@@ -1,0 +1,59 @@
+<section class="app-page__header">
+  <div>
+    <div class="app-page__title">File Management</div>
+    <div class="app-page__subtitle">Gestiona estados de cuenta y recibos para IA.</div>
+  </div>
+  <button class="app-btn-primary">
+    <i class="bi bi-cloud-upload me-2"></i>
+    Subir manualmente
+  </button>
+</section>
+
+<section class="app-card app-card--flat upload-dropzone mb-4">
+  <div class="upload-dropzone__icon">
+    <i class="bi bi-file-earmark-arrow-up"></i>
+  </div>
+  <div class="fw-semibold">Arrastra tus estados de cuenta aquí</div>
+  <div class="text-muted-2">
+    PDF, CSV o imágenes. Máx 25MB. Cifrado AES-256 antes de procesar.
+  </div>
+  <div class="d-flex align-items-center justify-content-center gap-3 mt-3 text-muted-2" style="font-size: 0.75rem;">
+    <span><i class="bi bi-shield-lock me-1"></i>Encriptado</span>
+    <span>•</span>
+    <span><i class="bi bi-stars me-1"></i>Parsing IA</span>
+  </div>
+</section>
+
+<section class="app-card">
+  <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="fw-semibold">Recent Uploads</div>
+    <div class="d-flex gap-2">
+      <button class="app-btn-ghost">Todos</button>
+      <button class="app-btn-ghost">Procesando</button>
+      <button class="app-btn-ghost">Completados</button>
+      <button class="app-btn-ghost">Errores</button>
+    </div>
+  </div>
+  <div class="d-flex flex-column gap-2">
+    <div class="upload-item" *ngFor="let upload of vm.uploads">
+      <div class="upload-item__icon" [class.is-error]="upload.status === 'error'" [class.is-pending]="upload.status === 'pending'">
+        <i class="bi" [ngClass]="upload.status === 'error' ? 'bi-exclamation-triangle' : upload.status === 'pending' ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
+      </div>
+      <div class="flex-grow-1">
+        <div class="fw-semibold">{{ upload.name }}</div>
+        <div class="text-muted-2" style="font-size: 0.75rem;">
+          {{ upload.uploadedLabel }} · {{ upload.sizeLabel }}
+        </div>
+      </div>
+      <div class="text-end">
+        <div class="app-chip" [class.app-chip--success]="upload.status === 'processed'" [class.app-chip--warning]="upload.status === 'pending'" [class.app-chip--danger]="upload.status === 'error'">
+          {{ getStatusLabel(upload.status) }}
+        </div>
+        <div class="text-muted-2" style="font-size: 0.7rem;" *ngIf="upload.extractedCount">
+          {{ upload.extractedCount }} transacciones extraídas
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="text-center text-muted-2 mt-3">Cargar más historial</div>
+</section>

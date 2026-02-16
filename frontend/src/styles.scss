@@ -1,0 +1,15 @@
+@use "bootstrap/scss/bootstrap" with (
+  $primary: #2b6cee,
+  $body-bg: #191919,
+  $body-color: #e7e7e7,
+  $border-color: #2e2e2e,
+  $font-family-sans-serif: ("Inter", "sans-serif"),
+  $enable-shadows: true
+);
+
+@use "./styles/theme";
+@use "./styles/layout";
+@use "./styles/components";
+@use "./styles/utilities";
+
+@import "bootstrap-icons/font/bootstrap-icons.css";

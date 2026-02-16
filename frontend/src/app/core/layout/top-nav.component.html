@@ -1,0 +1,30 @@
+<header class="app-top-nav">
+  <div class="app-top-nav__inner">
+    <div class="app-top-nav__brand">
+      <div class="app-top-nav__logo">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <span>FinAI</span>
+    </div>
+
+    <nav class="app-top-nav__links">
+      <a
+        *ngFor="let item of navItems"
+        [routerLink]="item.route"
+        routerLinkActive="is-active"
+        class="app-top-nav__link"
+      >
+        {{ item.label }}
+      </a>
+    </nav>
+
+    <div class="app-top-nav__actions">
+      <button class="app-top-nav__icon">
+        <i class="bi bi-bell"></i>
+        <span class="app-top-nav__dot"></span>
+      </button>
+      <div class="app-top-nav__divider"></div>
+      <div class="app-top-nav__avatar">JD</div>
+    </div>
+  </div>
+</header>

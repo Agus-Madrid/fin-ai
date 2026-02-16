@@ -1,0 +1,49 @@
+.upload-dropzone {
+  border: 2px dashed var(--app-border);
+  border-radius: 20px;
+  padding: 3rem 2rem;
+  text-align: center;
+  background: var(--app-surface-2);
+}
+
+.upload-dropzone__icon {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 1rem;
+  border-radius: 50%;
+  background: rgba(43, 108, 238, 0.12);
+  color: var(--app-primary);
+  display: grid;
+  place-items: center;
+  font-size: 1.5rem;
+}
+
+.upload-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
+}
+
+.upload-item__icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--app-success);
+}
+
+.upload-item__icon.is-pending {
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--app-warning);
+}
+
+.upload-item__icon.is-error {
+  background: rgba(239, 68, 68, 0.15);
+  color: var(--app-danger);
+}

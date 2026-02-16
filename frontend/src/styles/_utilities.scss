@@ -1,0 +1,45 @@
+.text-muted {
+  color: var(--app-muted) !important;
+}
+
+.text-muted-2 {
+  color: var(--app-muted-2) !important;
+}
+
+.bg-surface {
+  background: var(--app-surface) !important;
+}
+
+.bg-surface-2 {
+  background: var(--app-surface-2) !important;
+}
+
+.bg-surface-3 {
+  background: var(--app-surface-3) !important;
+}
+
+.border-subtle {
+  border: 1px solid var(--app-border) !important;
+}
+
+.app-divider {
+  height: 1px;
+  background: var(--app-border);
+  width: 100%;
+}
+
+.app-icon-pill {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(43, 108, 238, 0.12);
+  color: var(--app-primary);
+  border: 1px solid rgba(43, 108, 238, 0.2);
+}
+
+.app-faded {
+  opacity: 0.75;
+}

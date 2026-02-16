@@ -1,0 +1,168 @@
+<section class="app-page__header">
+  <div>
+    <div class="app-page__title">Budget Planner</div>
+    <div class="app-page__subtitle">
+      Gestiona ingresos reales, gastos fijos y metas de ahorro.
+    </div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <button class="app-btn-ghost">Mensual</button>
+    <button class="app-btn-ghost">Trimestral</button>
+    <button class="app-btn-primary">
+      <i class="bi bi-stars me-2"></i>
+      AI Optimize
+    </button>
+  </div>
+</section>
+
+<section class="app-grid app-grid--two">
+  <div class="app-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-cash-stack me-2 text-success"></i>
+        Ingresos
+      </div>
+      <button class="app-btn-ghost"><i class="bi bi-plus-lg"></i></button>
+    </div>
+    <div class="d-flex flex-column gap-3">
+      <div class="budget-item" *ngFor="let income of vm.incomeSources">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="text-muted-2 text-uppercase" style="font-size: 0.65rem;">{{ income.label }}</div>
+            <div class="fw-semibold">{{ income.source }}</div>
+          </div>
+          <span class="app-chip app-chip--success">{{ income.status }}</span>
+        </div>
+        <div class="d-flex align-items-end justify-content-between mt-2">
+          <div class="text-muted-2" style="font-size: 0.75rem;">{{ income.timing }}</div>
+          <div class="fw-semibold fs-5">
+            {{ income.amount | currency: vm.currency:'symbol':'1.0-2' }}
+          </div>
+        </div>
+        <div class="progress bg-surface-2 mt-3" style="height: 6px;">
+          <div class="progress-bar bg-success" [style.width]="income.progress + '%'"></div>
+        </div>
+      </div>
+    </div>
+    <div class="app-divider my-3"></div>
+    <div class="d-flex align-items-center justify-content-between">
+      <span class="text-muted">Ingreso total</span>
+      <span class="fw-bold fs-4">{{ vm.totalIncome | currency: vm.currency:'symbol':'1.0-2' }}</span>
+    </div>
+  </div>
+
+  <div class="app-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-repeat me-2 text-danger"></i>
+        Gastos fijos
+      </div>
+      <span class="app-pill">48% ingreso</span>
+    </div>
+    <div class="d-flex flex-column gap-2">
+      <div class="budget-row" *ngFor="let expense of vm.fixedExpenses">
+        <div class="d-flex align-items-center gap-3">
+          <div class="budget-row__icon">
+            <i class="bi" [ngClass]="expense.icon"></i>
+          </div>
+          <div>
+            <div class="fw-semibold">{{ expense.name }}</div>
+            <div class="text-muted-2 text-uppercase" style="font-size: 0.65rem;">{{ expense.category }}</div>
+          </div>
+        </div>
+        <div class="text-end">
+          <div class="fw-semibold">
+            {{ expense.amount | currency: vm.currency:'symbol':'1.0-2' }}
+          </div>
+          <div class="progress bg-surface-2 mt-2" style="height: 5px; width: 90px;">
+            <div class="progress-bar bg-danger" [style.width]="expense.progress + '%'"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="app-divider my-3"></div>
+    <div class="d-flex align-items-center justify-content-between">
+      <span class="text-muted">Total fijo</span>
+      <span class="fw-bold fs-4 text-danger">
+        {{ vm.totalFixed | currency: vm.currency:'symbol':'1.0-2' }}
+      </span>
+    </div>
+  </div>
+
+  <div class="app-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-piggy-bank me-2 text-primary"></i>
+        Meta de ahorro
+      </div>
+      <span class="app-chip app-chip--success">21% ingreso</span>
+    </div>
+    <div class="text-center my-4">
+      <div class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.2em;">
+        Objetivo mensual
+      </div>
+      <div class="display-5 fw-bold">
+        {{ vm.savings.monthlyGoal | currency: vm.currency:'symbol':'1.0-2' }}
+      </div>
+    </div>
+    <div class="progress bg-surface-2" style="height: 10px;">
+      <div class="progress-bar" [style.width]="vm.savings.progress + '%'"></div>
+    </div>
+    <div class="d-flex justify-content-between text-muted-2 mt-2" style="font-size: 0.7rem;">
+      <span>$0</span>
+      <span>$1k</span>
+      <span>$2k</span>
+      <span>$3k+</span>
+    </div>
+    <div class="app-card app-card--flat mt-4 bg-surface-2">
+      <div class="d-flex gap-2">
+        <i class="bi bi-lightbulb text-primary"></i>
+        <p class="text-muted-2 mb-0">{{ vm.savings.projectedMessage }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card app-card--gradient">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-pie-chart me-2 text-muted"></i>
+        Commitment Summary
+      </div>
+      <span class="text-muted">{{ vm.commitments.remainderPercent }}% disponible</span>
+    </div>
+    <div class="mb-4">
+      <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Pre-comprometido</span>
+        <span class="fw-semibold">
+          {{ vm.commitments.preCommitted | currency: vm.currency:'symbol':'1.0-2' }}
+        </span>
+      </div>
+      <div class="progress bg-surface-2" style="height: 8px;">
+        <div class="progress-bar bg-danger" style="width: 69%"></div>
+        <div class="progress-bar bg-surface-3" style="width: 31%"></div>
+      </div>
+    </div>
+    <div class="mb-4">
+      <div class="d-flex justify-content-between mb-2">
+        <span class="text-muted">Discrecional</span>
+        <span class="fw-semibold text-primary">
+          {{ vm.commitments.discretionary | currency: vm.currency:'symbol':'1.0-2' }}
+        </span>
+      </div>
+      <div class="progress bg-surface-2" style="height: 8px;">
+        <div class="progress-bar bg-primary" style="width: 31%"></div>
+        <div class="progress-bar bg-surface-3" style="width: 69%"></div>
+      </div>
+    </div>
+    <div class="app-card app-card--flat bg-surface-2">
+      <div class="fw-semibold text-primary mb-2">
+        <i class="bi bi-stars me-2"></i>
+        AI Insight
+      </div>
+      <div class="text-muted-2">
+        Detectamos 3 suscripciones inactivas. Cancelarlas incrementa tu presupuesto en $45/mes.
+      </div>
+      <button class="app-btn-ghost mt-3">Ver detalle</button>
+    </div>
+  </div>
+</section>

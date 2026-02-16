@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Unified Budget Planner</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#3b82f6", 
+                        "background-dark": "#191919",
+                        "card-dark": "#1e1e1e",
+                        "border-dark": "#2d2d2d",
+                        "text-secondary": "#a1a1aa",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.375rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; background-color: #191919; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #444; }
+    </style>
+</head>
+<body class="bg-background-dark text-slate-100 min-h-screen font-display flex flex-col antialiased selection:bg-primary/20 selection:text-primary">
+<header class="sticky top-0 z-50 bg-[#191919]/95 backdrop-blur-md border-b border-[#2d2d2d] w-full">
+<div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+<div class="flex items-center gap-12">
+<div class="flex items-center gap-2 text-white font-bold text-xl tracking-tight">
+<div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-[20px]">account_balance_wallet</span>
+</div>
+<span>FinanceAI</span>
+</div>
+<nav class="hidden md:flex items-center space-x-1">
+<a class="px-3 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5" href="#">Dashboard</a>
+<a class="px-3 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5" href="#">Review Inbox</a>
+<a class="px-3 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5" href="#">Transactions</a>
+<a class="px-3 py-2 text-sm font-medium text-text-secondary hover:text-white transition-colors rounded-lg hover:bg-white/5" href="#">Uploads</a>
+<a class="px-3 py-2 text-sm font-medium text-white bg-white/10 rounded-lg" href="#">Budget Planner</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<button class="p-2 text-text-secondary hover:text-white transition-colors rounded-full hover:bg-white/5">
+<span class="material-symbols-outlined text-[20px]">notifications</span>
+</button>
+<div class="h-9 w-9 rounded-full bg-gradient-to-tr from-primary to-purple-600 flex items-center justify-center text-xs font-bold text-white ring-2 ring-[#191919]">
+                    JD
+                </div>
+</div>
+</div>
+</header>
+<main class="flex-1 w-full max-w-7xl mx-auto px-6 py-10">
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-10">
+<div>
+<h1 class="text-3xl font-bold tracking-tight text-white">Budget Planner</h1>
+<p class="text-text-secondary text-sm mt-2">Manage your monthly allocations and track savings goals.</p>
+</div>
+<div class="flex items-center gap-3">
+<div class="flex bg-card-dark rounded-lg p-1 border border-border-dark">
+<button class="px-4 py-1.5 text-xs font-medium text-white bg-white/10 rounded shadow-sm">Monthly</button>
+<button class="px-4 py-1.5 text-xs font-medium text-text-secondary hover:text-white transition-colors">Quarterly</button>
+</div>
+<button class="bg-white text-black hover:bg-gray-200 px-4 py-2 rounded-lg flex items-center gap-2 text-sm font-medium transition-all shadow-lg shadow-white/5">
+<span class="material-symbols-outlined text-[18px]">auto_awesome</span>
+<span>AI Optimize</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 h-auto min-h-[600px]">
+<div class="bg-card-dark p-6 rounded-2xl border border-border-dark hover:border-[#3d3d3d] transition-colors flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-emerald-500/10 rounded-lg text-emerald-500 border border-emerald-500/20">
+<span class="material-symbols-outlined text-[20px]">payments</span>
+</div>
+<h2 class="text-base font-semibold text-white">Income Source</h2>
+</div>
+<button class="text-text-secondary hover:text-white transition-colors p-1.5 hover:bg-white/5 rounded-lg">
+<span class="material-symbols-outlined text-[20px]">add</span>
+</button>
+</div>
+<div class="flex-grow space-y-3 overflow-y-auto custom-scrollbar pr-1">
+<div class="p-4 rounded-xl bg-[#252525] border border-border-dark hover:border-emerald-500/30 transition-all group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 block">Primary Salary</span>
+<h3 class="text-sm font-medium text-white">Enterprise Tech Corp.</h3>
+</div>
+<span class="bg-emerald-500/10 text-emerald-400 text-[10px] font-bold px-2 py-0.5 rounded border border-emerald-500/20 uppercase">Confirmed</span>
+</div>
+<div class="flex items-end justify-between mt-2">
+<span class="text-text-secondary text-xs">Direct Deposit • Oct 1st</span>
+<span class="font-bold text-lg text-white">$6,000.00</span>
+</div>
+<div class="mt-3 w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-emerald-500 h-full w-full rounded-full"></div>
+</div>
+</div>
+<div class="p-4 rounded-xl bg-[#252525] border border-border-dark hover:border-emerald-500/30 transition-all group">
+<div class="flex justify-between items-start mb-3">
+<div>
+<span class="text-[10px] font-bold text-emerald-500 uppercase tracking-wider mb-1 block">Freelance</span>
+<h3 class="text-sm font-medium text-white">Consulting Hours</h3>
+</div>
+<span class="bg-amber-500/10 text-amber-400 text-[10px] font-bold px-2 py-0.5 rounded border border-amber-500/20 uppercase">Pending</span>
+</div>
+<div class="flex items-end justify-between mt-2">
+<span class="text-text-secondary text-xs">Invoiced • Net 30</span>
+<span class="font-bold text-lg text-white">$1,200.00</span>
+</div>
+<div class="mt-3 w-full bg-white/5 h-1 rounded-full overflow-hidden">
+<div class="bg-emerald-500/60 h-full w-[60%] rounded-full"></div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-5 border-t border-border-dark">
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium text-text-secondary">Total Monthly Income</span>
+<span class="text-xl font-bold text-white">$7,200.00</span>
+</div>
+</div>
+</div>
+<div class="bg-card-dark p-6 rounded-2xl border border-border-dark hover:border-[#3d3d3d] transition-colors flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-rose-500/10 rounded-lg text-rose-500 border border-rose-500/20">
+<span class="material-symbols-outlined text-[20px]">repeat</span>
+</div>
+<h2 class="text-base font-semibold text-white">Fixed Expenses</h2>
+</div>
+<span class="text-[11px] font-medium text-text-secondary bg-white/5 px-2.5 py-1 rounded border border-white/5">48% of Income</span>
+</div>
+<div class="flex-grow space-y-2 overflow-y-auto custom-scrollbar pr-1">
+<div class="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-border-dark group">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#252525] flex items-center justify-center text-text-secondary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">home</span>
+</div>
+<div>
+<p class="text-sm font-medium text-white">Rent &amp; Insurance</p>
+<p class="text-[10px] text-text-secondary uppercase font-semibold tracking-wide mt-0.5">Housing</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-white">$1,950.00</p>
+<div class="w-20 h-1 bg-white/5 rounded-full mt-2 ml-auto overflow-hidden">
+<div class="h-full bg-rose-500 w-[90%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-border-dark group">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#252525] flex items-center justify-center text-text-secondary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">bolt</span>
+</div>
+<div>
+<p class="text-sm font-medium text-white">Utilities</p>
+<p class="text-[10px] text-text-secondary uppercase font-semibold tracking-wide mt-0.5">Variable</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-white">$200.00</p>
+<div class="w-20 h-1 bg-white/5 rounded-full mt-2 ml-auto overflow-hidden">
+<div class="h-full bg-rose-400 w-[45%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-border-dark group">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#252525] flex items-center justify-center text-text-secondary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">stream</span>
+</div>
+<div>
+<p class="text-sm font-medium text-white">SaaS Suite</p>
+<p class="text-[10px] text-text-secondary uppercase font-semibold tracking-wide mt-0.5">Tech</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-white">$150.00</p>
+<div class="w-20 h-1 bg-white/5 rounded-full mt-2 ml-auto overflow-hidden">
+<div class="h-full bg-rose-300 w-[20%]"></div>
+</div>
+</div>
+</div>
+<div class="flex items-center justify-between p-3 hover:bg-white/5 rounded-xl transition-colors cursor-pointer border border-transparent hover:border-border-dark group opacity-80 hover:opacity-100">
+<div class="flex items-center gap-3">
+<div class="w-9 h-9 rounded-full bg-[#252525] flex items-center justify-center text-text-secondary group-hover:text-white transition-colors">
+<span class="material-symbols-outlined text-[18px]">directions_car</span>
+</div>
+<div>
+<p class="text-sm font-medium text-white">Transport</p>
+<p class="text-[10px] text-text-secondary uppercase font-semibold tracking-wide mt-0.5">Estimated</p>
+</div>
+</div>
+<div class="text-right">
+<p class="text-sm font-bold text-white">$1,150.00</p>
+<div class="w-20 h-1 bg-white/5 rounded-full mt-2 ml-auto overflow-hidden">
+<div class="h-full bg-rose-300 w-[70%]"></div>
+</div>
+</div>
+</div>
+</div>
+<div class="mt-auto pt-5 border-t border-border-dark">
+<div class="flex justify-between items-center">
+<span class="text-sm font-medium text-text-secondary">Total Fixed Costs</span>
+<span class="text-xl font-bold text-rose-500">$3,450.00</span>
+</div>
+</div>
+</div>
+<div class="bg-card-dark p-6 rounded-2xl border border-border-dark hover:border-[#3d3d3d] transition-colors flex flex-col h-full">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-primary/10 rounded-lg text-primary border border-primary/20">
+<span class="material-symbols-outlined text-[20px]">savings</span>
+</div>
+<h2 class="text-base font-semibold text-white">Savings Target</h2>
+</div>
+<span class="text-[11px] font-medium text-primary bg-primary/10 px-2.5 py-1 rounded border border-primary/20">21% of Income</span>
+</div>
+<div class="flex-grow flex flex-col justify-center py-4 px-2">
+<div class="text-center mb-10">
+<p class="text-text-secondary text-[11px] uppercase tracking-widest font-bold mb-3">Monthly Goal</p>
+<h3 class="text-5xl font-bold text-white tracking-tighter">$1,500.00</h3>
+</div>
+<div class="px-2 mb-2">
+<div class="relative pt-1">
+<div class="h-3 bg-[#252525] rounded-full w-full relative overflow-hidden ring-1 ring-white/5">
+<div class="absolute h-full bg-primary rounded-full transition-all duration-500 ease-out shadow-[0_0_15px_rgba(59,130,246,0.5)]" style="width: 70%"></div>
+<div class="absolute inset-0 flex justify-between px-0.5 pointer-events-none">
+<div class="w-px h-full bg-black/20"></div>
+<div class="w-px h-full bg-black/20"></div>
+<div class="w-px h-full bg-black/20"></div>
+<div class="w-px h-full bg-black/20"></div>
+</div>
+</div>
+<div class="absolute top-1/2 -translate-y-1/2 h-5 w-5 bg-card-dark border-[3px] border-primary rounded-full shadow-lg cursor-grab hover:scale-110 transition-transform z-10" style="left: 70%"></div>
+</div>
+<div class="flex justify-between text-[10px] text-text-secondary font-bold uppercase mt-3">
+<span>$0</span>
+<span>$1k</span>
+<span>$2k</span>
+<span>$3k+</span>
+</div>
+</div>
+<div class="mt-8 bg-[#252525] p-4 rounded-xl border border-border-dark flex items-start space-x-3">
+<span class="material-symbols-outlined text-primary text-sm mt-0.5">lightbulb</span>
+<p class="text-xs leading-relaxed text-text-secondary">
+<span class="text-white font-medium">Projected Growth:</span> Your Emergency Fund will be fully funded in 3.4 months. An extra $200 could shave off 2 weeks.
+                        </p>
+</div>
+</div>
+</div>
+<div class="bg-card-dark p-6 rounded-2xl border border-border-dark hover:border-[#3d3d3d] transition-colors flex flex-col relative overflow-hidden h-full">
+<div class="absolute right-0 top-0 p-40 bg-primary/5 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+<div class="flex items-center justify-between mb-6 relative z-10">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-[#252525] rounded-lg text-text-secondary border border-border-dark">
+<span class="material-symbols-outlined text-[20px]">pie_chart</span>
+</div>
+<h2 class="text-base font-semibold text-white">Commitment Summary</h2>
+</div>
+<span class="text-[11px] font-medium text-text-secondary">Remainder: 31%</span>
+</div>
+<div class="flex-grow flex flex-col justify-between relative z-10 gap-6">
+<div class="space-y-6">
+<div>
+<div class="flex justify-between text-sm mb-2.5">
+<span class="text-text-secondary font-medium">Pre-Committed <span class="text-[10px] text-[#555] ml-1">(Fixed + Savings)</span></span>
+<span class="font-bold text-white">$4,950.00</span>
+</div>
+<div class="h-2 w-full bg-[#252525] rounded-full overflow-hidden flex ring-1 ring-white/5">
+<div class="h-full bg-rose-500 w-[69%] shadow-[0_0_8px_rgba(244,63,94,0.3)]"></div>
+<div class="h-full bg-[#333] w-[31%]"></div>
+</div>
+<div class="flex justify-between text-[11px] text-text-secondary mt-2 font-medium">
+<span>69% of Income</span>
+<span>Target: &lt;70%</span>
+</div>
+</div>
+<div>
+<div class="flex justify-between text-sm mb-2.5">
+<span class="text-text-secondary font-medium">Discretionary Budget</span>
+<span class="font-bold text-primary">$2,250.00</span>
+</div>
+<div class="h-2 w-full bg-[#252525] rounded-full overflow-hidden flex ring-1 ring-white/5">
+<div class="h-full bg-primary w-[31%] shadow-[0_0_8px_rgba(59,130,246,0.3)]"></div>
+<div class="h-full bg-transparent w-[69%]"></div>
+</div>
+<div class="flex justify-between text-[11px] text-text-secondary mt-2 font-medium">
+<span>31% Available</span>
+<span>Target: &gt;30%</span>
+</div>
+</div>
+</div>
+<div class="mt-4">
+<div class="bg-gradient-to-br from-[#252525] to-[#1e1e1e] p-5 rounded-xl border border-border-dark relative overflow-hidden group shadow-lg hover:border-primary/20 transition-all">
+<div class="absolute -right-4 -bottom-4 text-white opacity-[0.03] transform rotate-12 pointer-events-none">
+<span class="material-symbols-outlined text-[100px]">insights</span>
+</div>
+<h4 class="text-sm font-bold flex items-center mb-2 text-primary">
+<span class="material-symbols-outlined text-[16px] mr-2">auto_awesome</span>
+                                AI Insight
+                            </h4>
+<p class="text-xs text-text-secondary mb-4 relative z-10 leading-relaxed">
+                                You have 3 subscriptions unused in 30 days. Canceling them would increase your discretionary budget by $45/mo.
+                            </p>
+<button class="text-[10px] font-bold uppercase tracking-wider text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded transition-all border border-white/5 hover:border-white/10">
+                                View Details
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>

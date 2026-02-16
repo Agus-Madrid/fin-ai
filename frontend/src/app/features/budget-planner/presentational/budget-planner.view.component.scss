@@ -1,0 +1,26 @@
+.budget-item {
+  padding: 1rem;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface-2);
+}
+
+.budget-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem;
+  border-radius: 14px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.budget-row__icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--app-surface-3);
+  display: grid;
+  place-items: center;
+  color: var(--app-muted);
+}

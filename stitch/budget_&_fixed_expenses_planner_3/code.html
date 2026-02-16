@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Unified Uploads History</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#2b6cee",
+                        "background-light": "#f6f6f8",
+                        "background-dark": "#191919",
+                        "card-dark": "#232323",
+                        "status-success": "#10b981",
+                        "status-error": "#ef4444",
+                        "status-pending": "#f59e0b",
+                    },
+                    fontFamily: {
+                        "display": ["Inter"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "2xl": "1rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #2b6cee33; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #2b6cee; }
+    </style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100 min-h-screen font-display flex flex-col">
+<header class="fixed top-0 left-0 right-0 h-16 bg-white dark:bg-card-dark border-b border-slate-200 dark:border-white/5 z-50 px-6 flex items-center justify-between">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-2 text-primary font-bold text-lg tracking-tight">
+<span class="material-icons text-2xl">account_balance_wallet</span>
+<span>FinFlow</span>
+</div>
+<nav class="hidden md:flex items-center space-x-1">
+<a class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg transition-colors" href="#">Dashboard</a>
+<a class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg transition-colors" href="#">Review Inbox</a>
+<a class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg transition-colors" href="#">Transactions</a>
+<a class="px-4 py-2 text-sm font-bold text-slate-900 dark:text-white bg-slate-100 dark:bg-white/10 rounded-lg transition-colors" href="#">Uploads</a>
+<a class="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white rounded-lg transition-colors" href="#">Budget Planner</a>
+</nav>
+</div>
+<div class="flex items-center space-x-4">
+<button class="relative p-2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+<span class="material-icons">notifications</span>
+<span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+</button>
+<div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden border border-slate-300 dark:border-slate-600">
+<img alt="Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAKKnxL4zldCev_xHy4DxdL2liQ97EKV9G0Q65DO44MkooocugpNktRyfKJFnDGZPxbB5tGLroUaxBJ4LWt4X_EfNSOQLN1q1hxRQUdPXFJ262ZOkKKnnz7bHyiDfHMLYvcsZ6KM38iYVjKBY_7JByr9WiF1ANVZSBK9TWfvZniEsR7o6GkUZWo7nNMsWRXBts1QX8iV9UL1DgS8139Qi8Efwaj3yQ-k15_bGgMqAmvO2DQ2CJ61_jwadPTNSGrVsBGm2sbeyR6cw"/>
+</div>
+</div>
+</header>
+<main class="flex-1 pt-24 pb-12 px-6 max-w-6xl mx-auto w-full">
+<div class="flex items-center justify-between mb-8">
+<div>
+<h1 class="text-3xl font-bold tracking-tight text-slate-900 dark:text-white">File Management</h1>
+<p class="text-slate-500 dark:text-slate-400 text-sm mt-2">Manage your bank statements and receipts for AI processing.</p>
+</div>
+<button class="bg-primary hover:bg-primary/90 text-white px-5 py-2.5 rounded-lg flex items-center space-x-2 text-sm font-medium transition-all shadow-lg shadow-primary/20">
+<span class="material-icons text-sm">cloud_upload</span>
+<span>Upload Manually</span>
+</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+<div class="lg:col-span-12">
+<div class="bg-white dark:bg-card-dark rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 p-12 flex flex-col items-center justify-center text-center hover:border-primary/50 hover:bg-slate-50 dark:hover:bg-white/5 transition-all cursor-pointer group">
+<div class="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+<span class="material-icons text-3xl">upload_file</span>
+</div>
+<h3 class="text-lg font-semibold text-slate-900 dark:text-white mb-2">Drop your bank statements here</h3>
+<p class="text-slate-500 dark:text-slate-400 text-sm max-w-md">
+                        Support for PDF, CSV, and Image formats. Max file size 25MB. Files are encrypted before processing.
+                    </p>
+<div class="mt-8 flex items-center gap-6 text-xs text-slate-400 font-medium">
+<span class="flex items-center gap-1.5"><span class="material-icons text-base">security</span> AES-256 Encryption</span>
+<span class="w-1 h-1 bg-slate-600 rounded-full"></span>
+<span class="flex items-center gap-1.5"><span class="material-icons text-base">smart_toy</span> AI Parsing</span>
+</div>
+</div>
+</div>
+<div class="lg:col-span-12 bg-white dark:bg-card-dark rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+<div class="px-6 py-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+<h2 class="font-bold text-lg text-slate-900 dark:text-white">Recent Uploads</h2>
+<div class="flex bg-slate-100 dark:bg-slate-900/50 rounded-lg p-1">
+<button class="px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm rounded">All</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Processing</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Completed</button>
+<button class="px-3 py-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors">Errors</button>
+</div>
+</div>
+<div class="divide-y divide-slate-100 dark:divide-slate-800">
+<div class="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-10 h-10 rounded-lg bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
+<span class="material-icons">hourglass_empty</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white">Chase_Statement_Oct_2023.pdf</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Uploaded 2 mins ago • 1.4 MB</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 dark:bg-orange-500/10 dark:text-orange-400 border border-orange-200 dark:border-orange-500/20">
+                                    Pending Review
+                                </span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity w-20 justify-end">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="View">
+<span class="material-icons text-xl">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10" title="Delete">
+<span class="material-icons text-xl">delete</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+<span class="material-icons">task_alt</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white">Amex_Gold_Sept_2023.pdf</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Uploaded yesterday • 2.1 MB</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                    Processed
+                                </span>
+<span class="text-[10px] text-slate-400 mt-1">45 transactions extracted</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity w-20 justify-end">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="View Details">
+<span class="material-icons text-xl">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="Download CSV">
+<span class="material-icons text-xl">download</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+<span class="material-icons">task_alt</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white">BOA_Checking_Sept_2023.pdf</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Uploaded Oct 12 • 0.8 MB</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                    Processed
+                                </span>
+<span class="text-[10px] text-slate-400 mt-1">12 transactions extracted</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity w-20 justify-end">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="View Details">
+<span class="material-icons text-xl">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="Download CSV">
+<span class="material-icons text-xl">download</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-10 h-10 rounded-lg bg-red-500/10 flex items-center justify-center text-red-500 shrink-0">
+<span class="material-icons">error_outline</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white">Unknown_Receipt_Scanned.png</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Uploaded Oct 10 • 5.2 MB</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-500/10 dark:text-red-400 border border-red-200 dark:border-red-500/20">
+                                    Parsing Error
+                                </span>
+<span class="text-[10px] text-red-400 mt-1 cursor-pointer hover:underline">View log details</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity w-20 justify-end">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="Retry">
+<span class="material-icons text-xl">refresh</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-red-500 transition-colors rounded-full hover:bg-red-500/10" title="Delete">
+<span class="material-icons text-xl">delete</span>
+</button>
+</div>
+</div>
+</div>
+<div class="p-5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors flex items-center justify-between group">
+<div class="flex items-center gap-5">
+<div class="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 shrink-0">
+<span class="material-icons">task_alt</span>
+</div>
+<div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white">Citi_DoubleCash_Aug_2023.pdf</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Uploaded Sept 28 • 1.9 MB</p>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex flex-col items-end">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/20">
+                                    Processed
+                                </span>
+<span class="text-[10px] text-slate-400 mt-1">89 transactions extracted</span>
+</div>
+<div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity w-20 justify-end">
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="View Details">
+<span class="material-icons text-xl">visibility</span>
+</button>
+<button class="p-2 text-slate-400 hover:text-primary transition-colors rounded-full hover:bg-primary/10" title="Download CSV">
+<span class="material-icons text-xl">download</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<div class="p-4 border-t border-slate-100 dark:border-slate-800 flex justify-center bg-slate-50/50 dark:bg-white/5">
+<button class="text-sm text-slate-500 hover:text-primary font-medium flex items-center gap-2 transition-colors py-2 px-4 rounded-lg hover:bg-slate-100 dark:hover:bg-white/5">
+<span>Load more history</span>
+<span class="material-icons text-sm">expand_more</span>
+</button>
+</div>
+</div>
+</div>
+</main>
+
+</body></html>
