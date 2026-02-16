@@ -1,5 +1,6 @@
 import { Inject, Injectable } from '@nestjs/common';
-import { AI_CLIENT, AiClient } from './ai.client';
+import { AI_CLIENT } from './ai.client';
+import type { AiClient } from './ai.client';
 import { ExtractStatementInput, ExtractStatementResult } from './ai.types';
 
 @Injectable()
