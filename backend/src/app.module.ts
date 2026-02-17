@@ -8,6 +8,9 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { UserController } from './user/user.controller';
+import { UserService } from './user/user.service';
+import { UserModule } from './user/user.module';
 
 @Module({
   imports: [
@@ -26,9 +29,10 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     IngestionModule,
     ReviewInboxModule,
     UploadsModule,
-    BudgetsModule
+    BudgetsModule,
+    UserModule
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [AppController, UserController],
+  providers: [AppService, UserService],
 })
 export class AppModule {}
