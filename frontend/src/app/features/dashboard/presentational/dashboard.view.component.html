@@ -230,10 +230,10 @@
 
     <div class="app-card">
       <div class="fw-semibold mb-3">Carga manual rápida</div>
-      <form class="d-flex flex-column gap-3" [formGroup]="manualTransactionFormGroup()!">
+      <form class="d-flex flex-column gap-3" [formGroup]="manualTransactionFormGroup()!" (ngSubmit)="onSubmit()">
         <div>
           <label class="app-section-title" for="descriptionInput">Descripción</label>
-          <input id="descriptionInput" class="app-input" placeholder="Ej: Cena en restaurante" type="text" />
+          <input id="descriptionInput" class="app-input" placeholder="Ej: Cena en restaurante" type="text" formControlName="description" />
         </div>
         <div>
           <label class="app-section-title" for="amountInput">Monto</label>
@@ -244,15 +244,15 @@
         </div>
         <div>
           <label class="app-section-title" for="categorySelect">Categoría</label>
-          <select class="app-select" id="categorySelect">
+          <select class="app-select" id="categorySelect" formControlName="categoryId">
             <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
           </select>
         </div>
         <div>
           <label class="app-section-title" for="dateInput">Fecha</label>
-          <input id="dateInput" class="app-input" type="date" />
+          <input id="dateInput" class="app-input" type="date" formControlName="date" />
         </div>
-        <button class="app-btn-primary" type="button">Agregar gasto</button>
+        <button class="app-btn-primary" type="submit">Agregar gasto</button>
       </form>
     </div>
 

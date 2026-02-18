@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CurrencyPipe, NgClass, NgFor } from '@angular/common';
 import { DashboardVm } from '../../../shared/models/dashboard.model';
 import { Transaction } from '../../../shared/models/transaction.model';
@@ -17,6 +17,7 @@ export class DashboardViewComponent {
   readonly vm = input.required<DashboardVm>();
   readonly manualTransactionFormGroup = input<FormGroup>();
   readonly categories = input<Category[]>([]);
+  readonly submitTransaction = output<void>();
 
   getSpendableLabel() {
     return 'Dinero Gastable';
@@ -42,5 +43,9 @@ export class DashboardViewComponent {
       return segment;
     });
     return `conic-gradient(${segments.join(', ')})`;
+  }
+
+  onSubmit() {
+    this.submitTransaction.emit();
   }
 }
