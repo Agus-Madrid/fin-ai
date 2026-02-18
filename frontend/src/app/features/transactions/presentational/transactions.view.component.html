@@ -13,8 +13,8 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <span class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.14em;">Filtros activos</span>
-  <span class="app-pill">Fecha: {{ vm.filters.dateRange }}</span>
-  <span class="app-pill">Cuenta: {{ vm.filters.account }}</span>
+  <span class="app-pill">Fecha: {{ vm().filters.dateRange }}</span>
+  <span class="app-pill">Cuenta: {{ vm().filters.account }}</span>
   <button class="app-btn-ghost">+ Agregar filtro</button>
 </div>
 
@@ -32,7 +32,7 @@
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let tx of vm.transactions" [class.is-highlight]="tx.id === vm.highlightedId">
+        <tr *ngFor="let tx of vm().transactions" [class.is-highlight]="tx.id === vm().highlightedId">
           <td>{{ tx.dateLabel }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
@@ -48,7 +48,7 @@
           <td><span class="app-pill">{{ tx.category }}</span></td>
           <td class="text-muted-2">{{ tx.method }}</td>
           <td class="text-end fw-semibold">
-            {{ formatAmount(tx) | currency: vm.currency:'symbol':'1.0-2' }}
+            {{ formatAmount(tx) | currency: vm().currency:'symbol':'1.0-2' }}
           </td>
           <td class="text-end">
             <button class="app-btn-ghost"><i class="bi bi-three-dots"></i></button>
@@ -74,7 +74,7 @@
     </table>
   </div>
   <div class="d-flex align-items-center justify-content-between mt-3 text-muted-2" style="font-size: 0.75rem;">
-    <span>Mostrando {{ vm.rangeLabel }} de {{ vm.totalCount }} resultados</span>
+    <span>Mostrando {{ vm().rangeLabel }} de {{ vm().totalCount }} resultados</span>
     <div class="d-flex gap-2">
       <button class="app-btn-ghost"><i class="bi bi-chevron-left"></i></button>
       <button class="app-btn-ghost"><i class="bi bi-chevron-right"></i></button>

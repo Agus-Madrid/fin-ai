@@ -22,4 +22,14 @@ export class CategoryService {
         return category;
     }
 
+    async findByUserId(userId: string): Promise<Category[]> {
+        const user = await this.categoryRepository.find({where: {userId}});
+        if(!user){
+            throw new NotFoundException(`User with id ${userId} not found`);
+        }
+        
+        const categories = await this.categoryRepository.find({where: {userId}});
+        return categories;
+    }
+
 }

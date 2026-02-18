@@ -4,7 +4,7 @@
     <div class="app-page__subtitle">Verifica y categoriza transacciones sugeridas por IA.</div>
   </div>
   <div class="d-flex align-items-center gap-3">
-    <span class="text-muted">{{ vm.pendingCount }} pendientes</span>
+    <span class="text-muted">{{ vm().pendingCount }} pendientes</span>
     <button class="app-btn-primary">
       <i class="bi bi-check-circle me-2"></i>
       Aprobar todo
@@ -25,7 +25,7 @@
       </div>
     </div>
     <div class="review-list">
-      <div class="review-item" *ngFor="let item of vm.items" [class.is-active]="item.id === vm.selectedItem.id">
+      <div class="review-item" *ngFor="let item of vm().items" [class.is-active]="item.id === vm().selectedItem.id">
         <div class="review-item__main">
           <div class="fw-semibold">{{ item.merchant }}</div>
           <div class="text-muted-2">{{ item.category }} · {{ item.dateLabel }}</div>
@@ -57,12 +57,12 @@
     <div class="d-flex align-items-center gap-3 mb-4">
       <div class="review-avatar">UBER</div>
       <div>
-        <div class="fw-semibold fs-5">{{ vm.selectedItem.merchant }}</div>
-        <div class="text-muted-2">{{ vm.selectedItem.dateLabel }}</div>
+        <div class="fw-semibold fs-5">{{ vm().selectedItem.merchant }}</div>
+        <div class="text-muted-2">{{ vm().selectedItem.dateLabel }}</div>
       </div>
       <div class="ms-auto text-end">
         <div class="fw-bold fs-4">
-          -{{ vm.selectedItem.amount | currency: vm.selectedItem.currency:'symbol':'1.0-2' }}
+          -{{ vm().selectedItem.amount | currency: vm().selectedItem.currency:'symbol':'1.0-2' }}
         </div>
         <div class="text-muted-2 text-uppercase">Pendiente</div>
       </div>
@@ -81,7 +81,7 @@
       </div>
       <div>
         <label class="app-section-title">Comercio</label>
-        <input class="app-input" [value]="vm.selectedItem.merchant" />
+        <input class="app-input" [value]="vm().selectedItem.merchant" />
       </div>
       <div class="row g-3">
         <div class="col-6">

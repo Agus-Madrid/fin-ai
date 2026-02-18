@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CurrencyPipe, NgClass, NgFor } from '@angular/common';
 import { BudgetVm } from '../../../shared/models/budget.model';
 
@@ -11,5 +11,5 @@ import { BudgetVm } from '../../../shared/models/budget.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BudgetPlannerViewComponent {
-  @Input({ required: true }) vm!: BudgetVm;
+  readonly vm = input.required<BudgetVm>();
 }
