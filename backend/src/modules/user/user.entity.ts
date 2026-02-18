@@ -1,19 +1,48 @@
-import { Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { Transaction } from '../transactions/transaction.entity';
+import { Category } from '../categories/category.entity';
+import { SavingGoal } from '../savings-goals/saving-goal.entity';
+import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
+import { Upload } from '../uploads/upload.entity';
 
-@Entity('user')
+@Entity('users')
 export class User {
-    @PrimaryGeneratedColumn('uuid')
-    id:string;
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
-    @Column({name:'name'})
-    name:string;
+  @Column({ name: 'name' })
+  name: string;
 
-    @Column({name:'password'})
-    password:string;
+  @Column({ name: 'password' })
+  password: string;
 
-    @Column({unique:true, name: 'email'})
-    email:string;
+  @Column({ unique: true, name: 'email' })
+  email: string;
 
-    @Column('date', {name:'created_at'})
-    createdAt:string
+  @CreateDateColumn({ name: 'created_at' })
+  createdAt: Date;
+
+  @Column({ name: 'current_total_savings' })
+  currentTotalSavings: number;
+
+  @OneToMany(() => Transaction, (transaction) => transaction.user)
+  transactions: Transaction[];
+
+  @OneToMany(() => Category, (category) => category.user)
+  categories: Category[];
+
+  @OneToMany(() => SavingGoal, (savingGoal) => savingGoal.user)
+  savingGoals: SavingGoal[];
+
+  @OneToMany(() => FixedCommitment, (fixedCommitment) => fixedCommitment.user)
+  fixedCommitments: FixedCommitment[];
+
+  @OneToMany(() => Upload, (upload) => upload.user)
+  uploads: Upload[];
 }

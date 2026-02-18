@@ -7,7 +7,9 @@ import { ExtractStatementInput, ExtractStatementResult } from './ai.types';
 export class AiService {
   constructor(@Inject(AI_CLIENT) private readonly client: AiClient) {}
 
-  async extractStatement(input: ExtractStatementInput): Promise<ExtractStatementResult> {
+  async extractStatement(
+    input: ExtractStatementInput,
+  ): Promise<ExtractStatementResult> {
     return this.client.extractStatement(input);
   }
 }

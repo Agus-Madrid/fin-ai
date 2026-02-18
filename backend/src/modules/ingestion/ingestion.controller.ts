@@ -8,7 +8,7 @@ export class IngestionController {
   @Post('statement/preview')
   async previewExtraction() {
     return {
-      message: 'Endpoint placeholder. Wire file upload + AI extraction here.'
+      message: 'Endpoint placeholder. Wire file upload + AI extraction here.',
     };
   }
 }

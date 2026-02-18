@@ -8,19 +8,20 @@ import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
-import { UserController } from './user/user.controller';
-import { UserService } from './user/user.service';
-import { UserModule } from './user/user.module';
+import { UserModule } from './modules/user/user.module';
+import { FixedCommitmentsModule } from './modules/fixed-commitments/fixed-commitments.module';
+import { SeedModule } from './modules/seed/seed.module';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'mysql',
       host: process.env.DB_HOST ?? 'localhost',
-      port: parseInt(process.env.DB_PORT ?? '3306', 10),
+      port: Number.parseInt(process.env.DB_PORT ?? '3306', 10),
       username: process.env.DB_USER ?? 'finai',
       password: process.env.DB_PASSWORD ?? 'finai',
       database: process.env.DB_NAME ?? 'finai',
+      entities: [__dirname + '/**/*.entity{.ts,.js}'],
       autoLoadEntities: true,
       synchronize: true,
     }),
@@ -30,9 +31,11 @@ import { UserModule } from './user/user.module';
     ReviewInboxModule,
     UploadsModule,
     BudgetsModule,
-    UserModule
+    UserModule,
+    FixedCommitmentsModule,
+    SeedModule,
   ],
-  controllers: [AppController, UserController],
-  providers: [AppService, UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
