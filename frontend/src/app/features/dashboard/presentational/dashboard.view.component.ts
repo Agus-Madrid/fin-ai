@@ -16,7 +16,7 @@ import { Category } from '../../../shared/models/category.model';
 export class DashboardViewComponent {
   readonly vm = input.required<DashboardVm>();
   readonly manualTransactionFormGroup = input<FormGroup>();
-  categories = input<Category[]>();
+  readonly categories = input<Category[]>([]);
 
   getSpendableLabel() {
     return 'Dinero Gastable';

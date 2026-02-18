@@ -245,7 +245,7 @@
         <div>
           <label class="app-section-title" for="categorySelect">Categoría</label>
           <select class="app-select" id="categorySelect">
-            <option *ngFor="let category in categories" [value]="category.id">{{ category.name }}</option>
+            <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
           </select>
         </div>
         <div>
