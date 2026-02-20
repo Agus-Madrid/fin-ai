@@ -6,6 +6,8 @@ import { CreateTransactionDto } from './dtos/create-transaction.dto';
 import { UserService } from '../user/user.service';
 import { CategoryService } from '../categories/category.service';
 
+const TRANSACTION_RELATIONS = ['category', 'user'] as const;
+
 @Injectable()
 export class TransactionsService {
   constructor(
@@ -15,11 +17,16 @@ export class TransactionsService {
     private readonly categoryService: CategoryService) {}
 
   async findAll(): Promise<Transaction[]> {
-    return await this.transactionRepository.find();
+    return await this.transactionRepository.find({
+      relations: [...TRANSACTION_RELATIONS],
+    });
   }
 
   async findAllByUser(userId: string): Promise<Transaction[]> {
-    const transactions = await this.transactionRepository.find({ where: { user: { id: userId } } });
+    const transactions = await this.transactionRepository.find({
+      where: { user: { id: userId } },
+      relations: [...TRANSACTION_RELATIONS],
+    });
 
     if(!transactions || transactions.length === 0){
       throw new NotFoundException(`No transactions found for user with id ${userId}`);
@@ -28,7 +35,10 @@ export class TransactionsService {
   }
 
   async findById(id: number): Promise<Transaction> {
-    const transaction = await this.transactionRepository.findOne({ where: { id } });
+    const transaction = await this.transactionRepository.findOne({
+      where: { id },
+      relations: [...TRANSACTION_RELATIONS],
+    });
 
     if(!transaction){
       throw new NotFoundException(`Transaction with id ${id} not found`);

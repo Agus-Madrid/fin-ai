@@ -1,20 +1,17 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common';
-import { TransactionsVm } from '../../../shared/models/transactions-page.model';
+import { ChangeDetectionStrategy, Component, input, ResourceRef } from '@angular/core';
+import { CurrencyPipe, NgClass, NgFor } from '@angular/common';
+import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
 
 @Component({
   selector: 'app-transactions-view',
   standalone: true,
-  imports: [NgFor, NgIf, NgClass, CurrencyPipe],
+  imports: [CurrencyPipe, NgFor],
   templateUrl: './transactions.view.component.html',
   styleUrl: './transactions.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsViewComponent {
-  readonly vm = input.required<TransactionsVm>();
-
-  formatAmount(transaction: Transaction) {
-    return transaction.type === 'expense' ? -transaction.amount : transaction.amount;
-  }
+  readonly transactions = input.required<ResourceRef<Transaction[] | null>>();
+  TransactionStatus = TransactionStatus;
 }
