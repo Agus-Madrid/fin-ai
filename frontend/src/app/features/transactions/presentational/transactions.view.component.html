@@ -13,8 +13,8 @@
 
 <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
   <span class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.14em;">Filtros activos</span>
-  <span class="app-pill">Fecha: {{ vm().filters.dateRange }}</span>
-  <span class="app-pill">Cuenta: {{ vm().filters.account }}</span>
+  <span class="app-pill">Fecha: </span>
+  <span class="app-pill">Cuenta: </span>
   <button class="app-btn-ghost">+ Agregar filtro</button>
 </div>
 
@@ -26,29 +26,26 @@
           <th>Fecha</th>
           <th>Descripción</th>
           <th>Categoría</th>
-          <th>Método</th>
           <th class="text-end">Monto</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let tx of vm().transactions" [class.is-highlight]="tx.id === vm().highlightedId">
-          <td>{{ tx.dateLabel }}</td>
+        <tr *ngFor="let tx of transactions().value() ?? []" [class.bg-surface-2]="tx.status === TransactionStatus.PENDING">
+          <td>{{ tx.date }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <span class="app-icon-pill" [class.bg-success]="tx.type === 'income'">
-                <i class="bi" [ngClass]="tx.icon"></i>
+              <span class="app-icon-pill" [class.bg-success]="tx.status === TransactionStatus.CONFIRMED">
+                <i>{{tx.category.icon}}</i>
               </span>
               <div>
-                <div class="fw-semibold">{{ tx.merchant }}</div>
-                <div class="text-muted-2" style="font-size: 0.7rem;" *ngIf="tx.note">{{ tx.note }}</div>
+                <div class="fw-semibold">{{ tx.description }}</div>
               </div>
             </div>
           </td>
-          <td><span class="app-pill">{{ tx.category }}</span></td>
-          <td class="text-muted-2">{{ tx.method }}</td>
+          <td><span class="app-pill">{{ tx.category.name  }}</span></td>
           <td class="text-end fw-semibold">
-            {{ formatAmount(tx) | currency: vm().currency:'symbol':'1.0-2' }}
+            {{ tx.amount | currency: 'USD':'symbol':'1.0-2' }}
           </td>
           <td class="text-end">
             <button class="app-btn-ghost"><i class="bi bi-three-dots"></i></button>
@@ -64,7 +61,6 @@
               Seleccionar <i class="bi bi-chevron-down"></i>
             </button>
           </td>
-          <td class="text-muted-2">Visa ·• 8822</td>
           <td class="text-end"><input class="app-input text-end" value="$210.00" /></td>
           <td class="text-end">
             <button class="app-btn-primary"><i class="bi bi-check-lg"></i></button>
@@ -74,7 +70,7 @@
     </table>
   </div>
   <div class="d-flex align-items-center justify-content-between mt-3 text-muted-2" style="font-size: 0.75rem;">
-    <span>Mostrando {{ vm().rangeLabel }} de {{ vm().totalCount }} resultados</span>
+    <span>Mostrando  de  resultados</span>
     <div class="d-flex gap-2">
       <button class="app-btn-ghost"><i class="bi bi-chevron-left"></i></button>
       <button class="app-btn-ghost"><i class="bi bi-chevron-right"></i></button>

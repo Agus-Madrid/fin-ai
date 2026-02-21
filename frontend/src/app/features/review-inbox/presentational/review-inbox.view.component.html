@@ -4,7 +4,7 @@
     <div class="app-page__subtitle">Verifica y categoriza transacciones sugeridas por IA.</div>
   </div>
   <div class="d-flex align-items-center gap-3">
-    <span class="text-muted">{{ vm().pendingCount }} pendientes</span>
+    <span class="text-muted">{{ inbox().pendingCount }} pendientes</span>
     <button class="app-btn-primary">
       <i class="bi bi-check-circle me-2"></i>
       Aprobar todo
@@ -25,7 +25,12 @@
       </div>
     </div>
     <div class="review-list">
-      <div class="review-item" *ngFor="let item of vm().items" [class.is-active]="item.id === vm().selectedItem.id">
+      <div
+        class="review-item"
+        *ngFor="let item of inbox().items"
+        [class.is-active]="item.id === inbox().selectedItem.id"
+        (click)="selectItem.emit(item)"
+      >
         <div class="review-item__main">
           <div class="fw-semibold">{{ item.merchant }}</div>
           <div class="text-muted-2">{{ item.category }} · {{ item.dateLabel }}</div>
@@ -55,16 +60,16 @@
     </div>
 
     <div class="d-flex align-items-center gap-3 mb-4">
-      <div class="review-avatar">UBER</div>
+      <div class="review-avatar">{{ getAvatarLabel(inbox().selectedItem.merchant) }}</div>
       <div>
-        <div class="fw-semibold fs-5">{{ vm().selectedItem.merchant }}</div>
-        <div class="text-muted-2">{{ vm().selectedItem.dateLabel }}</div>
+        <div class="fw-semibold fs-5">{{ inbox().selectedItem.merchant }}</div>
+        <div class="text-muted-2">{{ inbox().selectedItem.dateLabel }}</div>
       </div>
       <div class="ms-auto text-end">
         <div class="fw-bold fs-4">
-          -{{ vm().selectedItem.amount | currency: vm().selectedItem.currency:'symbol':'1.0-2' }}
+          -{{ inbox().selectedItem.amount | currency: inbox().selectedItem.currency:'symbol':'1.0-2' }}
         </div>
-        <div class="text-muted-2 text-uppercase">Pendiente</div>
+        <div class="text-muted-2 text-uppercase">{{ inbox().selectedItem.status }}</div>
       </div>
     </div>
 
@@ -73,24 +78,24 @@
     <div class="d-flex flex-column gap-3">
       <div>
         <label class="app-section-title">Categoría</label>
-        <select class="app-select">
-          <option>Transporte</option>
-          <option>Comida</option>
-          <option>Servicios</option>
+        <select class="app-select" [value]="inbox().selectedItem.category">
+          <option *ngFor="let option of inbox().categoryOptions" [value]="option">
+            {{ option }}
+          </option>
         </select>
       </div>
       <div>
         <label class="app-section-title">Comercio</label>
-        <input class="app-input" [value]="vm().selectedItem.merchant" />
+        <input class="app-input" [value]="inbox().selectedItem.merchant" />
       </div>
       <div class="row g-3">
         <div class="col-6">
           <label class="app-section-title">Fecha</label>
-          <input class="app-input" type="date" value="2026-02-24" />
+          <input class="app-input" type="date" [value]="inbox().selectedItem.dateValue" />
         </div>
         <div class="col-6">
           <label class="app-section-title">Monto</label>
-          <input class="app-input" type="number" value="24.50" />
+          <input class="app-input" type="number" [value]="inbox().selectedItem.amount" />
         </div>
       </div>
       <div>

@@ -4,7 +4,9 @@ import { rxResource } from '@angular/core/rxjs-interop';
 import { FakeAuthService } from '../../../core/auth/fake-auth.service';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { joinUrl } from '../../../core/http/url.util';
-import { CreateTransactionDto, CreateTransactionRequest, TransactionStatus } from '../../../shared/models/transaction-create.model';
+import { CreateTransactionDto, CreateTransactionRequest } from '../../../shared/models/transaction-create.model';
+import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
+import { Transaction } from '../../../shared/models/transaction.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
@@ -13,14 +15,43 @@ export class TransactionService {
   private readonly config = inject(AppConfigService);
 
   getTransactions() {
-    return rxResource<unknown[], { userId: string; apiBaseUrl: string }>({
+    return rxResource<Transaction[], { userId: string; apiBaseUrl: string }>({
       request: () => ({
         userId: this.auth.ensureUserId(),
         apiBaseUrl: this.config.apiBaseUrl()
       }),
       loader: ({ request }) =>
-        this.http.get<unknown[]>(
+        this.http.get<Transaction[]>(
           joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}`)
+        ),
+      defaultValue: []
+    });
+  }
+
+  getTransactionsByStatus(status: TransactionStatus){
+    return rxResource<Transaction[], { userId: string, apiBaseUrl: string, status: TransactionStatus }>({
+      request: () => ({
+        userId: this.auth.ensureUserId(),
+        apiBaseUrl: this.config.apiBaseUrl(),
+        status
+      }),
+      loader: ({ request }) =>
+        this.http.get<Transaction[]>(
+          joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}?status=${request.status}`)
+        )
+      })
+  }
+
+  getLatestTransactions(limit: number = 5){
+    return rxResource<Transaction[], { userId: string, apiBaseUrl: string, limit: number }>({
+      request: () => ({
+        userId: this.auth.ensureUserId(),
+        apiBaseUrl: this.config.apiBaseUrl(),
+        limit
+      }),
+      loader: ({ request }) =>
+        this.http.get<Transaction[]>(
+          joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}/latest?limit=${request.limit}`)
         ),
       defaultValue: []
     });
