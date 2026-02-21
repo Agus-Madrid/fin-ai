@@ -5,6 +5,7 @@ export interface InboxItem {
   merchant: string;
   category: string;
   dateLabel: string;
+  dateValue: string;
   amount: number;
   currency: string;
   status: string;
@@ -13,8 +14,9 @@ export interface InboxItem {
   tag?: string;
 }
 
-export interface InboxVm {
+export interface InboxState {
   pendingCount: number;
   items: InboxItem[];
   selectedItem: InboxItem;
+  categoryOptions: string[];
 }

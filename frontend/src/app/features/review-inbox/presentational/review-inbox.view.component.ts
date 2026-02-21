@@ -1,6 +1,6 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Output, input } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
-import { InboxVm } from '../../../shared/models/inbox.model';
+import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
 
 @Component({
   selector: 'app-review-inbox-view',
@@ -11,7 +11,8 @@ import { InboxVm } from '../../../shared/models/inbox.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewInboxViewComponent {
-  readonly vm = input.required<InboxVm>();
+  readonly inbox = input.required<InboxState>();
+  @Output() readonly selectItem = new EventEmitter<InboxItem>();
 
   getConfidenceLabel(confidence: string) {
     if (confidence === 'low') {
@@ -21,5 +22,13 @@ export class ReviewInboxViewComponent {
       return 'Alta';
     }
     return 'Media';
+  }
+
+  getAvatarLabel(merchant: string) {
+    const cleaned = merchant.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+    if (!cleaned) {
+      return '...';
+    }
+    return cleaned.slice(0, 4);
   }
 }

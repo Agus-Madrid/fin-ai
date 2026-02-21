@@ -43,7 +43,7 @@ export class DashboardPageComponent {
   readonly categoriesResource = this.categoriesService.getCategories();
   readonly categories = this.categoriesResource.value;
 
-  readonly transactions = this.transactionService.getTransactions();
+  readonly transactions = this.transactionService.getLatestTransactions();
   readonly user: User = {
     id: 'user-001',
     name: 'Sofia Mercado',
@@ -87,6 +87,10 @@ export class DashboardPageComponent {
   }
 
   getTransactionCategories(): { category: Category; amount: number }[] {
+    if(!this.transactions){
+      return [];
+    }
+
     const transactions = this.transactions.value();
     const categoriesMap = new Map<string, number>();
     transactions.forEach((txn: Transaction) => {

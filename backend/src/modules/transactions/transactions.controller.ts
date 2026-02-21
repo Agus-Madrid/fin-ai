@@ -1,6 +1,7 @@
-import { Body, Controller, Get, Param, ParseIntPipe, Post, Put } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dtos/create-transaction.dto';
+import { TransactionStatus } from './transaction.enum';
 
 @Controller('transactions')
 export class TransactionsController {
@@ -12,8 +13,23 @@ export class TransactionsController {
   }
 
   @Get('user/:userId')
-  getAllByUser(@Param('userId') userId: string) {
-    return this.transactionsService.findAllByUser(userId);
+  getAllByUser(
+    @Param('userId') userId: string,
+    @Query('status') status?: string,
+  ) {
+    if (status === undefined) {
+      return this.transactionsService.findAllByUser(userId);
+    }
+
+    return this.transactionsService.findAllByUserStatus(userId, status as unknown as TransactionStatus);
+  }
+
+  @Get('user/:userId/latest')
+  getLatestByUser(
+    @Param('userId') userId: string,
+    @Query('limit') limit: number = 5,
+  ) {
+    return this.transactionsService.findLatestByUser(userId, limit);
   }
 
   @Post()

@@ -28,6 +28,35 @@ export class TransactionService {
     });
   }
 
+  getTransactionsByStatus(status: TransactionStatus){
+    return rxResource<Transaction[], { userId: string, apiBaseUrl: string, status: TransactionStatus }>({
+      request: () => ({
+        userId: this.auth.ensureUserId(),
+        apiBaseUrl: this.config.apiBaseUrl(),
+        status
+      }),
+      loader: ({ request }) =>
+        this.http.get<Transaction[]>(
+          joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}?status=${request.status}`)
+        )
+      })
+  }
+
+  getLatestTransactions(limit: number = 5){
+    return rxResource<Transaction[], { userId: string, apiBaseUrl: string, limit: number }>({
+      request: () => ({
+        userId: this.auth.ensureUserId(),
+        apiBaseUrl: this.config.apiBaseUrl(),
+        limit
+      }),
+      loader: ({ request }) =>
+        this.http.get<Transaction[]>(
+          joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}/latest?limit=${request.limit}`)
+        ),
+      defaultValue: []
+    });
+  }
+
   create(request: CreateTransactionRequest) {
     const payload: CreateTransactionDto = {
       ...request,

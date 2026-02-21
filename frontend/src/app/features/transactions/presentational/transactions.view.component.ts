@@ -12,6 +12,6 @@ import { Transaction } from '../../../shared/models/transaction.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsViewComponent {
-  readonly transactions = input.required<ResourceRef<Transaction[] | null>>();
+  readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
   TransactionStatus = TransactionStatus;
 }
