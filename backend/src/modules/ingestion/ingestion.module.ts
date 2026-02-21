@@ -6,6 +6,6 @@ import { IngestionService } from './ingestion.service';
 @Module({
   imports: [AiModule],
   controllers: [IngestionController],
-  providers: [IngestionService]
+  providers: [IngestionService],
 })
 export class IngestionModule {}

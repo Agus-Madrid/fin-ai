@@ -35,7 +35,7 @@
     </div>
   </div>
   <div class="d-flex flex-column gap-2">
-    <div class="upload-item" *ngFor="let upload of vm.uploads">
+    <div class="upload-item" *ngFor="let upload of vm().uploads">
       <div class="upload-item__icon" [class.is-error]="upload.status === 'error'" [class.is-pending]="upload.status === 'pending'">
         <i class="bi" [ngClass]="upload.status === 'error' ? 'bi-exclamation-triangle' : upload.status === 'pending' ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
       </div>

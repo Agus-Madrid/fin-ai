@@ -8,9 +8,9 @@ import { NullAiClient } from './null-ai.client';
     AiService,
     {
       provide: AI_CLIENT,
-      useClass: NullAiClient
-    }
+      useClass: NullAiClient,
+    },
   ],
-  exports: [AiService]
+  exports: [AiService],
 })
 export class AiModule {}

@@ -3,6 +3,6 @@ import { AiModule } from './ai/ai.module';
 
 @Module({
   imports: [AiModule],
-  exports: [AiModule]
+  exports: [AiModule],
 })
 export class CoreModule {}

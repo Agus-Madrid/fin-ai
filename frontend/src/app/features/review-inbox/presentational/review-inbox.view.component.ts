@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { InboxVm } from '../../../shared/models/inbox.model';
 
@@ -11,7 +11,7 @@ import { InboxVm } from '../../../shared/models/inbox.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewInboxViewComponent {
-  @Input({ required: true }) vm!: InboxVm;
+  readonly vm = input.required<InboxVm>();
 
   getConfidenceLabel(confidence: string) {
     if (confidence === 'low') {
