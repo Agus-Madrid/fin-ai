@@ -71,25 +71,25 @@
 
     <div class="d-flex flex-column gap-3">
       <div>
-        <label class="app-section-title">Categoría</label>
-        <select class="app-select" [value]="inbox().selectedItem.category">
+        <label class="app-section-title" for="review-category">Categoría</label>
+        <select id="review-category" class="app-select" [value]="inbox().selectedItem.category">
           <option *ngFor="let option of inbox().categoryOptions" [value]="option">
             {{ option }}
           </option>
         </select>
       </div>
       <div>
-        <label class="app-section-title">Comercio</label>
-        <input class="app-input" [value]="inbox().selectedItem.merchant" />
+        <label class="app-section-title" for="review-merchant">Comercio</label>
+        <input id="review-merchant" class="app-input" [value]="inbox().selectedItem.merchant" />
       </div>
       <div class="row g-3">
         <div class="col-6">
-          <label class="app-section-title">Fecha</label>
-          <input class="app-input" type="date" [value]="inbox().selectedItem.dateValue" />
+          <label class="app-section-title" for="review-date">Fecha</label>
+          <input id="review-date" class="app-input" type="date" [value]="inbox().selectedItem.dateValue" />
         </div>
         <div class="col-6">
-          <label class="app-section-title">Monto</label>
-          <input class="app-input" type="number" [value]="inbox().selectedItem.amountValue" />
+          <label class="app-section-title" for="review-amount">Monto</label>
+          <input id="review-amount" class="app-input" type="number" [value]="inbox().selectedItem.amountValue" />
         </div>
       </div>
       
@@ -101,4 +101,5 @@
     </div>
   </div>
 </section>
+
 
