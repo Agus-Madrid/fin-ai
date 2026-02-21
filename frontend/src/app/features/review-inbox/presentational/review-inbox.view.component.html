@@ -60,16 +60,10 @@
     </div>
 
     <div class="d-flex align-items-center gap-3 mb-4">
-      <div class="review-avatar">{{ getAvatarLabel(inbox().selectedItem.merchant) }}</div>
+      <div class="review-avatar">{{ inbox().selectedItem.categoryIcon }}</div>
       <div>
         <div class="fw-semibold fs-5">{{ inbox().selectedItem.merchant }}</div>
         <div class="text-muted-2">{{ inbox().selectedItem.dateLabel }}</div>
-      </div>
-      <div class="ms-auto text-end">
-        <div class="fw-bold fs-4">
-          -{{ inbox().selectedItem.amount | currency: inbox().selectedItem.currency:'symbol':'1.0-2' }}
-        </div>
-        <div class="text-muted-2 text-uppercase">{{ inbox().selectedItem.status }}</div>
       </div>
     </div>
 
@@ -95,17 +89,10 @@
         </div>
         <div class="col-6">
           <label class="app-section-title">Monto</label>
-          <input class="app-input" type="number" [value]="inbox().selectedItem.amount" />
+          <input class="app-input" type="number" [value]="inbox().selectedItem.amountValue" />
         </div>
       </div>
-      <div>
-        <label class="app-section-title">Notas</label>
-        <textarea class="app-textarea" rows="3" placeholder="Agrega una nota"></textarea>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <input class="form-check-input" type="checkbox" id="recurring" />
-        <label class="text-muted-2" for="recurring">Marcar como suscripción recurrente</label>
-      </div>
+      
     </div>
 
     <div class="d-flex justify-content-end gap-2 mt-4">
@@ -114,3 +101,4 @@
     </div>
   </div>
 </section>
+

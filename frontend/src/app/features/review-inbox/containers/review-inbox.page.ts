@@ -19,6 +19,7 @@ export class ReviewInboxPageComponent {
   private readonly pendingResource = this.transactions.getTransactionsByStatus(TransactionStatus.PENDING);
   private readonly selectedItemId = signal<string | null>(null);
 
+  //Computed for mapping transactions to inbox state and have the reactivity to update the view
   readonly inbox = computed(() => {
     const items = (this.pendingResource.value() ?? []).map((tx) => this.toInboxItem(tx));
     const selectedItem = this.pickSelectedItem(items, this.selectedItemId());
@@ -47,14 +48,18 @@ export class ReviewInboxPageComponent {
 
   private toInboxItem(transaction: Transaction): InboxItem {
     const categoryName = transaction.category?.name ?? 'Sin categoria';
+    const categoryIcon = transaction.category?.icon ?? '';
     const dateValue = this.formatDateValue(transaction.date);
+    const amount = this.parseAmount(transaction.amount);
     return {
       id: String(transaction.id),
       merchant: transaction.description,
       category: categoryName,
+      categoryIcon,
       dateLabel: this.formatDateLabel(transaction.date),
       dateValue,
-      amount: transaction.amount,
+      amount,
+      amountValue: this.formatAmountValue(amount),
       currency: 'USD',
       status: 'Pendiente',
       confidence: 'medium',
@@ -67,9 +72,11 @@ export class ReviewInboxPageComponent {
       id: 'empty',
       merchant: 'Sin transacciones pendientes',
       category: '',
+      categoryIcon: '',
       dateLabel: '',
       dateValue: '',
       amount: 0,
+      amountValue: '',
       currency: 'USD',
       status: '',
       confidence: 'low'
@@ -87,8 +94,8 @@ export class ReviewInboxPageComponent {
   }
 
   private formatDateLabel(value: Date | string): string {
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
+    const date = this.parseDate(value);
+    if (!date) {
       return '';
     }
     return date.toLocaleDateString('en-GB', {
@@ -99,10 +106,44 @@ export class ReviewInboxPageComponent {
   }
 
   private formatDateValue(value: Date | string): string {
-    const date = value instanceof Date ? value : new Date(value);
-    if (Number.isNaN(date.getTime())) {
+    const date = this.parseDate(value);
+    if (!date) {
       return '';
     }
     return date.toISOString().slice(0, 10);
+  }
+
+  private parseDate(value: Date | string): Date | null {
+    if (value instanceof Date) {
+      return Number.isNaN(value.getTime()) ? null : value;
+    }
+    if (!value) {
+      return null;
+    }
+    const normalized = value.includes('T') ? value : value.replace(' ', 'T');
+    const parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) {
+      return parsed;
+    }
+    const parsedUtc = new Date(`${normalized}Z`);
+    if (!Number.isNaN(parsedUtc.getTime())) {
+      return parsedUtc;
+    }
+    return null;
+  }
+
+  private parseAmount(amount: number | string): number {
+    if (typeof amount === 'number') {
+      return amount;
+    }
+    const parsed = Number(amount);
+    return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  private formatAmountValue(amount: number): string {
+    if (!Number.isFinite(amount)) {
+      return '';
+    }
+    return amount.toString();
   }
 }
