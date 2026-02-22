@@ -1,4 +1,4 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dtos/create-transaction.dto';
 import { TransactionStatus } from './transaction.enum';
@@ -40,5 +40,10 @@ export class TransactionsController {
   @Put(':id')
   update(@Param('id', ParseIntPipe) transactionId: number, @Body() updateTransactionDto: CreateTransactionDto){
     return this.transactionsService.update(transactionId, updateTransactionDto);
+  }
+
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) transactionId: number){
+    return this.transactionsService.delete(transactionId); 
   }
 }

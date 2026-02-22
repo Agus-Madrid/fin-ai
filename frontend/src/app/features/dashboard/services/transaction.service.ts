@@ -69,4 +69,23 @@ export class TransactionService {
       payload
     );
   }
+
+  update(transactionId: string, request: CreateTransactionRequest) {
+    const payload: CreateTransactionDto = {
+      ...request,
+      userId: this.auth.ensureUserId(),
+      status: TransactionStatus.CONFIRMED
+    };
+
+    return this.http.put(
+      joinUrl(this.config.apiBaseUrl(), `/transactions/${transactionId}`),
+      payload
+    )
+  }
+
+  delete(transactionId:string) {
+    return this.http.delete(
+      joinUrl(this.config.apiBaseUrl(), `/transactions/${transactionId}`)
+    )
+  }
 }

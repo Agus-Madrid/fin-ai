@@ -36,7 +36,7 @@
   transform: translateY(-4px) scale(0.98);
   transform-origin: top right;
   transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
-  z-index: 15;
+  z-index: 45;
 }
 
 .tx-actions:focus-within .tx-actions__menu,

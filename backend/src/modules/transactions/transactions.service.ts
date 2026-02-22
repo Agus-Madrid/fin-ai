@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './transaction.entity';
 import { Repository } from 'typeorm';
@@ -70,6 +70,7 @@ export class TransactionsService {
     const category = await this.categoryService.findById(transactionData.categoryId);
     const transaction = this.transactionRepository.create({
       ...transactionData,
+      date: this.normalizeDate(transactionData.date),
       user,
       category
     });
@@ -81,7 +82,12 @@ export class TransactionsService {
     const user = await this.userService.findById(updateData.userId);
     const category = await this.categoryService.findById(updateData.categoryId);
 
-    Object.assign(transaction, {...updateData,user,category});
+    Object.assign(transaction, {
+      ...updateData,
+      date: this.normalizeDate(updateData.date),
+      user,
+      category
+    });
     return await this.transactionRepository.save(transaction);
   }
 
@@ -90,5 +96,24 @@ export class TransactionsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Transaction with id ${id} not found`);
     }
+  }
+
+  private normalizeDate(input: Date | string): string {
+    if (typeof input === 'string') {
+      const datePrefix = input.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+      if (datePrefix) {
+        return datePrefix;
+      }
+    }
+
+    const date = input instanceof Date ? input : new Date(input);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format');
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }
