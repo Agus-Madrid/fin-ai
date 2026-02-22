@@ -1,0 +1,45 @@
+<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="transaction-form-title">
+  <div class="modal-backdrop"></div>
+
+  <section class="modal-card app-card app-card--gradient">
+    <header class="modal-header">
+      <div>
+        <h2 id="transaction-form-title" class="modal-title">{{ title() }}</h2>
+        <p class="modal-subtitle">Update details for a confirmed transaction.</p>
+      </div>
+      <button type="button" class="app-btn-ghost modal-close" aria-label="Close modal" (click)="cancel.emit()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </header>
+
+    <form class="modal-form">
+      <div class="form-group">
+        <label class="app-section-title" for="tx-form-description">Description</label>
+        <input id="tx-form-description" class="app-input" type="text" [value]="draft().description" />
+      </div>
+
+      <div class="form-group">
+        <label class="app-section-title" for="tx-form-category">Category</label>
+        <select id="tx-form-category" class="app-select" [value]="draft().category">
+          <option *ngFor="let category of categories()" [value]="category">{{ category }}</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="app-section-title" for="tx-form-date">Date</label>
+          <input id="tx-form-date" class="app-input" type="date" [value]="draft().date" />
+        </div>
+        <div class="form-group">
+          <label class="app-section-title" for="tx-form-amount">Amount</label>
+          <input id="tx-form-amount" class="app-input" type="number" [value]="draft().amount" />
+        </div>
+      </div>
+    </form>
+
+    <footer class="modal-actions">
+      <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText() }}</button>
+      <button type="button" class="app-btn-primary" (click)="save.emit()">{{ saveText() }}</button>
+    </footer>
+  </section>
+</div>

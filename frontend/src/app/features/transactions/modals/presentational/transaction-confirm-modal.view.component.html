@@ -1,0 +1,22 @@
+<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="transaction-confirm-title">
+  <div class="modal-backdrop"></div>
+
+  <section class="modal-card app-card app-card--gradient">
+    <header class="modal-header">
+      <div class="modal-icon" [ngClass]="tone() === 'danger' ? 'is-danger' : 'is-primary'">
+        <i class="bi" [ngClass]="tone() === 'danger' ? 'bi-exclamation-triangle' : 'bi-question-circle'"></i>
+      </div>
+      <div>
+        <h2 id="transaction-confirm-title" class="modal-title">{{ title() }}</h2>
+        <p class="modal-subtitle">{{ message() }}</p>
+      </div>
+    </header>
+
+    <footer class="modal-actions">
+      <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText() }}</button>
+      <button type="button" class="app-btn-primary" [ngClass]="tone() === 'danger' ? 'is-danger' : ''" (click)="confirm.emit()">
+        {{ confirmText() }}
+      </button>
+    </footer>
+  </section>
+</div>
