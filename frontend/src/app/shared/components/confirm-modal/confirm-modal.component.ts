@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, output } from '@angular/core';
 import { NgClass } from '@angular/common';
 
 @Component({
@@ -10,11 +10,11 @@ import { NgClass } from '@angular/common';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ConfirmModalComponent {
-  readonly title = input('Confirm action');
-  readonly message = input('Are you sure you want to continue?');
-  readonly cancelText = input('Cancel');
-  readonly confirmText = input('Confirm');
-  readonly tone = input<'danger' | 'primary'>('danger');
+  title = 'Confirm action';
+  message = 'Are you sure you want to continue?';
+  cancelText = 'Cancel';
+  confirmText = 'Confirm';
+  tone: 'danger' | 'primary' = 'danger';
 
   readonly cancel = output<void>();
   readonly confirm = output<void>();

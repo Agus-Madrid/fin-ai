@@ -48,7 +48,25 @@
             {{ tx.amount | currency: 'USD':'symbol':'1.0-2' }}
           </td>
           <td class="text-end">
-            <button class="app-btn-ghost"><i class="bi bi-three-dots"></i></button>
+            <div class="tx-actions">
+              <button type="button" class="app-btn-ghost tx-actions__trigger" aria-haspopup="menu" aria-label="Transaction actions">
+                <i class="bi bi-three-dots"></i>
+              </button>
+              <div class="tx-actions__menu" role="menu">
+                <button type="button" class="tx-actions__item" role="menuitem" (click)="editTransaction(tx)">
+                  <i class="bi bi-pencil-square"></i>
+                  Editar
+                </button>
+                <button type="button" class="tx-actions__item" role="menuitem">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                  Reabrir revisión
+                </button>
+                <button type="button" class="tx-actions__item is-danger" role="menuitem" (click)="deleteTransaction(tx)">
+                  <i class="bi bi-trash3"></i>
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </td>
         </tr>
         <tr class="is-edit">

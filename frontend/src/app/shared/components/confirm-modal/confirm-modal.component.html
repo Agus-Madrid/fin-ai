@@ -1,22 +1,18 @@
-<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
-  <div class="modal-backdrop"></div>
+<section class="modal-card app-card app-card--gradient" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
+  <header class="modal-header">
+    <div class="modal-icon" [ngClass]="tone === 'danger' ? 'is-danger' : 'is-primary'">
+      <i class="bi" [ngClass]="tone === 'danger' ? 'bi-exclamation-triangle' : 'bi-question-circle'"></i>
+    </div>
+    <div>
+      <h2 id="confirm-modal-title" class="modal-title">{{ title }}</h2>
+      <p class="modal-subtitle">{{ message }}</p>
+    </div>
+  </header>
 
-  <section class="modal-card app-card app-card--gradient">
-    <header class="modal-header">
-      <div class="modal-icon" [ngClass]="tone() === 'danger' ? 'is-danger' : 'is-primary'">
-        <i class="bi" [ngClass]="tone() === 'danger' ? 'bi-exclamation-triangle' : 'bi-question-circle'"></i>
-      </div>
-      <div>
-        <h2 id="confirm-modal-title" class="modal-title">{{ title() }}</h2>
-        <p class="modal-subtitle">{{ message() }}</p>
-      </div>
-    </header>
-
-    <footer class="modal-actions">
-      <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText() }}</button>
-      <button type="button" class="app-btn-primary" [ngClass]="tone() === 'danger' ? 'is-danger' : ''" (click)="confirm.emit()">
-        {{ confirmText() }}
-      </button>
-    </footer>
-  </section>
-</div>
+  <footer class="modal-actions">
+    <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText }}</button>
+    <button type="button" class="app-btn-primary" [ngClass]="tone === 'danger' ? 'is-danger' : ''" (click)="confirm.emit()">
+      {{ confirmText }}
+    </button>
+  </footer>
+</section>
