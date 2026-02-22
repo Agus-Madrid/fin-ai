@@ -2,14 +2,14 @@ import { ChangeDetectionStrategy, Component, input, output } from '@angular/core
 import { NgClass } from '@angular/common';
 
 @Component({
-  selector: 'app-transaction-confirm-modal-view',
+  selector: 'app-confirm-modal',
   standalone: true,
   imports: [NgClass],
-  templateUrl: './transaction-confirm-modal.view.component.html',
-  styleUrl: './transaction-confirm-modal.view.component.scss',
+  templateUrl: './confirm-modal.component.html',
+  styleUrl: './confirm-modal.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class TransactionConfirmModalViewComponent {
+export class ConfirmModalComponent {
   readonly title = input('Confirm action');
   readonly message = input('Are you sure you want to continue?');
   readonly cancelText = input('Cancel');

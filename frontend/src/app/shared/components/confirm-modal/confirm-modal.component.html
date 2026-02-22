@@ -1,4 +1,4 @@
-<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="transaction-confirm-title">
+<div class="modal-shell" role="dialog" aria-modal="true" aria-labelledby="confirm-modal-title">
   <div class="modal-backdrop"></div>
 
   <section class="modal-card app-card app-card--gradient">
@@ -7,7 +7,7 @@
         <i class="bi" [ngClass]="tone() === 'danger' ? 'bi-exclamation-triangle' : 'bi-question-circle'"></i>
       </div>
       <div>
-        <h2 id="transaction-confirm-title" class="modal-title">{{ title() }}</h2>
+        <h2 id="confirm-modal-title" class="modal-title">{{ title() }}</h2>
         <p class="modal-subtitle">{{ message() }}</p>
       </div>
     </header>
