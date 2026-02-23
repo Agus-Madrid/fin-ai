@@ -38,7 +38,7 @@
           <td>{{ tx.date }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <span class="app-icon-pill" [class.bg-success]="tx.status === TransactionStatus.CONFIRMED">
+              <span class="app-icon-pill" [style.background]="tx.category.color">
                 <i>{{tx.category.icon}}</i>
               </span>
               <div>
