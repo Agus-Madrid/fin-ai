@@ -1,0 +1,70 @@
+<section class="login-page">
+  <div class="login-page__bg login-page__bg--primary"></div>
+  <div class="login-page__bg login-page__bg--secondary"></div>
+
+  <div class="login-page__content">
+    <article class="app-card app-card--gradient login-card">
+      <header class="login-card__header">
+        <span class="login-card__badge">
+          <i class="bi bi-shield-lock me-1"></i>
+          FinAI Access
+        </span>
+        <h1 class="login-card__title">Iniciar sesion</h1>
+        <p class="login-card__subtitle">
+          Usa tus credenciales para entrar a tu panel financiero.
+        </p>
+      </header>
+
+      <form class="login-form" [formGroup]="loginForm()" (ngSubmit)="onSubmit()">
+        <div class="login-form__field">
+          <label class="app-section-title" for="emailInput">Email</label>
+          <input
+            id="emailInput"
+            class="app-input"
+            type="email"
+            autocomplete="email"
+            placeholder="nombre@empresa.com"
+            formControlName="email"
+            [class.login-form__input--invalid]="isControlInvalid('email')" />
+          <small class="login-form__error" *ngIf="hasError('email', 'required')">
+            Ingresa tu email.
+          </small>
+          <small class="login-form__error" *ngIf="hasError('email', 'email')">
+            Ingresa un email valido.
+          </small>
+        </div>
+
+        <div class="login-form__field">
+          <label class="app-section-title" for="passwordInput">Password</label>
+          <input
+            id="passwordInput"
+            class="app-input"
+            type="password"
+            autocomplete="current-password"
+            placeholder="********"
+            formControlName="password"
+            [class.login-form__input--invalid]="isControlInvalid('password')" />
+          <small class="login-form__error" *ngIf="hasError('password', 'required')">
+            Ingresa tu password.
+          </small>
+          <small class="login-form__error" *ngIf="hasError('password', 'minlength')">
+            Debe tener al menos 6 caracteres.
+          </small>
+        </div>
+
+        <div class="login-form__options">
+          <label class="login-form__checkbox">
+            <input type="checkbox" formControlName="rememberMe" />
+            <span>Recordarme en este dispositivo</span>
+          </label>
+          <a routerLink="/dashboard" class="login-form__shortcut">Entrar sin bloqueo</a>
+        </div>
+
+        <button class="app-btn-primary w-100 login-form__submit" type="submit" [disabled]="isSubmitting()">
+          <ng-container *ngIf="!isSubmitting(); else submittingLabel">Entrar</ng-container>
+          <ng-template #submittingLabel>Ingresando...</ng-template>
+        </button>
+      </form>
+    </article>
+  </div>
+</section>

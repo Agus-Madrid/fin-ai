@@ -1,0 +1,159 @@
+:host {
+  display: block;
+}
+
+.login-page {
+  position: relative;
+  min-height: 100vh;
+  padding: 2.5rem 1.25rem;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+.login-page__bg {
+  position: absolute;
+  border-radius: 999px;
+  filter: blur(48px);
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+.login-page__bg--primary {
+  width: 420px;
+  height: 420px;
+  top: -90px;
+  left: -130px;
+  background: radial-gradient(circle at 30% 30%, rgba(103, 121, 153, 0.6), transparent 70%);
+}
+
+.login-page__bg--secondary {
+  width: 360px;
+  height: 360px;
+  right: -120px;
+  bottom: -90px;
+  background: radial-gradient(circle at 30% 30%, rgba(93, 93, 108, 0.5), transparent 70%);
+}
+
+.login-page__content {
+  width: min(560px, 100%);
+  position: relative;
+  z-index: 1;
+}
+
+.login-card {
+  animation: login-entrance 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.login-card__header {
+  margin-bottom: 1.25rem;
+}
+
+.login-card__badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0.28rem 0.66rem;
+  font-size: 0.72rem;
+  border: 1px solid rgba(117, 117, 128, 0.42);
+  color: var(--app-muted);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.login-card__title {
+  margin: 0.95rem 0 0.4rem;
+  font-size: 2rem;
+  letter-spacing: -0.03em;
+}
+
+.login-card__subtitle {
+  margin: 0;
+  color: var(--app-muted);
+  max-width: 38ch;
+}
+
+.login-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.login-form__field {
+  display: grid;
+  gap: 0.42rem;
+}
+
+.login-form__input--invalid {
+  border-color: rgba(239, 68, 68, 0.7);
+  box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.15);
+}
+
+.login-form__error {
+  color: var(--app-danger);
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.login-form__options {
+  margin-top: 0.1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.login-form__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--app-muted);
+  font-size: 0.84rem;
+}
+
+.login-form__checkbox input {
+  accent-color: var(--app-primary);
+}
+
+.login-form__shortcut {
+  color: #d3d8df;
+  font-size: 0.84rem;
+}
+
+.login-form__shortcut:hover {
+  color: #ffffff;
+}
+
+.login-form__submit {
+  margin-top: 0.25rem;
+}
+
+.login-form__submit:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+@keyframes login-entrance {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .login-page {
+    padding: 1.5rem 1rem;
+  }
+
+  .login-card__title {
+    font-size: 1.7rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-card {
+    animation: none;
+  }
+}
