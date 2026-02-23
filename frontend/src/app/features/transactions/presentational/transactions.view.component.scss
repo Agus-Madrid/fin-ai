@@ -2,6 +2,17 @@
   background: rgba(43, 108, 238, 0.08);
 }
 
+.transactions-card {
+  min-height: 62vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.transactions-table-responsive {
+  flex: 1;
+  overflow-y: visible;
+}
+
 .is-edit td {
   background: rgba(255, 255, 255, 0.02);
 }

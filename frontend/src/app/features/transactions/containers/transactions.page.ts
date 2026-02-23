@@ -1,6 +1,6 @@
 import { NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../dashboard/services/transaction.service';
 import { CategoryService } from '../../dashboard/services/category.service';
@@ -11,6 +11,11 @@ import { TransactionFormModalContainerComponent } from '../modals/containers/tra
 import { TransactionsViewComponent } from '../presentational/transactions.view.component';
 import { Category } from '../../../shared/models/category.model';
 import { CreateTransactionRequest } from '../../../shared/models/transaction-create.model';
+import {
+  TRANSACTION_FORM_CONTROL_NAMES,
+  TransactionFormSavePayload,
+  TransactionFormGroup
+} from '../modals/transaction-form.types';
 
 @Component({
   selector: 'app-transactions-page',
@@ -20,8 +25,9 @@ import { CreateTransactionRequest } from '../../../shared/models/transaction-cre
     <ng-container *ngIf="transactionResource">
       <app-transactions-view
         [transactions]="transactionResource"
-        (edit)="editTransaction($event)"
-        (delete)="deleteTransaction($event)" />
+        (createRequested)="createTransaction()"
+        (editRequested)="editTransaction($event)"
+        (deleteRequested)="deleteTransaction($event)" />
     </ng-container>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -32,32 +38,15 @@ export class TransactionsPageComponent {
   private readonly modalService = inject(NgbModal);
   private readonly formBuilder = inject(FormBuilder);
 
-  readonly transactionFormControlNames = {
-    description: 'description',
-    categoryId: 'categoryId',
-    date: 'date',
-    amount: 'amount'
-  } as const;
-
   readonly transactionResource = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
   readonly categoriesResource = this.categoryService.getCategories();
 
+  createTransaction(): void {
+    this.openTransactionFormModal();
+  }
+
   editTransaction(tx: Transaction) {
-    const modalRef = this.modalService.open(TransactionFormModalContainerComponent, {
-      size: 'md',
-      backdrop: 'static',
-      centered: true
-    });
-
-    modalRef.componentInstance.form = this.buildTransactionForm(tx);
-    modalRef.componentInstance.formControlNames = this.transactionFormControlNames;
-    modalRef.componentInstance.transaction = tx;
-    modalRef.componentInstance.categories = this.categoriesResource.value() ?? this.buildTransactionCategories(tx);
-
-    modalRef.componentInstance.save.subscribe((editedTransaction: Transaction) => {
-      this.handleEditTransaction(editedTransaction, modalRef);
-    });
-    modalRef.componentInstance.cancel.subscribe(() => modalRef.dismiss('cancel'));
+    this.openTransactionFormModal(tx);
   }
 
   deleteTransaction(_tx: Transaction) {
@@ -73,24 +62,60 @@ export class TransactionsPageComponent {
     modalRef.componentInstance.cancelText = 'Cancelar';
     modalRef.componentInstance.tone = 'danger';
 
-    modalRef.componentInstance.confirm.subscribe(() => this.handleDeleteConfirmation(true, modalRef, _tx));
-    modalRef.componentInstance.cancel.subscribe(() => this.handleDeleteConfirmation(false, modalRef));
+    modalRef.componentInstance.confirmRequested.subscribe(() => this.handleDeleteConfirmation(true, modalRef, _tx));
+    modalRef.componentInstance.dismissRequested.subscribe(() => this.handleDeleteConfirmation(false, modalRef));
   }
 
-  private buildTransactionForm(tx: Transaction): FormGroup {
-    return this.formBuilder.group({
-      [this.transactionFormControlNames.description]: [tx.description ?? '', Validators.required],
-      [this.transactionFormControlNames.categoryId]: [tx.category?.id ?? '', Validators.required],
-      [this.transactionFormControlNames.date]: [this.toDateInputValue(tx.date), Validators.required],
-      [this.transactionFormControlNames.amount]: [tx.amount ?? 0, Validators.required]
+  private openTransactionFormModal(transaction?: Transaction): void {
+    const modalRef = this.modalService.open(TransactionFormModalContainerComponent, {
+      size: 'md',
+      backdrop: 'static',
+      centered: true
     });
+
+    const selectedTransaction = transaction ?? null;
+    modalRef.componentInstance.form = this.buildTransactionForm(selectedTransaction);
+    modalRef.componentInstance.formControlNames = TRANSACTION_FORM_CONTROL_NAMES;
+    modalRef.componentInstance.transaction = selectedTransaction;
+    modalRef.componentInstance.categories = this.categoriesResource.value() ?? this.buildTransactionCategories(selectedTransaction);
+
+    modalRef.componentInstance.saveRequested.subscribe((payload: TransactionFormSavePayload) => {
+      this.handleSaveTransaction(payload, modalRef);
+    });
+    modalRef.componentInstance.dismissRequested.subscribe(() => modalRef.dismiss('cancel'));
   }
 
-  private buildTransactionCategories(tx: Transaction): Category[] {
-    if (!tx.category) {
+  private buildTransactionForm(transaction: Transaction | null): TransactionFormGroup {
+    const categoryId = transaction?.category?.id ?? '';
+    const amount = transaction?.amount ?? null;
+    const date = transaction ? this.toDateInputValue(transaction.date) : this.toDateInputValue(new Date());
+    const description = transaction?.description ?? '';
+
+    return this.formBuilder.group({
+      [TRANSACTION_FORM_CONTROL_NAMES.description]: this.formBuilder.nonNullable.control(
+        description,
+        Validators.required
+      ),
+      [TRANSACTION_FORM_CONTROL_NAMES.categoryId]: this.formBuilder.nonNullable.control(
+        categoryId,
+        Validators.required
+      ),
+      [TRANSACTION_FORM_CONTROL_NAMES.date]: this.formBuilder.nonNullable.control(
+        date,
+        Validators.required
+      ),
+      [TRANSACTION_FORM_CONTROL_NAMES.amount]: this.formBuilder.control(
+        amount,
+        Validators.required
+      )
+    }) as TransactionFormGroup;
+  }
+
+  private buildTransactionCategories(transaction: Transaction | null): Category[] {
+    if (!transaction?.category) {
       return [];
     }
-    return [tx.category];
+    return [transaction.category];
   }
 
   private toDateInputValue(value: Date | string): string {
@@ -101,7 +126,7 @@ export class TransactionsPageComponent {
     return date.toISOString().slice(0, 10);
   }
 
-  handleDeleteConfirmation(result: boolean, modalRef: NgbModalRef, tx?: Transaction) {
+  private handleDeleteConfirmation(result: boolean, modalRef: NgbModalRef, tx?: Transaction) {
     if (result && tx) {
       this.transactionService.delete(tx.id).subscribe({
         next: () => {
@@ -115,17 +140,28 @@ export class TransactionsPageComponent {
     modalRef.dismiss('cancel');
   }
 
-  handleEditTransaction(editedTransaction: Transaction, modalRef: NgbModalRef) {
-    const editedTransactionData: CreateTransactionRequest = {
-      description: editedTransaction.description,
-      amount: editedTransaction.amount,
-      date: this.toDateInputValue(editedTransaction.date),
-      categoryId: editedTransaction.category.id
+  private handleSaveTransaction(payload: TransactionFormSavePayload, modalRef: NgbModalRef): void {
+    const request: CreateTransactionRequest = {
+      ...payload.request,
+      date: this.toDateInputValue(payload.request.date)
     };
 
-    this.transactionService.update(editedTransaction.id, editedTransactionData).subscribe({
+    if (!payload.transactionId) {
+      this.transactionService.create(request).subscribe({
+        next: () => {
+          modalRef.close(payload);
+          this.transactionResource.reload();
+        },
+        error: () => {
+          modalRef.dismiss('create_error');
+        }
+      });
+      return;
+    }
+
+    this.transactionService.update(String(payload.transactionId), request).subscribe({
       next: () => {
-        modalRef.close(editedTransaction);
+        modalRef.close(payload);
         this.transactionResource.reload();
       },
       error: () => {

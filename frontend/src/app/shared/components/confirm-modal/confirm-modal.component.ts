@@ -16,6 +16,6 @@ export class ConfirmModalComponent {
   confirmText = 'Confirm';
   tone: 'danger' | 'primary' = 'danger';
 
-  readonly cancel = output<void>();
-  readonly confirm = output<void>();
+  readonly dismissRequested = output<void>();
+  readonly confirmRequested = output<void>();
 }

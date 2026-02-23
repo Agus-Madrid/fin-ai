@@ -10,8 +10,8 @@
   </header>
 
   <footer class="modal-actions">
-    <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText }}</button>
-    <button type="button" class="app-btn-primary" [ngClass]="tone === 'danger' ? 'is-danger' : ''" (click)="confirm.emit()">
+    <button type="button" class="app-btn-ghost" (click)="dismissRequested.emit()">{{ cancelText }}</button>
+    <button type="button" class="app-btn-primary" [ngClass]="tone === 'danger' ? 'is-danger' : ''" (click)="confirmRequested.emit()">
       {{ confirmText }}
     </button>
   </footer>

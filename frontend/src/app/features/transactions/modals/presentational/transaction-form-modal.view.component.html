@@ -2,9 +2,9 @@
   <header class="modal-header">
     <div>
       <h2 id="transaction-form-title" class="modal-title">{{ title() }}</h2>
-      <p class="modal-subtitle">Update details for a confirmed transaction.</p>
+      <p class="modal-subtitle">{{ subtitle() }}</p>
     </div>
-    <button type="button" class="app-btn-ghost modal-close" aria-label="Close modal" (click)="cancel.emit()">
+    <button type="button" class="app-btn-ghost modal-close" aria-label="Close modal" (click)="dismissRequested.emit()">
       <i class="bi bi-x-lg"></i>
     </button>
   </header>
@@ -35,7 +35,7 @@
   </form>
 
   <footer class="modal-actions">
-    <button type="button" class="app-btn-ghost" (click)="cancel.emit()">{{ cancelText() }}</button>
+    <button type="button" class="app-btn-ghost" (click)="dismissRequested.emit()">{{ cancelText() }}</button>
     <button type="button" class="app-btn-primary" (click)="onSave()">{{ saveText() }}</button>
   </footer>
 </section>

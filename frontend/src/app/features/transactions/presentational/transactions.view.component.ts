@@ -14,16 +14,21 @@ import { Transaction } from '../../../shared/models/transaction.model';
 export class TransactionsViewComponent {
   TransactionStatus = TransactionStatus;
   
-  readonly edit = output<Transaction>();
-  readonly delete = output<Transaction>();
+  readonly createRequested = output<void>();
+  readonly editRequested = output<Transaction>();
+  readonly deleteRequested = output<Transaction>();
   readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
 
+  createTransaction(): void {
+    this.createRequested.emit();
+  }
+
   editTransaction(tx:Transaction) {
-    this.edit.emit(tx);
+    this.editRequested.emit(tx);
   }
 
   deleteTransaction(tx: Transaction) {
-    this.delete.emit(tx);
+    this.deleteRequested.emit(tx);
   }
   
 }

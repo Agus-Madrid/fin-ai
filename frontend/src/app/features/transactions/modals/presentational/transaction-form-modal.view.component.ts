@@ -1,8 +1,16 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
-import { FormGroup, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { Category } from '../../../../shared/models/category.model';
 import { Transaction } from '../../../../shared/models/transaction.model';
+import { CreateTransactionRequest } from '../../../../shared/models/transaction-create.model';
+import {
+  TRANSACTION_FORM_CONTROL_NAMES,
+  TransactionFormControlNames,
+  TransactionFormSavePayload,
+  TransactionFormValue,
+  TransactionFormGroup
+} from '../transaction-form.types';
 
 @Component({
   selector: 'app-transaction-form-modal-view',
@@ -14,50 +22,40 @@ import { Transaction } from '../../../../shared/models/transaction.model';
 })
 export class TransactionFormModalViewComponent {
   readonly title = input('Edit transaction');
+  readonly subtitle = input('Update details for a confirmed transaction.');
   readonly saveText = input('Save changes');
   readonly cancelText = input('Cancel');
   readonly categories = input<Category[]>([]);
   readonly transaction = input<Transaction | null>(null);
-  readonly form = input<FormGroup | null>(null);
-  
-  readonly formControlNames = input({
-    description: 'description',
-    categoryId: 'categoryId',
-    date: 'date',
-    amount: 'amount'
-  } as const);
+  readonly form = input<TransactionFormGroup | null>(null);
 
-  readonly cancel = output<void>();
-  readonly save = output<Transaction>();
+  readonly formControlNames = input<TransactionFormControlNames>(TRANSACTION_FORM_CONTROL_NAMES);
+
+  readonly dismissRequested = output<void>();
+  readonly saveRequested = output<TransactionFormSavePayload>();
 
   onSave(): void {
     const form = this.form();
-    const baseTransaction = this.transaction();
-    if (!form?.valid || !baseTransaction) {
+    if (!form?.valid) {
       return;
     }
 
-    const formData = form.getRawValue() as Record<string, unknown>;
-    const selectedCategoryId = String(formData[this.formControlNames().categoryId] ?? '');
-    const selectedCategory =
-      this.categories().find((category) => category.id === selectedCategoryId) ?? baseTransaction.category;
+    const formData: TransactionFormValue = form.getRawValue();
+    const { description, amount, date, categoryId } = formData;
+    if (amount === null) {
+      return;
+    }
 
-    const editedTransaction: Transaction = {
-      ...baseTransaction,
-      description: String(formData[this.formControlNames().description] ?? ''),
-      amount: Number(formData[this.formControlNames().amount] ?? 0),
-      date: this.toDateValue(formData[this.formControlNames().date], baseTransaction.date),
-      category: selectedCategory
+    const request: CreateTransactionRequest = {
+      description,
+      amount,
+      date,
+      categoryId
     };
 
-    this.save.emit(editedTransaction);
-  }
-
-  private toDateValue(value: unknown, fallback: Date): Date {
-    if (value instanceof Date) {
-      return Number.isNaN(value.getTime()) ? fallback : value;
-    }
-    const parsed = new Date(String(value ?? ''));
-    return Number.isNaN(parsed.getTime()) ? fallback : parsed;
+    this.saveRequested.emit({
+      request,
+      transactionId: this.transaction()?.id ?? null
+    });
   }
 }
