@@ -22,6 +22,11 @@ export const routes: Routes = [
       import('./features/transactions/containers/transactions.page').then((m) => m.TransactionsPageComponent)
   },
   {
+    path: 'categories',
+    loadComponent: () =>
+      import('./features/categories/containers/categories.page').then((m) => m.CategoriesPageComponent)
+  },
+  {
     path: 'uploads',
     loadComponent: () =>
       import('./features/uploads/containers/uploads.page').then((m) => m.UploadsPageComponent)

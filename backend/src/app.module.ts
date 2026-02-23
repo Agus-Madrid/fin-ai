@@ -11,6 +11,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { UserModule } from './modules/user/user.module';
 import { FixedCommitmentsModule } from './modules/fixed-commitments/fixed-commitments.module';
 import { SeedModule } from './modules/seed/seed.module';
+import { CategoryModule } from './modules/categories/category.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { SeedModule } from './modules/seed/seed.module';
       synchronize: true,
     }),
     CoreModule,
+    CategoryModule,
     TransactionsModule,
     IngestionModule,
     ReviewInboxModule,

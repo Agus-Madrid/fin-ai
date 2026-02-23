@@ -10,7 +10,7 @@ import {
   ResourceRef,
   viewChild
 } from '@angular/core';
-import { CurrencyPipe, NgClass, NgFor, SlicePipe } from '@angular/common';
+import { CurrencyPipe, NgFor, SlicePipe } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, ScriptableContext, TooltipItem, registerables } from 'chart.js';
 import { Category } from '../../../shared/models/category.model';
@@ -35,7 +35,7 @@ interface DashboardThemeColors {
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [NgFor, NgClass, CurrencyPipe, ReactiveFormsModule, SlicePipe],
+  imports: [NgFor, CurrencyPipe, ReactiveFormsModule, SlicePipe],
   templateUrl: './dashboard.view.component.html',
   styleUrl: './dashboard.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush

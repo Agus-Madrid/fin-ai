@@ -5,6 +5,10 @@ import { Category } from '../../../shared/models/category.model';
 import { FakeAuthService } from '../../../core/auth/fake-auth.service';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { joinUrl } from '../../../core/http/url.util';
+import {
+  CreateCategoryDto,
+  CreateCategoryRequest
+} from '../../../shared/models/category-create.model';
 
 @Injectable({ providedIn: 'root' })
 export class CategoryService {
@@ -24,5 +28,24 @@ export class CategoryService {
         ),
       defaultValue: []
     });
+  }
+
+  create(request: CreateCategoryRequest) {
+    const payload: CreateCategoryDto = {
+      ...request,
+      userId: this.auth.ensureUserId()
+    };
+
+    return this.http.post<Category>(
+      joinUrl(this.config.apiBaseUrl(), '/categories'),
+      payload
+    );
+  }
+
+  update(categoryId: string, request: CreateCategoryRequest) {
+    return this.http.put<Category>(
+      joinUrl(this.config.apiBaseUrl(), `/categories/${categoryId}`),
+      request
+    );
   }
 }

@@ -19,6 +19,7 @@ export class TopNavComponent {
     { label: 'Dashboard', route: '/dashboard' },
     { label: 'Review Inbox', route: '/review-inbox' },
     { label: 'Transactions', route: '/transactions' },
+    { label: 'Categories', route: '/categories' },
     { label: 'Uploads', route: '/uploads' },
     { label: 'Budget Planner', route: '/budget-planner' }
   ];
