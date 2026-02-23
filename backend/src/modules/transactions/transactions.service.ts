@@ -146,6 +146,14 @@ export class TransactionsService {
     return await this.transactionRepository.save(transaction);
   }
 
+  async confirmMany(ids: number[]): Promise<Transaction[]> {
+    const transactions: Transaction[] = [];
+    for(const id of ids) {
+      transactions.push(await this.confirm(id));
+    }
+    return transactions;
+  }
+
   private normalizeDate(input: Date | string): string {
     if (typeof input === 'string') {
       const datePrefix = input.match(/^\d{4}-\d{2}-\d{2}/)?.[0];

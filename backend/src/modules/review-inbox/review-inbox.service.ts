@@ -13,4 +13,8 @@ export class ReviewInboxService {
   confirmTransaction(id: number, update: ReviewTransactionDto) {
     return this.transactionsService.confirmWithUpdates(id, update);
   }
+
+  confirmMany(ids: number[]) {
+    return this.transactionsService.confirmMany(ids);
+  }
 }

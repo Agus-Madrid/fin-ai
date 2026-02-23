@@ -2,10 +2,13 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { TransactionService } from '../../dashboard/services/transaction.service';
 import { ReviewInboxViewComponent } from '../presentational/review-inbox.view.component';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
-import { CategoryOption, InboxItem, InboxState } from '../../../shared/models/inbox.model';
+import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
 import { Transaction } from '../../../shared/models/transaction.model';
 import { ReviewInboxService } from '../services/review-inbox.service';
 import { ReviewInboxForm } from '../models/review-inbox-form.model';
+import { CategoryService } from '../../dashboard/services/category.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-review-inbox-page',
@@ -18,16 +21,22 @@ import { ReviewInboxForm } from '../models/review-inbox-form.model';
       (selectItem)="onSelectItem($event)"
       (formChange)="onFormChange($event)"
       (confirmTransaction)="onConfirmTransaction()"
-    ></app-review-inbox-view>
+      (confirmMany)="onConfirmMany()"
+    />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewInboxPageComponent {
   private readonly transactionService = inject(TransactionService);
   private readonly reviewInboxService = inject(ReviewInboxService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly modalService = inject(NgbModal);
   private readonly pendingResource = this.transactionService.getTransactionsByStatus(TransactionStatus.PENDING);
   private readonly selectedItemId = signal<string | null>(null);
+
   readonly formState = signal<ReviewInboxForm>(this.emptyForm());
+
+  categories = this.categoryService.getCategories();
 
   constructor() {
     effect(() => {
@@ -43,7 +52,7 @@ export class ReviewInboxPageComponent {
   readonly inbox = computed(() => {
     const items = (this.pendingResource.value() ?? []).map((tx) => this.toInboxItem(tx));
     const selectedItem = this.pickSelectedItem(items, this.selectedItemId());
-    const categoryOptions = this.getCategoryOptions(items);
+    const categoryOptions = this.categories.value();
     return {
       pendingCount: items.length,
       items,
@@ -72,6 +81,36 @@ export class ReviewInboxPageComponent {
       description: form.merchant,
       categoryId: form.categoryId
     }).subscribe({
+      next: () => {
+        this.pendingResource.reload();
+        this.selectedItemId.set(null);
+      }
+    });
+  }
+
+  onConfirmMany() {
+    const itemsToConfirm = this.inbox().items.filter(item => item.id !== 'empty').map(item => Number(item.id));
+
+    if (itemsToConfirm.length === 0) {
+      return;
+    }
+    const modalRef = this.modalService.open(ConfirmModalComponent, { centered: true });
+    modalRef.componentInstance.title = 'Confirmar todas las transacciones';
+    modalRef.componentInstance.message = `Estas seguro de que deseas confirmar las ${itemsToConfirm.length} transacciones pendientes? Esta accion no se puede deshacer.`;
+    modalRef.componentInstance.confirmText = 'Confirmar';
+    modalRef.componentInstance.cancelText = 'Cancelar';
+    modalRef.componentInstance.tone = 'primary';
+    
+    modalRef.componentInstance.confirmRequested.subscribe(() => {
+      this.confirmManyTransactions(itemsToConfirm);
+      modalRef.close();
+    });
+
+    modalRef.componentInstance.dismissRequested.subscribe(() => modalRef.dismiss());
+  }
+
+  private confirmManyTransactions(ids: number[]) {
+    this.reviewInboxService.confirmMany(ids).subscribe({
       next: () => {
         this.pendingResource.reload();
         this.selectedItemId.set(null);
@@ -147,21 +186,6 @@ export class ReviewInboxPageComponent {
       date: '',
       amount: ''
     };
-  }
-
-  private getCategoryOptions(items: InboxItem[]): CategoryOption[] {
-    const map = new Map<string, string>();
-    items.forEach((item) => {
-      if (item.categoryId) {
-        map.set(item.categoryId, item.category || 'Sin categoria');
-      }
-    });
-
-    if (map.size === 0) {
-      return [{ id: '', label: 'Sin categoria' }];
-    }
-
-    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
   }
 
   private formatDateLabel(value: Date | string): string {

@@ -18,6 +18,7 @@ export class ReviewInboxViewComponent {
   selectItem = output<InboxItem>();
   formChange = output<Partial<ReviewInboxForm>>();
   confirmTransaction = output<void>();
+  confirmMany = output<void>();
 
   getConfidenceLabel(confidence: string) {
     if (confidence === 'low') {

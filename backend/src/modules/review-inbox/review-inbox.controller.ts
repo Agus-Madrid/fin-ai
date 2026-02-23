@@ -18,4 +18,9 @@ export class ReviewInboxController {
   ) {
     return this.reviewInboxService.confirmTransaction(id, updateTransactionDto);
   }
+
+  @Put('confirm-many')
+  async confirmMany(@Body() ids: number[]) {
+    return this.reviewInboxService.confirmMany(ids);
+  }
 }

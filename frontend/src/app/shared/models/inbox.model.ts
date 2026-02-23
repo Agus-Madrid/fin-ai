@@ -1,3 +1,5 @@
+import { Category } from "./category.model";
+
 export type InboxConfidence = 'low' | 'medium' | 'high';
 
 export interface InboxItem {
@@ -21,10 +23,5 @@ export interface InboxState {
   pendingCount: number;
   items: InboxItem[];
   selectedItem: InboxItem;
-  categoryOptions: CategoryOption[];
-}
-
-export interface CategoryOption {
-  id: string;
-  label: string;
+  categoryOptions: Category[];
 }

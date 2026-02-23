@@ -16,4 +16,9 @@ export class ReviewInboxService {
     const apiBaseUrl = this.config.apiBaseUrl();
     return this.http.put(`${apiBaseUrl}/review-inbox/${id}/confirm`, payload);
   }
+
+  confirmMany(ids: number[] | string[]) {
+    const apiBaseUrl = this.config.apiBaseUrl();
+    return this.http.put(`${apiBaseUrl}/review-inbox/confirm-many`, ids);
+  }
 }
