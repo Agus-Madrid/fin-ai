@@ -1,4 +1,4 @@
-import { AsyncPipe, NgIf } from '@angular/common';
+﻿import { AsyncPipe, NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
@@ -8,6 +8,7 @@ import { TransactionService } from '../services/transaction.service';
 import { Transaction } from '../../../shared/models/transaction.model';
 import { Category } from '../../../shared/models/category.model';
 import { User } from '../../../shared/models/user.model';
+import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 
 @Component({
   selector: 'app-dashboard-page',
@@ -43,7 +44,7 @@ export class DashboardPageComponent {
   readonly categoriesResource = this.categoriesService.getCategories();
   readonly categories = this.categoriesResource.value;
 
-  readonly transactions = this.transactionService.getLatestTransactions();
+  readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
   readonly user: User = {
     id: 'user-001',
     name: 'Sofia Mercado',
@@ -87,24 +88,49 @@ export class DashboardPageComponent {
   }
 
   getTransactionCategories(): { category: Category; amount: number }[] {
-    if(!this.transactions){
+    if (!this.transactions) {
       return [];
     }
 
-    const transactions = this.transactions.value();
-    const categoriesMap = new Map<string, number>();
+    const transactions = this.transactions.value() ?? [];
+    if (!transactions.length) {
+      return [];
+    }
+
+    const categoriesById = new Map(
+      (this.categories() ?? []).map((category) => [String(category.id), category] as const)
+    );
+
+    const categoriesMap = new Map<string, { category: Category; amount: number }>();
     transactions.forEach((txn: Transaction) => {
-      const existing = categoriesMap.get(txn.category.id);
-      categoriesMap.set(txn.category.id, (existing || 0) + txn.amount);
+      const rawAmount = Number(txn.amount) || 0;
+      const spendAmount = Math.abs(rawAmount);
+      if (spendAmount <= 0) {
+        return;
+      }
+
+      const txCategory = txn.category as Category | null | undefined;
+      const categoryId = txCategory?.id != null ? String(txCategory.id) : 'uncategorized';
+      const existing = categoriesMap.get(categoryId);
+
+      if (existing) {
+        existing.amount += spendAmount;
+        return;
+      }
+
+      const categoryFromCatalog = categoriesById.get(categoryId);
+      const fallbackCategory: Category = {
+        id: 'uncategorized',
+        name: 'Sin categoría',
+        icon: 'bi bi-question-circle',
+        color: '#7d7d86'
+      };
+
+      const normalizedCategory: Category = categoryFromCatalog ?? txCategory ?? fallbackCategory;
+      categoriesMap.set(categoryId, { category: normalizedCategory, amount: spendAmount });
     });
 
-    const result: { category: Category; amount: number }[] = [];
-    for (const [categoryId, amount] of categoriesMap.entries()) {
-      const category = this.categories().find((c) => c.id === categoryId);
-      if (category) {
-        result.push({ category, amount });
-      }
-    }
-    return result;
+    return Array.from(categoriesMap.values()).sort((a, b) => b.amount - a.amount);
   }
 }
+

@@ -38,7 +38,8 @@ export class TransactionService {
       loader: ({ request }) =>
         this.http.get<Transaction[]>(
           joinUrl(request.apiBaseUrl, `/transactions/user/${request.userId}?status=${request.status}`)
-        )
+        ),
+      defaultValue: []
       })
   }
 

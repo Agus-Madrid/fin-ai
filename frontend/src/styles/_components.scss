@@ -1,9 +1,18 @@
 .app-card {
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.07), transparent 42%),
+    linear-gradient(160deg, #0f1218 0%, #0b0e13 48%, #080b10 100%);
+  border: 1px solid rgba(70, 70, 80, 0.36);
   border-radius: 18px;
   padding: 1.5rem;
   box-shadow: var(--app-shadow-soft);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.app-card:hover {
+  border-color: rgba(130, 130, 142, 0.45);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.33);
+  transform: translateY(-1px);
 }
 
 .app-card--flat {
@@ -11,7 +20,7 @@
 }
 
 .app-card--gradient {
-  background: linear-gradient(160deg, #202020 0%, #1a1a1a 100%);
+  background: linear-gradient(160deg, #121720 0%, #0d1219 100%);
 }
 
 .app-section-title {
@@ -75,8 +84,8 @@
 .app-select,
 .app-textarea {
   width: 100%;
-  background: var(--app-surface-2);
-  border: 1px solid var(--app-border);
+  background: linear-gradient(180deg, #13171d 0%, #0f141a 100%);
+  border: 1px solid rgba(74, 74, 84, 0.45);
   color: var(--app-text);
   border-radius: 12px;
   padding: 0.6rem 0.85rem;
@@ -88,42 +97,53 @@
 .app-input:focus,
 .app-select:focus,
 .app-textarea:focus {
-  border-color: rgba(43, 108, 238, 0.65);
-  box-shadow: 0 0 0 0.2rem rgba(43, 108, 238, 0.15);
+  border-color: rgba(184, 184, 196, 0.6);
+  box-shadow: 0 0 0 0.2rem rgba(184, 184, 196, 0.14);
 }
 
 .app-btn-primary {
-  background: var(--app-primary);
+  background: linear-gradient(180deg, #38434f 0%, #2a3440 100%);
   color: #fff;
-  border: 1px solid rgba(43, 108, 238, 0.4);
+  border: 1px solid rgba(140, 140, 152, 0.4);
   border-radius: 12px;
   padding: 0.6rem 1.1rem;
   font-weight: 600;
   font-size: 0.9rem;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 10px 25px rgba(43, 108, 238, 0.25);
+  transition: transform 0.16s ease, box-shadow 0.16s ease, background 0.16s ease, border-color 0.16s ease;
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.28);
 }
 
 .app-btn-primary:hover {
-  background: #1f5fd3;
+  background: linear-gradient(180deg, #444f5c 0%, #323d4a 100%);
+  border-color: rgba(175, 175, 188, 0.45);
   transform: translateY(-1px);
 }
 
+.app-btn-primary:active {
+  transform: scale(0.97);
+}
+
 .app-btn-ghost {
-  border: 1px solid var(--app-border);
-  background: transparent;
+  border: 1px solid rgba(74, 74, 84, 0.45);
+  background: rgba(255, 255, 255, 0.01);
   color: var(--app-text);
   border-radius: 12px;
   padding: 0.55rem 1rem;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: border-color 0.2s ease, color 0.2s ease, background 0.2s ease;
+  transition: transform 0.16s ease, border-color 0.16s ease, color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
 }
 
 .app-btn-ghost:hover {
-  border-color: rgba(43, 108, 238, 0.5);
-  color: var(--app-primary);
-  background: rgba(43, 108, 238, 0.08);
+  border-color: rgba(173, 173, 184, 0.5);
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.24);
+}
+
+.app-btn-ghost:active {
+  transform: scale(0.97);
 }
 
 .app-table {
@@ -136,19 +156,20 @@
   text-transform: uppercase;
   letter-spacing: 0.12em;
   color: var(--app-muted);
-  border-bottom: 1px solid var(--app-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   padding: 0.85rem 0.75rem;
 }
 
 .app-table tbody td {
   padding: 0.85rem 0.75rem;
-  border-bottom: 1px solid var(--app-border);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
   font-size: 0.9rem;
   color: #d9d9df;
+  transition: background 0.16s ease;
 }
 
 .app-table tbody tr:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .app-pill {
@@ -156,9 +177,16 @@
   border-radius: 999px;
   font-size: 0.75rem;
   font-weight: 600;
-  background: #262626;
-  border: 1px solid #333;
+  background: #1d2026;
+  border: 1px solid rgba(102, 102, 112, 0.35);
   color: var(--app-muted);
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.app-pill:hover {
+  background: #252a32;
+  border-color: rgba(138, 138, 148, 0.42);
+  color: #dfdfe5;
 }
 
 .app-pill--success {
