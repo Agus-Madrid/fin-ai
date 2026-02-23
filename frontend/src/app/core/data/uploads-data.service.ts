@@ -1,11 +1,11 @@
 import { Injectable } from '@angular/core';
 import { of } from 'rxjs';
-import { UploadVm } from '../../shared/models/upload.model';
+import { UploadViewModel } from '../../shared/models/upload.model';
 
 @Injectable({ providedIn: 'root' })
 export class UploadsDataService {
-  getUploadsVm() {
-    const vm: UploadVm = {
+  getUploadsViewModel() {
+    const uploadViewModel: UploadViewModel = {
       uploads: [
         {
           id: 'up-1',
@@ -48,6 +48,6 @@ export class UploadsDataService {
       ]
     };
 
-    return of(vm);
+    return of(uploadViewModel);
   }
 }

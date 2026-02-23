@@ -9,6 +9,6 @@ export interface UploadItem {
   extractedCount?: number;
 }
 
-export interface UploadVm {
+export interface UploadViewModel {
   uploads: UploadItem[];
 }

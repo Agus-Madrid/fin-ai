@@ -6,37 +6,71 @@
     </div>
   </div>
   <div class="d-flex align-items-center gap-2">
-    <button class="app-btn-ghost">Mensual</button>
-    <button class="app-btn-ghost">Trimestral</button>
-    <button class="app-btn-primary">
+    <button
+      type="button"
+      [ngClass]="activeTab === 'monthly' ? 'app-btn-primary' : 'app-btn-ghost'"
+      (click)="setActiveTab('monthly')">
+      Mensual
+    </button>
+    <button
+      type="button"
+      [ngClass]="activeTab === 'goals' ? 'app-btn-primary' : 'app-btn-ghost'"
+      (click)="setActiveTab('goals')">
+      Metas de ahorro
+    </button>
+    <button class="app-btn-ghost">
       <i class="bi bi-stars me-2"></i>
       AI Optimize
     </button>
   </div>
 </section>
 
-<section class="app-grid app-grid--two">
+<section class="app-grid app-grid--two budget-grid--uniform" *ngIf="activeTab === 'monthly'">
   <div class="app-card">
     <div class="d-flex align-items-center justify-content-between mb-3">
       <div class="fw-semibold">
         <i class="bi bi-cash-stack me-2 text-success"></i>
         Ingresos
       </div>
-      <button class="app-btn-ghost"><i class="bi bi-plus-lg"></i></button>
+      <button class="app-btn-ghost" type="button" (click)="onAddIncomeRequested()">
+        <i class="bi bi-plus-lg"></i>
+      </button>
     </div>
-    <div class="d-flex flex-column gap-3">
-      <div class="budget-item" *ngFor="let income of vm().incomeSources">
+    <div class="d-flex flex-column gap-3 budget-list budget-list--income">
+      <div class="budget-item budget-item--clickable" *ngFor="let income of budgetViewModel().incomeSources" (click)="onEditIncomeRequested(income)">
         <div class="d-flex align-items-start justify-content-between">
           <div>
             <div class="text-muted-2 text-uppercase" style="font-size: 0.65rem;">{{ income.label }}</div>
             <div class="fw-semibold">{{ income.source }}</div>
           </div>
-          <span class="app-chip app-chip--success">{{ income.status }}</span>
+          <div class="budget-item__actions">
+            <span class="app-chip app-chip--success">{{ income.status }}</span>
+            <div class="budget-actions">
+              <button
+                type="button"
+                class="app-btn-ghost budget-actions__trigger"
+                aria-haspopup="menu"
+                aria-label="Acciones de ingreso"
+                (click)="$event.stopPropagation()">
+                <i class="bi bi-three-dots"></i>
+              </button>
+              <div class="budget-actions__menu" role="menu" (click)="$event.stopPropagation()">
+                <button type="button" class="budget-actions__item" role="menuitem" (click)="onEditIncomeRequested(income)">
+                  <i class="bi bi-pencil-square"></i>
+                  Editar
+                </button>
+                <button type="button" class="budget-actions__item is-danger" role="menuitem" (click)="onDeleteIncomeRequested(income)">
+                  <i class="bi bi-trash3"></i>
+                  Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="d-flex align-items-end justify-content-between mt-2">
           <div class="text-muted-2" style="font-size: 0.75rem;">{{ income.timing }}</div>
           <div class="fw-semibold fs-5">
-            {{ income.amount | currency: vm().currency:'symbol':'1.0-2' }}
+            {{ income.amount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
           </div>
         </div>
         <div class="progress bg-surface-2 mt-3" style="height: 6px;">
@@ -47,7 +81,7 @@
     <div class="app-divider my-3"></div>
     <div class="d-flex align-items-center justify-content-between">
       <span class="text-muted">Ingreso total</span>
-      <span class="fw-bold fs-4">{{ vm().totalIncome | currency: vm().currency:'symbol':'1.0-2' }}</span>
+      <span class="fw-bold fs-4">{{ budgetViewModel().totalIncome | currency: budgetViewModel().currency:'symbol':'1.0-2' }}</span>
     </div>
   </div>
 
@@ -57,10 +91,15 @@
         <i class="bi bi-repeat me-2 text-danger"></i>
         Gastos fijos
       </div>
-      <span class="app-pill">48% ingreso</span>
+      <div class="d-flex align-items-center gap-2">
+        <span class="app-pill">{{ getFixedIncomePercentLabel() }} ingreso</span>
+        <button class="app-btn-ghost" type="button" (click)="onAddFixedCommitmentRequested()">
+          <i class="bi bi-plus-lg"></i>
+        </button>
+      </div>
     </div>
-    <div class="d-flex flex-column gap-2">
-      <div class="budget-row" *ngFor="let expense of vm().fixedExpenses">
+    <div class="d-flex flex-column gap-2 budget-list budget-list--fixed">
+      <div class="budget-row budget-row--clickable" *ngFor="let expense of budgetViewModel().fixedExpenses" (click)="onEditFixedCommitmentRequested(expense)">
         <div class="d-flex align-items-center gap-3">
           <div class="budget-row__icon">
             <i class="bi" [ngClass]="expense.icon"></i>
@@ -72,10 +111,30 @@
         </div>
         <div class="text-end">
           <div class="fw-semibold">
-            {{ expense.amount | currency: vm().currency:'symbol':'1.0-2' }}
+            {{ expense.amount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
           </div>
           <div class="progress bg-surface-2 mt-2" style="height: 5px; width: 90px;">
             <div class="progress-bar bg-danger" [style.width]="expense.progress + '%'"></div>
+          </div>
+        </div>
+        <div class="budget-actions">
+          <button
+            type="button"
+            class="app-btn-ghost budget-actions__trigger"
+            aria-haspopup="menu"
+            aria-label="Acciones de gasto fijo"
+            (click)="$event.stopPropagation()">
+            <i class="bi bi-three-dots"></i>
+          </button>
+          <div class="budget-actions__menu" role="menu" (click)="$event.stopPropagation()">
+            <button type="button" class="budget-actions__item" role="menuitem" (click)="onEditFixedCommitmentRequested(expense)">
+              <i class="bi bi-pencil-square"></i>
+              Editar
+            </button>
+            <button type="button" class="budget-actions__item is-danger" role="menuitem" (click)="onDeleteFixedCommitmentRequested(expense)">
+              <i class="bi bi-trash3"></i>
+              Eliminar
+            </button>
           </div>
         </div>
       </div>
@@ -84,7 +143,7 @@
     <div class="d-flex align-items-center justify-content-between">
       <span class="text-muted">Total fijo</span>
       <span class="fw-bold fs-4 text-danger">
-        {{ vm().totalFixed | currency: vm().currency:'symbol':'1.0-2' }}
+        {{ budgetViewModel().totalFixed | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
       </span>
     </div>
   </div>
@@ -93,33 +152,122 @@
     <div class="d-flex align-items-center justify-content-between mb-3">
       <div class="fw-semibold">
         <i class="bi bi-piggy-bank me-2 text-primary"></i>
-        Meta de ahorro
+        Ahorro mensual
       </div>
-      <span class="app-chip app-chip--success">21% ingreso</span>
+      <span class="app-chip app-chip--success">{{ budgetViewModel().savings.monthlyGoalPercent | number:'1.0-1' }}% ingreso</span>
     </div>
-    <div class="text-center my-4">
-      <div class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.2em;">
+    <div class="text-center my-3">
+      <div class="text-muted text-uppercase budget-savings__label">
         Objetivo mensual
       </div>
-      <div class="display-5 fw-bold">
-        {{ vm().savings.monthlyGoal | currency: vm().currency:'symbol':'1.0-2' }}
+      <div class="display-6 fw-bold">
+        {{ budgetViewModel().savings.monthlyGoal | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+      </div>
+      <div class="text-muted-2">
+        {{ budgetViewModel().savings.monthlyGoalPercent | number:'1.0-1' }}% del ingreso total
       </div>
     </div>
-    <div class="progress bg-surface-2" style="height: 10px;">
-      <div class="progress-bar" [style.width]="vm().savings.progress + '%'"></div>
-    </div>
-    <div class="d-flex justify-content-between text-muted-2 mt-2" style="font-size: 0.7rem;">
-      <span>$0</span>
-      <span>$1k</span>
-      <span>$2k</span>
-      <span>$3k+</span>
-    </div>
-    <div class="app-card app-card--flat mt-4 bg-surface-2">
-      <div class="d-flex gap-2">
-        <i class="bi bi-lightbulb text-primary"></i>
-        <p class="text-muted-2 mb-0">{{ vm().savings.projectedMessage }}</p>
+    <div class="budget-savings-control mt-3">
+      <label class="budget-savings-control__label" for="monthlyGoalInput">Objetivo mensual editable</label>
+      <div class="budget-savings-control__row">
+        <input
+          id="monthlyGoalInput"
+          #monthlyGoalInput
+          class="app-input"
+          type="number"
+          min="0"
+          step="0.01"
+          [value]="budgetViewModel().savings.monthlyGoal">
+        <button class="app-btn-ghost" type="button" (click)="onUpdateMonthlyGoalRequested(monthlyGoalInput.value)">
+          Guardar
+        </button>
       </div>
     </div>
+    <div class="budget-savings-control mt-3">
+      <label class="budget-savings-control__label" for="confirmSavingsInput">
+        Confirmar ahorro {{ budgetViewModel().savings.currentPeriodLabel }}
+      </label>
+      <div class="budget-savings-control__row">
+        <input
+          id="confirmSavingsInput"
+          #confirmSavingsInput
+          class="app-input"
+          type="number"
+          min="0"
+          step="0.01"
+          [value]="budgetViewModel().savings.currentPeriodSuggestedAmount">
+        <button class="app-btn-primary" type="button" (click)="onConfirmMonthlySavingsRequested(confirmSavingsInput.value)">
+          Confirmar
+        </button>
+      </div>
+      <button class="app-btn-ghost mt-2" type="button" (click)="onSkipMonthlySavingsRequested()">
+        No pude ahorrar este mes
+      </button>
+      <div class="text-muted-2 mt-2">
+        Estado actual: {{ getCurrentPeriodStatusLabel() }} -
+        {{ budgetViewModel().savings.currentPeriodConfirmedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+      </div>
+    </div>
+  </div>
+
+  <div class="app-card">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-bullseye me-2 text-primary"></i>
+        Meta de ahorro vigente
+      </div>
+      <div class="budget-goal-slider__controls">
+        <button
+          class="app-btn-ghost budget-goal-slider__button"
+          type="button"
+          [disabled]="!hasMultipleCurrentPeriodGoals()"
+          (click)="goToPreviousCurrentPeriodGoal()">
+          <i class="bi bi-chevron-left"></i>
+        </button>
+        <span class="app-pill">{{ getCurrentPeriodGoalsCounterLabel() }}</span>
+        <button
+          class="app-btn-ghost budget-goal-slider__button"
+          type="button"
+          [disabled]="!hasMultipleCurrentPeriodGoals()"
+          (click)="goToNextCurrentPeriodGoal()">
+          <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+    </div>
+    <ng-container *ngIf="getActiveCurrentPeriodGoal() as activeGoal; else noCurrentPeriodGoals">
+      <div class="d-flex align-items-center justify-content-between mb-2">
+        <div class="fw-semibold">{{ activeGoal.name }}</div>
+        <span class="app-chip app-chip--success">{{ activeGoal.progressPercent | number:'1.0-1' }}%</span>
+      </div>
+      <div class="text-center my-3">
+        <div class="text-muted text-uppercase budget-savings__label">
+          Ahorro asignado a esta meta
+        </div>
+        <div class="fs-3 fw-semibold">
+          {{ activeGoal.allocatedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+        </div>
+        <div class="text-muted-2">
+          Meta total: {{ activeGoal.targetAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+        </div>
+        <div class="text-muted-2">
+          Límite: {{ activeGoal.deadline | date:'dd/MM/yyyy' }}
+        </div>
+      </div>
+      <div class="progress bg-surface-2" style="height: 10px;">
+        <div class="progress-bar" [style.width.%]="activeGoal.progressPercent"></div>
+      </div>
+      <div class="app-card app-card--flat mt-3 bg-surface-2">
+        <div class="d-flex gap-2">
+          <i class="bi bi-lightbulb text-primary"></i>
+          <p class="text-muted-2 mb-0">{{ budgetViewModel().savings.projectedMessage }}</p>
+        </div>
+      </div>
+    </ng-container>
+    <ng-template #noCurrentPeriodGoals>
+      <div class="text-muted-2">
+        No hay metas vigentes para la fecha actual. Crea una nueva en la pestaña de Metas de ahorro.
+      </div>
+    </ng-template>
   </div>
 
   <div class="app-card app-card--gradient">
@@ -128,41 +276,135 @@
         <i class="bi bi-pie-chart me-2 text-muted"></i>
         Commitment Summary
       </div>
-      <span class="text-muted">{{ vm().commitments.remainderPercent }}% disponible</span>
+      <span class="text-muted">{{ budgetViewModel().commitments.remainderPercent }}% disponible</span>
     </div>
     <div class="mb-4">
       <div class="d-flex justify-content-between mb-2">
         <span class="text-muted">Pre-comprometido</span>
         <span class="fw-semibold">
-          {{ vm().commitments.preCommitted | currency: vm().currency:'symbol':'1.0-2' }}
+          {{ budgetViewModel().commitments.preCommitted | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
         </span>
       </div>
+      <div class="text-muted-2 mb-2 commitment-caption">
+        Gastos fijos + objetivo mensual de ahorro
+      </div>
       <div class="progress bg-surface-2" style="height: 8px;">
-        <div class="progress-bar bg-danger" style="width: 69%"></div>
-        <div class="progress-bar bg-surface-3" style="width: 31%"></div>
+        <div class="progress-bar bg-danger" [style.width.%]="budgetViewModel().commitments.preCommittedPercent"></div>
+        <div class="progress-bar bg-surface-3" [style.width.%]="budgetViewModel().commitments.remainderPercent"></div>
       </div>
     </div>
     <div class="mb-4">
       <div class="d-flex justify-content-between mb-2">
         <span class="text-muted">Discrecional</span>
         <span class="fw-semibold text-primary">
-          {{ vm().commitments.discretionary | currency: vm().currency:'symbol':'1.0-2' }}
+          {{ budgetViewModel().commitments.discretionary | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
         </span>
       </div>
+      <div class="text-muted-2 mb-2 commitment-caption">
+        Ingreso total - (gastos fijos + objetivo mensual de ahorro)
+      </div>
       <div class="progress bg-surface-2" style="height: 8px;">
-        <div class="progress-bar bg-primary" style="width: 31%"></div>
-        <div class="progress-bar bg-surface-3" style="width: 69%"></div>
+        <div class="progress-bar bg-primary" [style.width.%]="budgetViewModel().commitments.remainderPercent"></div>
+        <div class="progress-bar bg-surface-3" [style.width.%]="budgetViewModel().commitments.preCommittedPercent"></div>
       </div>
     </div>
-    <div class="app-card app-card--flat bg-surface-2">
-      <div class="fw-semibold text-primary mb-2">
-        <i class="bi bi-stars me-2"></i>
-        AI Insight
+  </div>
+
+  <div class="app-card budget-card--full-width">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-bar-chart-line me-2 text-primary"></i>
+        Confirmaciones de ahorro {{ budgetViewModel().savings.currentYear }}
       </div>
-      <div class="text-muted-2">
-        Detectamos 3 suscripciones inactivas. Cancelarlas incrementa tu presupuesto en $45/mes.
-      </div>
-      <button class="app-btn-ghost mt-3">Ver detalle</button>
+      <span class="app-pill">
+        {{ budgetViewModel().savings.annualConfirmedTotal | currency: budgetViewModel().currency:'symbol':'1.0-0' }} confirmado
+      </span>
+    </div>
+    <div class="budget-savings-chart">
+      <canvas #savingsLogsChart aria-label="Ahorros confirmados por mes"></canvas>
     </div>
   </div>
 </section>
+
+<section class="app-grid app-grid--two budget-grid--uniform" *ngIf="activeTab === 'goals'">
+  <div class="app-card">
+    <div class="fw-semibold mb-3">
+      <i class="bi bi-plus-circle me-2 text-primary"></i>
+      Crear meta de ahorro
+    </div>
+    <div class="d-flex flex-column gap-3">
+      <div>
+        <label class="app-section-title" for="goalNameInput">Nombre</label>
+        <input id="goalNameInput" #goalNameInput class="app-input" type="text" placeholder="Ej: Fondo de emergencia" />
+      </div>
+      <div>
+        <label class="app-section-title" for="goalTargetInput">Objetivo total</label>
+        <input id="goalTargetInput" #goalTargetInput class="app-input" type="number" min="0" step="0.01" />
+      </div>
+      <div>
+        <label class="app-section-title" for="goalDeadlineInput">Fecha limite</label>
+        <input id="goalDeadlineInput" #goalDeadlineInput class="app-input" type="date" />
+      </div>
+      <div>
+        <label class="app-section-title" for="goalPriorityInput">Prioridad</label>
+        <input id="goalPriorityInput" #goalPriorityInput class="app-input" type="number" min="1" step="1" value="1" />
+      </div>
+      <button
+        type="button"
+        class="app-btn-primary"
+        (click)="onCreateSavingGoalRequested(goalNameInput.value, goalTargetInput.value, goalDeadlineInput.value, goalPriorityInput.value); goalNameInput.value=''; goalTargetInput.value=''; goalDeadlineInput.value=''; goalPriorityInput.value='1'">
+        Crear meta
+      </button>
+    </div>
+  </div>
+
+  <div class="app-card">
+    <div class="fw-semibold mb-3">
+      <i class="bi bi-info-circle me-2 text-primary"></i>
+      Como se distribuye tu ahorro acumulado
+    </div>
+    <p class="text-muted-2 mb-0">
+      El total ahorrado confirmado se asigna automaticamente por prioridad y fecha limite. Asi puedes ver avance por cada meta sin llevar saldos manuales por meta.
+    </p>
+  </div>
+
+  <div class="app-card budget-card--full-width">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <div class="fw-semibold">
+        <i class="bi bi-bullseye me-2 text-primary"></i>
+        Todas tus metas
+      </div>
+      <span class="app-pill">{{ budgetViewModel().savingGoals.length }} metas</span>
+    </div>
+
+    <div class="d-flex flex-column gap-3" *ngIf="budgetViewModel().savingGoals.length > 0; else noGoals">
+      <div class="budget-goal-row" *ngFor="let goal of budgetViewModel().savingGoals">
+        <div class="d-flex align-items-start justify-content-between gap-3">
+          <div>
+            <div class="fw-semibold">{{ goal.name }}</div>
+            <div class="text-muted-2">
+              Objetivo: {{ goal.targetAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+              - Prioridad {{ goal.priority }}
+              - Limite {{ goal.deadline | date:'dd/MM/yyyy' }}
+            </div>
+          </div>
+          <button class="app-btn-ghost is-danger" type="button" (click)="onDeleteSavingGoalRequested(goal.id)">
+            Eliminar
+          </button>
+        </div>
+        <div class="d-flex justify-content-between mt-2">
+          <span class="text-muted-2">Asignado: {{ goal.allocatedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}</span>
+          <span class="fw-semibold">{{ goal.progressPercent | number:'1.0-1' }}%</span>
+        </div>
+        <div class="progress bg-surface-2 mt-2" style="height: 8px;">
+          <div class="progress-bar" [style.width.%]="goal.progressPercent"></div>
+        </div>
+      </div>
+    </div>
+
+    <ng-template #noGoals>
+      <div class="text-muted-2">Aun no tienes metas de ahorro. Crea la primera en el formulario.</div>
+    </ng-template>
+  </div>
+</section>
+

@@ -10,12 +10,13 @@ import {
   ResourceRef,
   viewChild
 } from '@angular/core';
-import { CurrencyPipe, NgFor, SlicePipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe, NgClass, NgFor, NgIf, SlicePipe } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, ScriptableContext, TooltipItem, registerables } from 'chart.js';
 import { Category } from '../../../shared/models/category.model';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
+import { SavingGoal } from '../../../shared/models/saving-goal.model';
 import { User } from '../../../shared/models/user.model';
 
 Chart.register(...registerables);
@@ -35,26 +36,35 @@ interface DashboardThemeColors {
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [NgFor, CurrencyPipe, ReactiveFormsModule, SlicePipe],
+  imports: [NgFor, NgIf, NgClass, CurrencyPipe, DecimalPipe, ReactiveFormsModule, SlicePipe],
   templateUrl: './dashboard.view.component.html',
   styleUrl: './dashboard.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardViewComponent {
   TransactionStatus = TransactionStatus;
+  private readonly locale = 'es-UY';
   private readonly destroyRef = inject(DestroyRef);
-  private readonly compactNumberFormatter = new Intl.NumberFormat('en-US', {
+  private readonly compactNumberFormatter = new Intl.NumberFormat(this.locale, {
     notation: 'compact',
     maximumFractionDigits: 1
   });
-  private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
+  private readonly currencyFormatter = new Intl.NumberFormat(this.locale, {
     style: 'currency',
-    currency: 'USD',
+    currency: 'UYU',
     maximumFractionDigits: 0
   });
-  private readonly trendDateFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly percentFormatter = new Intl.NumberFormat(this.locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  });
+  private readonly trendDateFormatter = new Intl.DateTimeFormat(this.locale, {
     day: '2-digit',
     month: 'short'
+  });
+  private readonly goalDeadlineFormatter = new Intl.DateTimeFormat(this.locale, {
+    month: 'short',
+    year: 'numeric'
   });
 
   private readonly categoryChartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('categoryChart');
@@ -66,6 +76,11 @@ export class DashboardViewComponent {
   readonly transactions = input.required<ResourceRef<Transaction[]>>();
   readonly transactionCategories = input.required<CategorySpend[]>();
   readonly user = input.required<User>();
+  readonly totalIncome = input(0);
+  readonly totalFixedExpenses = input(0);
+  readonly fixedExpensePercent = input(0);
+  readonly spendableBalance = input(0);
+  readonly spendablePercent = input(0);
   readonly manualTransactionFormGroup = input<FormGroup>();
   readonly categories = input<Category[]>([]);
   readonly submitTransaction = output<void>();
@@ -92,6 +107,19 @@ export class DashboardViewComponent {
     return 'Dinero Gastable';
   }
 
+  getSpendableChipClass(): string {
+    return this.spendablePercent() >= 0 ? 'app-chip--success' : 'app-chip--danger';
+  }
+
+  getSpendableIconClass(): string {
+    return this.spendablePercent() >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+  }
+
+  getSpendablePercentLabel(): string {
+    const absolute = Math.abs(this.spendablePercent());
+    return `${this.percentFormatter.format(absolute)}%`;
+  }
+
   getTotalCategoryAmount(): number {
     const items = this.transactionCategories() ?? [];
     return items.reduce((sum, item) => sum + item.amount, 0);
@@ -107,6 +135,58 @@ export class DashboardViewComponent {
       return 0;
     }
     return (amount / total) * 100;
+  }
+
+  getPrimarySavingGoal(): SavingGoal | null {
+    const savingGoals = this.user().savingGoals ?? [];
+    if (!savingGoals.length) {
+      return null;
+    }
+
+    return [...savingGoals].sort((a, b) => {
+      const byPriority = Number(a.priority ?? 1) - Number(b.priority ?? 1);
+      if (byPriority !== 0) {
+        return byPriority;
+      }
+
+      const aDeadline = new Date(a.deadline).getTime();
+      const bDeadline = new Date(b.deadline).getTime();
+      return aDeadline - bDeadline;
+    })[0] ?? null;
+  }
+
+  getSavingGoalProgressPercent(): number {
+    const savingGoal = this.getPrimarySavingGoal();
+    if (!savingGoal) {
+      return 0;
+    }
+
+    const targetAmount = Number(savingGoal.targetAmount);
+    if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+      return 0;
+    }
+
+    const currentTotalSavings = Number(this.user().currentTotalSavings);
+    if (!Number.isFinite(currentTotalSavings) || currentTotalSavings <= 0) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(100, (currentTotalSavings / targetAmount) * 100));
+  }
+
+  getSavingGoalProjectionLabel(): string {
+    const savingGoal = this.getPrimarySavingGoal();
+    if (!savingGoal) {
+      return 'Proyección: sin meta';
+    }
+
+    const deadline = new Date(savingGoal.deadline);
+    if (Number.isNaN(deadline.getTime())) {
+      return 'Proyección: sin fecha válida';
+    }
+
+    const formattedDeadline = this.goalDeadlineFormatter.format(deadline);
+    return `Proyección: ${formattedDeadline}`;
   }
 
   private renderCategoryChart(canvas: HTMLCanvasElement, categoryItems: CategorySpend[]) {

@@ -1,4 +1,4 @@
-<section class="app-page__header">
+﻿<section class="app-page__header">
   <div>
     <div class="app-page__title">File Management</div>
     <div class="app-page__subtitle">Gestiona estados de cuenta y recibos para IA.</div>
@@ -13,13 +13,13 @@
   <div class="upload-dropzone__icon">
     <i class="bi bi-file-earmark-arrow-up"></i>
   </div>
-  <div class="fw-semibold">Arrastra tus estados de cuenta aquí</div>
+  <div class="fw-semibold">Arrastra tus estados de cuenta aquÃ­</div>
   <div class="text-muted-2">
-    PDF, CSV o imágenes. Máx 25MB. Cifrado AES-256 antes de procesar.
+    PDF, CSV o imÃ¡genes. MÃ¡x 25MB. Cifrado AES-256 antes de procesar.
   </div>
   <div class="d-flex align-items-center justify-content-center gap-3 mt-3 text-muted-2" style="font-size: 0.75rem;">
     <span><i class="bi bi-shield-lock me-1"></i>Encriptado</span>
-    <span>•</span>
+    <span>â€¢</span>
     <span><i class="bi bi-stars me-1"></i>Parsing IA</span>
   </div>
 </section>
@@ -35,14 +35,14 @@
     </div>
   </div>
   <div class="d-flex flex-column gap-2">
-    <div class="upload-item" *ngFor="let upload of vm().uploads">
+    <div class="upload-item" *ngFor="let upload of uploadViewModel().uploads">
       <div class="upload-item__icon" [class.is-error]="upload.status === 'error'" [class.is-pending]="upload.status === 'pending'">
         <i class="bi" [ngClass]="upload.status === 'error' ? 'bi-exclamation-triangle' : upload.status === 'pending' ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
       </div>
       <div class="flex-grow-1">
         <div class="fw-semibold">{{ upload.name }}</div>
         <div class="text-muted-2" style="font-size: 0.75rem;">
-          {{ upload.uploadedLabel }} · {{ upload.sizeLabel }}
+          {{ upload.uploadedLabel }} Â· {{ upload.sizeLabel }}
         </div>
       </div>
       <div class="text-end">
@@ -50,10 +50,11 @@
           {{ getStatusLabel(upload.status) }}
         </div>
         <div class="text-muted-2" style="font-size: 0.7rem;" *ngIf="upload.extractedCount">
-          {{ upload.extractedCount }} transacciones extraídas
+          {{ upload.extractedCount }} transacciones extraÃ­das
         </div>
       </div>
     </div>
   </div>
-  <div class="text-center text-muted-2 mt-3">Cargar más historial</div>
+  <div class="text-center text-muted-2 mt-3">Cargar mÃ¡s historial</div>
 </section>
+

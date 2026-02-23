@@ -10,6 +10,29 @@
   transform: translateY(-1px);
 }
 
+.dashboard-card--spendable {
+  position: relative;
+}
+
+.dashboard-spendable__label {
+  white-space: nowrap;
+  padding-right: 6.25rem;
+}
+
+.dashboard-spendable__chip {
+  position: absolute;
+  top: 1.45rem;
+  right: 1.5rem;
+  font-size: 0.64rem;
+  padding: 0.14rem 0.45rem;
+  gap: 0.25rem;
+  white-space: nowrap;
+}
+
+.dashboard-spendable__value {
+  margin-top: 0.4rem;
+}
+
 .dashboard-progress {
   background: linear-gradient(180deg, #151921 0%, #10141b 100%);
   border: 1px solid rgba(95, 95, 106, 0.38);

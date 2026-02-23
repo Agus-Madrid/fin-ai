@@ -4,6 +4,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Category } from '../../../../shared/models/category.model';
 import { Transaction } from '../../../../shared/models/transaction.model';
 import { CreateTransactionRequest } from '../../../../shared/models/transaction-create.model';
+import { parseUruguayNumber } from '../../../../shared/utils/number-format.util';
 import {
   TRANSACTION_FORM_CONTROL_NAMES,
   TransactionFormControlNames,
@@ -42,13 +43,14 @@ export class TransactionFormModalViewComponent {
 
     const formData: TransactionFormValue = form.getRawValue();
     const { description, amount, date, categoryId } = formData;
-    if (amount === null) {
+    const parsedAmount = parseUruguayNumber(amount);
+    if (!Number.isFinite(parsedAmount)) {
       return;
     }
 
     const request: CreateTransactionRequest = {
       description,
-      amount,
+      amount: parsedAmount,
       date,
       categoryId
     };

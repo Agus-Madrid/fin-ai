@@ -9,6 +9,8 @@ const USER_RELATIONS = [
   'savingGoals',
   'fixedCommitments',
   'uploads',
+  'incomes',
+  'savingsLogs',
 ] as const;
 
 @Injectable()
@@ -33,5 +35,17 @@ export class UserService {
       throw new NotFoundException(`User with id ${id} not found`);
     }
     return user;
+  }
+
+  async updateMonthlyGoalSavings(userId: string, goalMonthlySavings: number): Promise<User> {
+    const user = await this.findById(userId);
+    user.goalMonthlySavings = goalMonthlySavings;
+    return await this.userRepository.save(user);
+  }
+
+  async updateCurrentTotalSavings(userId: string, currentTotalSavings: number): Promise<User> {
+    const user = await this.findById(userId);
+    user.currentTotalSavings = currentTotalSavings;
+    return await this.userRepository.save(user);
   }
 }
