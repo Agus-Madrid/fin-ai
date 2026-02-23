@@ -1,4 +1,15 @@
-import { BadRequestException, Body, Controller, Get, Param, ParseIntPipe, Post, Put, Query } from '@nestjs/common';
+import {
+  BadRequestException,
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dtos/create-transaction.dto';
 import { TransactionStatus } from './transaction.enum';
@@ -21,7 +32,15 @@ export class TransactionsController {
       return this.transactionsService.findAllByUser(userId);
     }
 
-    return this.transactionsService.findAllByUserStatus(userId, status as unknown as TransactionStatus);
+    const parsedStatus = Number.parseInt(status, 10);
+    if (Number.isNaN(parsedStatus)) {
+      throw new BadRequestException('status must be a numeric enum value');
+    }
+
+    return this.transactionsService.findAllByUserStatus(
+      userId,
+      parsedStatus as TransactionStatus,
+    );
   }
 
   @Get('user/:userId/latest')
@@ -38,7 +57,15 @@ export class TransactionsController {
   }
 
   @Put(':id')
-  update(@Param('id', ParseIntPipe) transactionId: number, @Body() updateTransactionDto: CreateTransactionDto){
+  update(
+    @Param('id', ParseIntPipe) transactionId: number,
+    @Body() updateTransactionDto: CreateTransactionDto,
+  ) {
     return this.transactionsService.update(transactionId, updateTransactionDto);
+  }
+
+  @Delete(':id')
+  delete(@Param('id', ParseIntPipe) transactionId: number) {
+    return this.transactionsService.delete(transactionId);
   }
 }

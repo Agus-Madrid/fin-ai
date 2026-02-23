@@ -1,0 +1,41 @@
+<section class="modal-card app-card app-card--gradient" role="dialog" aria-modal="true" aria-labelledby="transaction-form-title">
+  <header class="modal-header">
+    <div>
+      <h2 id="transaction-form-title" class="modal-title">{{ title() }}</h2>
+      <p class="modal-subtitle">{{ subtitle() }}</p>
+    </div>
+    <button type="button" class="app-btn-ghost modal-close" aria-label="Close modal" (click)="dismissRequested.emit()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </header>
+
+  <form *ngIf="form() as transactionForm" class="modal-form" [formGroup]="transactionForm">
+    <div class="form-group">
+      <label class="app-section-title" for="tx-form-description">Description</label>
+      <input id="tx-form-description" class="app-input" type="text" [formControlName]="formControlNames().description" />
+    </div>
+
+    <div class="form-group">
+      <label class="app-section-title" for="tx-form-category">Category</label>
+      <select id="tx-form-category" class="app-select" [formControlName]="formControlNames().categoryId">
+        <option *ngFor="let category of categories()" [value]="category.id">{{ category.name }}</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="app-section-title" for="tx-form-date">Date</label>
+        <input id="tx-form-date" class="app-input" type="date" [formControlName]="formControlNames().date" />
+      </div>
+      <div class="form-group">
+        <label class="app-section-title" for="tx-form-amount">Amount</label>
+        <input id="tx-form-amount" class="app-input" type="number" [formControlName]="formControlNames().amount" />
+      </div>
+    </div>
+  </form>
+
+  <footer class="modal-actions">
+    <button type="button" class="app-btn-ghost" (click)="dismissRequested.emit()">{{ cancelText() }}</button>
+    <button type="button" class="app-btn-primary" (click)="onSave()">{{ saveText() }}</button>
+  </footer>
+</section>

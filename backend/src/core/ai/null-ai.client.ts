@@ -4,12 +4,13 @@ import { ExtractStatementInput, ExtractStatementResult } from './ai.types';
 
 @Injectable()
 export class NullAiClient implements AiClient {
-  async extractStatement(
-    _input: ExtractStatementInput,
+  extractStatement(
+    input: ExtractStatementInput,
   ): Promise<ExtractStatementResult> {
-    return {
+    void input;
+    return Promise.resolve({
       transactions: [],
       warnings: ['AI client not configured.'],
-    };
+    });
   }
 }

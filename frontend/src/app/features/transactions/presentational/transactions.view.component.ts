@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, input, ResourceRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output, ResourceRef } from '@angular/core';
 import { CurrencyPipe, NgClass, NgFor } from '@angular/common';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
@@ -12,6 +12,23 @@ import { Transaction } from '../../../shared/models/transaction.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsViewComponent {
-  readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
   TransactionStatus = TransactionStatus;
+  
+  readonly createRequested = output<void>();
+  readonly editRequested = output<Transaction>();
+  readonly deleteRequested = output<Transaction>();
+  readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
+
+  createTransaction(): void {
+    this.createRequested.emit();
+  }
+
+  editTransaction(tx:Transaction) {
+    this.editRequested.emit(tx);
+  }
+
+  deleteTransaction(tx: Transaction) {
+    this.deleteRequested.emit(tx);
+  }
+  
 }

@@ -1,4 +1,5 @@
 import { Component } from '@angular/core';
+import { NgFor } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 
 interface NavItem {
@@ -9,7 +10,7 @@ interface NavItem {
 @Component({
   selector: 'app-top-nav',
   standalone: true,
-  imports: [RouterLink, RouterLinkActive],
+  imports: [NgFor, RouterLink, RouterLinkActive],
   templateUrl: './top-nav.component.html',
   styleUrl: './top-nav.component.scss'
 })

@@ -9,7 +9,16 @@ import { User } from '../user/user.entity';
 import { SeedService } from './seed.service';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User, Transaction, Upload, SavingGoal, FixedCommitment, Category])],
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Transaction,
+      Upload,
+      SavingGoal,
+      FixedCommitment,
+      Category,
+    ]),
+  ],
   providers: [SeedService],
 })
 export class SeedModule {}

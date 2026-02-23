@@ -4,9 +4,11 @@ export interface InboxItem {
   id: string;
   merchant: string;
   category: string;
+  categoryIcon: string;
   dateLabel: string;
   dateValue: string;
   amount: number;
+  amountValue: string;
   currency: string;
   status: string;
   confidence: InboxConfidence;

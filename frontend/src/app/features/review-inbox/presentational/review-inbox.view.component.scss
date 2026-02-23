@@ -37,13 +37,13 @@
 }
 
 .review-avatar {
-  width: 52px;
-  height: 52px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: #fff;
-  color: #111;
+  background: transparent;
+  color: inherit;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 1.5rem;
 }

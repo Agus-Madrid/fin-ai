@@ -44,6 +44,7 @@
   gap: 0.25rem;
   flex: 1;
   justify-content: center;
+  white-space: nowrap;
 }
 
 .app-top-nav__link {
@@ -109,7 +110,18 @@
 }
 
 @media (max-width: 992px) {
+  .app-top-nav__inner {
+    flex-wrap: wrap;
+    height: auto;
+    padding: 0.75rem 1rem;
+  }
+
   .app-top-nav__links {
-    display: none;
+    order: 3;
+    width: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+    gap: 0.5rem;
   }
 }

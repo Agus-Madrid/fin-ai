@@ -13,11 +13,15 @@ import { User } from '../user/user.entity';
 export class SeedService implements OnApplicationBootstrap {
   constructor(
     @InjectRepository(User) private readonly users: Repository<User>,
-    @InjectRepository(Transaction) private readonly transactions: Repository<Transaction>,
+    @InjectRepository(Transaction)
+    private readonly transactions: Repository<Transaction>,
     @InjectRepository(Upload) private readonly uploads: Repository<Upload>,
-    @InjectRepository(SavingGoal) private readonly savingGoals: Repository<SavingGoal>,
-    @InjectRepository(FixedCommitment) private readonly fixedCommitments: Repository<FixedCommitment>,
-    @InjectRepository(Category) private readonly categories: Repository<Category>,
+    @InjectRepository(SavingGoal)
+    private readonly savingGoals: Repository<SavingGoal>,
+    @InjectRepository(FixedCommitment)
+    private readonly fixedCommitments: Repository<FixedCommitment>,
+    @InjectRepository(Category)
+    private readonly categories: Repository<Category>,
   ) {}
 
   async onApplicationBootstrap() {
@@ -48,7 +52,9 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async ensureTransaction(user: User) {
-    const count = await this.transactions.count({ where: { user: { id: user.id } } });
+    const count = await this.transactions.count({
+      where: { user: { id: user.id } },
+    });
     if (count > 0) return;
 
     const tx = this.transactions.create({
@@ -62,7 +68,9 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async ensureUpload(user: User) {
-    const count = await this.uploads.count({ where: { user: { id: user.id } } });
+    const count = await this.uploads.count({
+      where: { user: { id: user.id } },
+    });
     if (count > 0) return;
 
     const upload = this.uploads.create({
@@ -75,7 +83,9 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async ensureSavingGoal(user: User) {
-    const count = await this.savingGoals.count({ where: { user: { id: user.id } } });
+    const count = await this.savingGoals.count({
+      where: { user: { id: user.id } },
+    });
     if (count > 0) return;
 
     const goal = this.savingGoals.create({
@@ -89,7 +99,9 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async ensureFixedCommitment(user: User) {
-    const count = await this.fixedCommitments.count({ where: { user: { id: user.id } } });
+    const count = await this.fixedCommitments.count({
+      where: { user: { id: user.id } },
+    });
     if (count > 0) return;
 
     const commitment = this.fixedCommitments.create({
@@ -101,7 +113,9 @@ export class SeedService implements OnApplicationBootstrap {
   }
 
   private async ensureCategories(user: User) {
-    const count = await this.categories.count({ where: { user: { id: user.id } } });
+    const count = await this.categories.count({
+      where: { user: { id: user.id } },
+    });
     if (count > 0) return;
 
     const categories = [

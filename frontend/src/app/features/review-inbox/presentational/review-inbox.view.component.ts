@@ -23,12 +23,4 @@ export class ReviewInboxViewComponent {
     }
     return 'Media';
   }
-
-  getAvatarLabel(merchant: string) {
-    const cleaned = merchant.replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-    if (!cleaned) {
-      return '...';
-    }
-    return cleaned.slice(0, 4);
-  }
 }

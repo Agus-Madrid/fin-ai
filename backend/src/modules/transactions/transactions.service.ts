@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './transaction.entity';
 import { Repository } from 'typeorm';
@@ -15,7 +19,8 @@ export class TransactionsService {
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
     private readonly userService: UserService,
-    private readonly categoryService: CategoryService) {}
+    private readonly categoryService: CategoryService,
+  ) {}
 
   async findAll(): Promise<Transaction[]> {
     return await this.transactionRepository.find({
@@ -32,19 +37,26 @@ export class TransactionsService {
     return transactions;
   }
 
-  async findAllByUserStatus(userId: string, status: TransactionStatus): Promise<Transaction[]> {
+  async findAllByUserStatus(
+    userId: string,
+    status: TransactionStatus,
+  ): Promise<Transaction[]> {
+    const dbStatus = `${status}`;
     const transactions = await this.transactionRepository.find({
-      where: {user: { id: userId }, status},
+      where: { user: { id: userId }, status: dbStatus as unknown as TransactionStatus },
       relations: [...TRANSACTION_RELATIONS],
     });
 
     return transactions;
   }
 
-  async findLatestByUser(userId: string, limit: number): Promise<Transaction[]> {
-    const status = TransactionStatus.CONFIRMED.toString() as unknown as TransactionStatus;
+  async findLatestByUser(
+    userId: string,
+    limit: number,
+  ): Promise<Transaction[]> {
+    const confirmedStatus = `${TransactionStatus.CONFIRMED}`;
     const transactions = await this.transactionRepository.find({
-      where: { user: { id: userId }, status },
+      where: { user: { id: userId }, status: confirmedStatus as unknown as TransactionStatus },
       order: { date: 'DESC' },
       take: limit,
       relations: [...TRANSACTION_RELATIONS],
@@ -59,7 +71,7 @@ export class TransactionsService {
       relations: [...TRANSACTION_RELATIONS],
     });
 
-    if(!transaction){
+    if (!transaction) {
       throw new NotFoundException(`Transaction with id ${id} not found`);
     }
     return transaction;
@@ -67,21 +79,32 @@ export class TransactionsService {
 
   async create(transactionData: CreateTransactionDto): Promise<Transaction> {
     const user = await this.userService.findById(transactionData.userId);
-    const category = await this.categoryService.findById(transactionData.categoryId);
+    const category = await this.categoryService.findById(
+      transactionData.categoryId,
+    );
     const transaction = this.transactionRepository.create({
       ...transactionData,
+      date: this.normalizeDate(transactionData.date),
       user,
-      category
+      category,
     });
     return await this.transactionRepository.save(transaction);
   }
 
-  async update(id: number, updateData: CreateTransactionDto): Promise<Transaction> {
+  async update(
+    id: number,
+    updateData: CreateTransactionDto,
+  ): Promise<Transaction> {
     const transaction = await this.findById(id);
     const user = await this.userService.findById(updateData.userId);
     const category = await this.categoryService.findById(updateData.categoryId);
 
-    Object.assign(transaction, {...updateData,user,category});
+    Object.assign(transaction, {
+      ...updateData,
+      date: this.normalizeDate(updateData.date),
+      user,
+      category,
+    });
     return await this.transactionRepository.save(transaction);
   }
 
@@ -90,5 +113,24 @@ export class TransactionsService {
     if (result.affected === 0) {
       throw new NotFoundException(`Transaction with id ${id} not found`);
     }
+  }
+
+  private normalizeDate(input: Date | string): string {
+    if (typeof input === 'string') {
+      const datePrefix = input.match(/^\d{4}-\d{2}-\d{2}/)?.[0];
+      if (datePrefix) {
+        return datePrefix;
+      }
+    }
+
+    const date = input instanceof Date ? input : new Date(input);
+    if (Number.isNaN(date.getTime())) {
+      throw new BadRequestException('Invalid date format');
+    }
+
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   }
 }

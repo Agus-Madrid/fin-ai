@@ -7,7 +7,11 @@ import { UserModule } from '../user/user.module';
 import { CategoryModule } from '../categories/category.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Transaction]), UserModule, CategoryModule],
+  imports: [
+    TypeOrmModule.forFeature([Transaction]),
+    UserModule,
+    CategoryModule,
+  ],
   controllers: [TransactionsController],
   providers: [TransactionsService],
 })
