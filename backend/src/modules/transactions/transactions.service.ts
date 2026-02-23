@@ -115,6 +115,45 @@ export class TransactionsService {
     }
   }
 
+  async confirm(id: number): Promise<Transaction> {
+    return this.confirmWithUpdates(id, {});
+  }
+
+  async confirmWithUpdates(
+    id: number,
+    updates: Partial<CreateTransactionDto> & { date?: Date | string },
+  ): Promise<Transaction> {
+    const transaction = await this.findById(id);
+
+    if (updates.description !== undefined) {
+      transaction.description = updates.description;
+    }
+
+    if (updates.amount !== undefined) {
+      transaction.amount = updates.amount;
+    }
+
+    if (updates.date !== undefined) {
+      transaction.date = this.normalizeDate(updates.date) as unknown as Date;
+    }
+
+    if (updates.categoryId !== undefined) {
+      const category = await this.categoryService.findById(updates.categoryId);
+      transaction.category = category;
+    }
+
+    transaction.status = TransactionStatus.CONFIRMED;
+    return await this.transactionRepository.save(transaction);
+  }
+
+  async confirmMany(ids: number[]): Promise<Transaction[]> {
+    const transactions: Transaction[] = [];
+    for(const id of ids) {
+      transactions.push(await this.confirm(id));
+    }
+    return transactions;
+  }
+
   private normalizeDate(input: Date | string): string {
     if (typeof input === 'string') {
       const datePrefix = input.match(/^\d{4}-\d{2}-\d{2}/)?.[0];

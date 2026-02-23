@@ -1,29 +1,58 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { TransactionService } from '../../dashboard/services/transaction.service';
 import { ReviewInboxViewComponent } from '../presentational/review-inbox.view.component';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
 import { Transaction } from '../../../shared/models/transaction.model';
+import { ReviewInboxService } from '../services/review-inbox.service';
+import { ReviewInboxForm } from '../models/review-inbox-form.model';
+import { CategoryService } from '../../dashboard/services/category.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 
 @Component({
   selector: 'app-review-inbox-page',
   standalone: true,
   imports: [ReviewInboxViewComponent],
   template: `
-    <app-review-inbox-view [inbox]="inbox()" (selectItem)="onSelectItem($event)"></app-review-inbox-view>
+    <app-review-inbox-view
+      [inbox]="inbox()"
+      [form]="formState()"
+      (selectItem)="onSelectItem($event)"
+      (formChange)="onFormChange($event)"
+      (confirmTransaction)="onConfirmTransaction()"
+      (confirmMany)="onConfirmMany()"
+    />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewInboxPageComponent {
-  private readonly transactions = inject(TransactionService);
-  private readonly pendingResource = this.transactions.getTransactionsByStatus(TransactionStatus.PENDING);
+  private readonly transactionService = inject(TransactionService);
+  private readonly reviewInboxService = inject(ReviewInboxService);
+  private readonly categoryService = inject(CategoryService);
+  private readonly modalService = inject(NgbModal);
+  private readonly pendingResource = this.transactionService.getTransactionsByStatus(TransactionStatus.PENDING);
   private readonly selectedItemId = signal<string | null>(null);
+
+  readonly formState = signal<ReviewInboxForm>(this.emptyForm());
+
+  categories = this.categoryService.getCategories();
+
+  constructor() {
+    effect(() => {
+      const selected = this.inbox().selectedItem;
+      if (!selected || selected.id === this.formState().id) {
+        return;
+      }
+      this.formState.set(this.toForm(selected));
+    });
+  }
 
   //Computed for mapping transactions to inbox state and have the reactivity to update the view
   readonly inbox = computed(() => {
     const items = (this.pendingResource.value() ?? []).map((tx) => this.toInboxItem(tx));
     const selectedItem = this.pickSelectedItem(items, this.selectedItemId());
-    const categoryOptions = this.getCategoryOptions(items);
+    const categoryOptions = this.categories.value();
     return {
       pendingCount: items.length,
       items,
@@ -34,6 +63,59 @@ export class ReviewInboxPageComponent {
 
   onSelectItem(item: InboxItem) {
     this.selectedItemId.set(item.id);
+  }
+
+  onFormChange(formUpdate: Partial<ReviewInboxForm>) {
+    this.formState.update((current) => ({ ...current, ...formUpdate }));
+  }
+
+  onConfirmTransaction() {
+    const form = this.formState();
+    if (!form.id || form.id === 'empty') {
+      return;
+    }
+
+    this.reviewInboxService.confirmTransaction(form.id, {
+      amount: Number(form.amount),
+      date: form.date,
+      description: form.merchant,
+      categoryId: form.categoryId
+    }).subscribe({
+      next: () => {
+        this.pendingResource.reload();
+        this.selectedItemId.set(null);
+      }
+    });
+  }
+
+  onConfirmMany() {
+    const itemsToConfirm = this.inbox().items.filter(item => item.id !== 'empty').map(item => Number(item.id));
+
+    if (itemsToConfirm.length === 0) {
+      return;
+    }
+    const modalRef = this.modalService.open(ConfirmModalComponent, { centered: true });
+    modalRef.componentInstance.title = 'Confirmar todas las transacciones';
+    modalRef.componentInstance.message = `Estas seguro de que deseas confirmar las ${itemsToConfirm.length} transacciones pendientes? Esta accion no se puede deshacer.`;
+    modalRef.componentInstance.confirmText = 'Confirmar';
+    modalRef.componentInstance.cancelText = 'Cancelar';
+    modalRef.componentInstance.tone = 'primary';
+    
+    modalRef.componentInstance.confirmRequested.subscribe(() => {
+      this.confirmManyTransactions(itemsToConfirm);
+      modalRef.close();
+    });
+
+    modalRef.componentInstance.dismissRequested.subscribe(() => modalRef.dismiss());
+  }
+
+  private confirmManyTransactions(ids: number[]) {
+    this.reviewInboxService.confirmMany(ids).subscribe({
+      next: () => {
+        this.pendingResource.reload();
+        this.selectedItemId.set(null);
+      }
+    });
   }
 
   private pickSelectedItem(items: InboxItem[], selectedId: string | null): InboxItem {
@@ -49,10 +131,12 @@ export class ReviewInboxPageComponent {
   private toInboxItem(transaction: Transaction): InboxItem {
     const categoryName = transaction.category?.name ?? 'Sin categoria';
     const categoryIcon = transaction.category?.icon ?? '';
+    const categoryId = transaction.category?.id ?? '';
     const dateValue = this.formatDateValue(transaction.date);
     const amount = this.parseAmount(transaction.amount);
     return {
       id: String(transaction.id),
+      categoryId,
       merchant: transaction.description,
       category: categoryName,
       categoryIcon,
@@ -70,6 +154,7 @@ export class ReviewInboxPageComponent {
   private emptyItem(): InboxItem {
     return {
       id: 'empty',
+      categoryId: '',
       merchant: 'Sin transacciones pendientes',
       category: '',
       categoryIcon: '',
@@ -83,14 +168,24 @@ export class ReviewInboxPageComponent {
     };
   }
 
-  private getCategoryOptions(items: InboxItem[]): string[] {
-    const options = Array.from(
-      new Set(items.map((item) => item.category).filter((category) => category))
-    );
-    if (options.length === 0) {
-      return ['Sin categoria'];
-    }
-    return options;
+  private toForm(item: InboxItem): ReviewInboxForm {
+    return {
+      id: item.id,
+      categoryId: item.categoryId ?? '',
+      merchant: item.merchant,
+      date: item.dateValue,
+      amount: item.amountValue
+    };
+  }
+
+  private emptyForm(): ReviewInboxForm {
+    return {
+      id: '',
+      categoryId: '',
+      merchant: '',
+      date: '',
+      amount: ''
+    };
   }
 
   private formatDateLabel(value: Date | string): string {
