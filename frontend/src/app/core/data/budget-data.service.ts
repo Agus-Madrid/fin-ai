@@ -1,81 +1,72 @@
 import { Injectable } from '@angular/core';
-import { of } from 'rxjs';
-import { BudgetVm } from '../../shared/models/budget.model';
+import { BudgetVm, IncomeSource } from '../../shared/models/budget.model';
+import { Income } from '../../shared/models/income.model';
+import { FixedCommitment } from '../../shared/models/fixed-commitment.model';
+
+const DEFAULT_INCOME_SOURCE = 'Ingreso manual';
+const DEFAULT_FIXED_CATEGORY = 'Compromiso fijo';
 
 @Injectable({ providedIn: 'root' })
 export class BudgetDataService {
-  getBudgetVm() {
-    const vm: BudgetVm = {
-      currency: 'USD',
-      incomeSources: [
-        {
-          id: 'inc-1',
-          label: 'Salario Principal',
-          source: 'Enterprise Tech Corp.',
-          amount: 6000,
-          status: 'Confirmado',
-          timing: 'Depósito directo · 1°',
-          progress: 100
-        },
-        {
-          id: 'inc-2',
-          label: 'Freelance',
-          source: 'Consulting Hours',
-          amount: 1200,
-          status: 'Pendiente',
-          timing: 'Facturado · Net 30',
-          progress: 60
-        }
-      ],
-      fixedExpenses: [
-        {
-          id: 'fix-1',
-          name: 'Alquiler & Seguro',
-          category: 'Vivienda',
-          amount: 1950,
-          progress: 90,
-          icon: 'bi-house'
-        },
-        {
-          id: 'fix-2',
-          name: 'Servicios',
-          category: 'Variable',
-          amount: 200,
-          progress: 45,
-          icon: 'bi-lightning-charge'
-        },
-        {
-          id: 'fix-3',
-          name: 'SaaS Suite',
-          category: 'Tecnología',
-          amount: 150,
-          progress: 20,
-          icon: 'bi-diagram-3'
-        },
-        {
-          id: 'fix-4',
-          name: 'Transporte',
-          category: 'Estimado',
-          amount: 1150,
-          progress: 70,
-          icon: 'bi-car-front'
-        }
-      ],
+  buildBudgetVm(incomes: Income[], fixedCommitments: FixedCommitment[]): BudgetVm {
+    const incomeSources = incomes.map((income, index) =>
+      this.toIncomeSource(income, index)
+    );
+    const fixedExpenses = fixedCommitments.map((commitment) =>
+      this.toFixedExpense(commitment)
+    );
+    const totalIncome = incomeSources.reduce((sum, income) => sum + income.amount, 0);
+    const totalFixed = fixedExpenses.reduce((sum, fixed) => sum + fixed.amount, 0);
+    const discretionary = Math.max(totalIncome - totalFixed, 0);
+    const remainderPercent = totalIncome > 0
+      ? Math.round((discretionary / totalIncome) * 100)
+      : 0;
+
+    return {
+      currency: 'UYU',
+      incomeSources,
+      fixedExpenses,
       savings: {
         monthlyGoal: 1500,
         progress: 70,
         projectedMessage:
-          'Tu fondo de emergencia estará completo en 3.4 meses. Un extra de $200 reduce 2 semanas.'
+          'Tu fondo de emergencia estara completo en 3,4 meses. Un extra de $200 reduce 2 semanas.'
       },
       commitments: {
-        preCommitted: 4950,
-        discretionary: 2250,
-        remainderPercent: 31
+        preCommitted: totalFixed,
+        discretionary,
+        remainderPercent
       },
-      totalIncome: 7200,
-      totalFixed: 3450
+      totalIncome,
+      totalFixed
     };
+  }
 
-    return of(vm);
+  private toIncomeSource(income: Income, index: number): IncomeSource {
+    const parsedAmount = Number(income.amount);
+
+    return {
+      id: income.id,
+      label: income.name,
+      source: income.description ?? DEFAULT_INCOME_SOURCE,
+      amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
+      status: 'Confirmado',
+      timing: `Actualizado · #${index + 1}`,
+      progress: 100
+    };
+  }
+
+  private toFixedExpense(commitment: FixedCommitment) {
+    const parsedAmount = Number(commitment.amount);
+    const amount = Number.isFinite(parsedAmount) ? parsedAmount : 0;
+
+    return {
+      id: commitment.id,
+      name: commitment.name,
+      category: commitment.description ?? DEFAULT_FIXED_CATEGORY,
+      amount,
+      progress: 100,
+      icon: 'bi-receipt'
+    };
   }
 }

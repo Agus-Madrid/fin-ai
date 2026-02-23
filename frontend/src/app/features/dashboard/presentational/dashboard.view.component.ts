@@ -10,7 +10,7 @@ import {
   ResourceRef,
   viewChild
 } from '@angular/core';
-import { CurrencyPipe, NgFor, SlicePipe } from '@angular/common';
+import { CurrencyPipe, NgClass, NgFor, SlicePipe } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, ScriptableContext, TooltipItem, registerables } from 'chart.js';
 import { Category } from '../../../shared/models/category.model';
@@ -35,24 +35,29 @@ interface DashboardThemeColors {
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [NgFor, CurrencyPipe, ReactiveFormsModule, SlicePipe],
+  imports: [NgFor, NgClass, CurrencyPipe, ReactiveFormsModule, SlicePipe],
   templateUrl: './dashboard.view.component.html',
   styleUrl: './dashboard.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardViewComponent {
   TransactionStatus = TransactionStatus;
+  private readonly locale = 'es-UY';
   private readonly destroyRef = inject(DestroyRef);
-  private readonly compactNumberFormatter = new Intl.NumberFormat('en-US', {
+  private readonly compactNumberFormatter = new Intl.NumberFormat(this.locale, {
     notation: 'compact',
     maximumFractionDigits: 1
   });
-  private readonly currencyFormatter = new Intl.NumberFormat('en-US', {
+  private readonly currencyFormatter = new Intl.NumberFormat(this.locale, {
     style: 'currency',
-    currency: 'USD',
+    currency: 'UYU',
     maximumFractionDigits: 0
   });
-  private readonly trendDateFormatter = new Intl.DateTimeFormat('es-AR', {
+  private readonly percentFormatter = new Intl.NumberFormat(this.locale, {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  });
+  private readonly trendDateFormatter = new Intl.DateTimeFormat(this.locale, {
     day: '2-digit',
     month: 'short'
   });
@@ -66,6 +71,11 @@ export class DashboardViewComponent {
   readonly transactions = input.required<ResourceRef<Transaction[]>>();
   readonly transactionCategories = input.required<CategorySpend[]>();
   readonly user = input.required<User>();
+  readonly totalIncome = input(0);
+  readonly totalFixedExpenses = input(0);
+  readonly fixedExpensePercent = input(0);
+  readonly spendableBalance = input(0);
+  readonly spendablePercent = input(0);
   readonly manualTransactionFormGroup = input<FormGroup>();
   readonly categories = input<Category[]>([]);
   readonly submitTransaction = output<void>();
@@ -90,6 +100,19 @@ export class DashboardViewComponent {
 
   getSpendableLabel() {
     return 'Dinero Gastable';
+  }
+
+  getSpendableChipClass(): string {
+    return this.spendablePercent() >= 0 ? 'app-chip--success' : 'app-chip--danger';
+  }
+
+  getSpendableIconClass(): string {
+    return this.spendablePercent() >= 0 ? 'bi bi-arrow-up' : 'bi bi-arrow-down';
+  }
+
+  getSpendablePercentLabel(): string {
+    const absolute = Math.abs(this.spendablePercent());
+    return `${this.percentFormatter.format(absolute)}%`;
   }
 
   getTotalCategoryAmount(): number {

@@ -14,15 +14,14 @@
 </section>
 
 <section class="app-grid app-grid--three mb-4">
-  <div class="app-card app-card--gradient dashboard-card">
-    <div class="app-stat__label">{{ getSpendableLabel() }}</div>
-    <div class="app-stat">
-      <div class="app-stat__value">
-      </div>
-      <span class="app-chip app-chip--success">
-        <i class="bi bi-arrow-up"></i>
-          %
-      </span>
+  <div class="app-card app-card--gradient dashboard-card dashboard-card--spendable">
+    <div class="app-stat__label dashboard-spendable__label">{{ getSpendableLabel() }}</div>
+    <span class="app-chip dashboard-spendable__chip" [ngClass]="getSpendableChipClass()">
+      <i class="bi" [ngClass]="getSpendableIconClass()"></i>
+      {{ getSpendablePercentLabel() }}
+    </span>
+    <div class="app-stat__value dashboard-spendable__value">
+      {{ spendableBalance() | currency: 'UYU':'symbol':'1.0-0' }}
     </div>
     <p class="text-muted mt-2 mb-0">
       Fórmula: Ingreso - Gastos Fijos - Ahorro. Disponible hoy sin comprometer metas.
@@ -33,16 +32,15 @@
     <div class="d-flex align-items-start justify-content-between">
       <div>
         <div class="app-stat__label">Ingreso Total</div>
-        <!-- TODO: 
-         <div class="fs-3 fw-semibold">
-          {{ user().incomeTotal | currency: user().currency:'symbol':'1.0-2' }}
-        </div> -->
+        <div class="fs-3 fw-semibold">
+          {{ totalIncome() | currency: 'UYU':'symbol':'1.0-2' }}
+        </div>
       </div>
       <span class="app-icon-pill"><i class="bi bi-wallet2"></i></span>
     </div>
     <div class="mt-3">
       <div class="progress dashboard-progress" style="height: 6px;">
-        <div class="progress-bar bg-primary" style="width: 100%"></div>
+        <div class="progress-bar bg-primary" [style.width.%]="totalIncome() > 0 ? 100 : 0"></div>
       </div>
     </div>
   </div>
@@ -51,10 +49,9 @@
     <div class="d-flex align-items-start justify-content-between">
       <div>
         <div class="app-stat__label">Gastos Fijos</div>
-        <!-- TODO
-         <div class="fs-3 fw-semibold">
-          {{ user().fixedExpenses | currency: 'USD':'symbol':'1.0-2' }}
-        </div> -->
+        <div class="fs-3 fw-semibold">
+          {{ totalFixedExpenses() | currency: 'UYU':'symbol':'1.0-2' }}
+        </div>
       </div>
       <span class="app-icon-pill text-danger border-danger" style="background: rgba(239,68,68,0.12);">
         <i class="bi bi-receipt"></i>
@@ -62,7 +59,7 @@
     </div>
     <div class="mt-3">
       <div class="progress dashboard-progress" style="height: 6px;">
-        <div class="progress-bar bg-danger" style="width: 65%"></div>
+        <div class="progress-bar bg-danger" [style.width.%]="fixedExpensePercent()"></div>
       </div>
     </div>
   </div>
@@ -70,14 +67,14 @@
   <div class="app-card dashboard-card">
     <div class="d-flex align-items-center justify-content-between">
       <div class="app-stat__label">Meta de Ahorro</div>
-      <span class="app-pill app-pill--success">49.8%</span>
+      <span class="app-pill app-pill--success">49,8%</span>
     </div>
     <div class="mt-3">
       <div class="fw-semibold">{{ user().savingGoals[0].name || 'Meta de ahorro' }}</div>
       <div class="text-muted">
-        {{ user().currentTotalSavings | currency: 'USD':'symbol':'1.0-0' }}
+        {{ user().currentTotalSavings | currency: 'UYU':'symbol':'1.0-0' }}
         de
-        {{ user().savingGoals[0].targetAmount | currency: 'USD':'symbol':'1.0-0' }}
+        {{ user().savingGoals[0].targetAmount | currency: 'UYU':'symbol':'1.0-0' }}
       </div>
       <div class="progress dashboard-progress mt-3" style="height: 10px;">
         <div class="progress-bar" style="width: 49.8%"></div>
@@ -113,7 +110,7 @@
                 <span class="text-muted category-row__name">{{ category.category.name }}</span>
               </div>
               <span class="fw-semibold category-row__amount">
-                {{ category.amount | currency: 'USD':'symbol':'1.0-0' }}
+                {{ category.amount | currency: 'UYU':'symbol':'1.0-0' }}
               </span>
             </div>
             <div class="category-row__track">
@@ -156,7 +153,7 @@
               <div class="text-muted-2" style="font-size: 0.75rem;">{{ tx.date }}</div>
             </div>
             <div class="fw-semibold">
-              {{ tx.amount | currency: 'USD':'symbol':'1.0-2' }}
+              {{ tx.amount | currency: 'UYU':'symbol':'1.0-2' }}
             </div>
           </div>
         </div>
@@ -187,7 +184,7 @@
               <td>{{ tx.description }}</td>
               <td><span class="app-pill">{{ tx.category.name }}</span></td>
               <td class="text-end fw-semibold">
-                {{ tx.amount | currency: 'USD':'symbol':'1.0-2' }}
+                {{ tx.amount | currency: 'UYU':'symbol':'1.0-2' }}
               </td>
             </tr>
             <tr class="bg-surface-2">
@@ -198,7 +195,7 @@
                   Seleccionar categoría <i class="bi bi-chevron-down"></i>
                 </button>
               </td>
-              <td class="text-end"><input class="app-input text-end" value="$210.00" /></td>
+              <td class="text-end"><input class="app-input text-end" value="$210,00" /></td>
             </tr>
           </tbody>
         </table>
@@ -232,7 +229,7 @@
           <label class="app-section-title" for="amountInput">Monto</label>
           <div class="position-relative">
             <span class="position-absolute top-50 start-0 translate-middle-y ms-3 text-muted">$</span>
-            <input id="amountInput" class="app-input ps-4" placeholder="0.00" type="number" formControlName="amount" />
+            <input id="amountInput" class="app-input ps-4" placeholder="0,00" type="text" inputmode="decimal" lang="es-UY" formControlName="amount" />
           </div>
         </div>
         <div>

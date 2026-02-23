@@ -7,9 +7,9 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Transaction } from './transaction.entity';
 import { Repository } from 'typeorm';
 import { CreateTransactionDto } from './dtos/create-transaction.dto';
-import { UserService } from '../user/user.service';
-import { CategoryService } from '../categories/category.service';
 import { TransactionStatus } from './transaction.enum';
+import { User } from '../user/user.entity';
+import { Category } from '../categories/category.entity';
 
 const TRANSACTION_RELATIONS = ['category', 'user'] as const;
 
@@ -18,8 +18,10 @@ export class TransactionsService {
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
-    private readonly userService: UserService,
-    private readonly categoryService: CategoryService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
   ) {}
 
   async findAll(): Promise<Transaction[]> {
@@ -78,13 +80,13 @@ export class TransactionsService {
   }
 
   async create(transactionData: CreateTransactionDto): Promise<Transaction> {
-    const user = await this.userService.findById(transactionData.userId);
-    const category = await this.categoryService.findById(
-      transactionData.categoryId,
-    );
+    const user = await this.findUserById(transactionData.userId);
+    const category = await this.findCategoryById(transactionData.categoryId);
     const transaction = this.transactionRepository.create({
-      ...transactionData,
+      amount: transactionData.amount,
+      description: transactionData.description,
       date: this.normalizeDate(transactionData.date),
+      status: transactionData.status,
       user,
       category,
     });
@@ -96,12 +98,14 @@ export class TransactionsService {
     updateData: CreateTransactionDto,
   ): Promise<Transaction> {
     const transaction = await this.findById(id);
-    const user = await this.userService.findById(updateData.userId);
-    const category = await this.categoryService.findById(updateData.categoryId);
+    const user = await this.findUserById(updateData.userId);
+    const category = await this.findCategoryById(updateData.categoryId);
 
     Object.assign(transaction, {
-      ...updateData,
+      amount: updateData.amount,
+      description: updateData.description,
       date: this.normalizeDate(updateData.date),
+      status: updateData.status,
       user,
       category,
     });
@@ -138,7 +142,7 @@ export class TransactionsService {
     }
 
     if (updates.categoryId !== undefined) {
-      const category = await this.categoryService.findById(updates.categoryId);
+      const category = await this.findCategoryById(updates.categoryId);
       transaction.category = category;
     }
 
@@ -171,5 +175,25 @@ export class TransactionsService {
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  }
+
+  private async findUserById(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    return user;
+  }
+
+  private async findCategoryById(categoryId: string): Promise<Category> {
+    const category = await this.categoryRepository.findOne({
+      where: { id: categoryId },
+    });
+    if (!category) {
+      throw new NotFoundException(`Category with id ${categoryId} not found`);
+    }
+
+    return category;
   }
 }

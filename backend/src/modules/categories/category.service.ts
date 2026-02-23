@@ -7,8 +7,8 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Category } from './category.entity';
 import { Repository } from 'typeorm';
 import { CreateCategoryDto } from './dtos/create-category.dto';
-import { UserService } from '../user/user.service';
 import { UpdateCategoryDto } from './dtos/update-category.dto';
+import { User } from '../user/user.entity';
 
 const CATEGORY_RELATIONS = ['user', 'transactions'] as const;
 const DEFAULT_CATEGORY_ICON = '💵';
@@ -19,7 +19,8 @@ export class CategoryService {
   constructor(
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
-    private readonly userService: UserService,
+    @InjectRepository(User)
+    private readonly userRepository: Repository<User>,
   ) {}
 
   async findAll(): Promise<Category[]> {
@@ -48,7 +49,7 @@ export class CategoryService {
 
   async create(categoryData: CreateCategoryDto): Promise<Category> {
     const name = this.normalizeName(categoryData.name);
-    const user = await this.userService.findById(categoryData.userId);
+    const user = await this.findUserById(categoryData.userId);
 
     const category = this.categoryRepository.create({
       name,
@@ -108,5 +109,14 @@ export class CategoryService {
     }
 
     return normalizedColor;
+  }
+
+  private async findUserById(userId: string): Promise<User> {
+    const user = await this.userRepository.findOne({ where: { id: userId } });
+    if (!user) {
+      throw new NotFoundException(`User with id ${userId} not found`);
+    }
+
+    return user;
   }
 }

@@ -10,6 +10,7 @@ import { Category } from '../categories/category.entity';
 import { SavingGoal } from '../savings-goals/saving-goal.entity';
 import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
 import { Upload } from '../uploads/upload.entity';
+import { Income } from '../incomes/incomes.entity';
 
 @Entity('users')
 export class User {
@@ -31,6 +32,9 @@ export class User {
   @Column({ name: 'current_total_savings' })
   currentTotalSavings: number;
 
+  @Column({ name: 'goal_monthly_savings' })
+  goalMonthlySavings: number;
+
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions: Transaction[];
 
@@ -45,4 +49,7 @@ export class User {
 
   @OneToMany(() => Upload, (upload) => upload.user)
   uploads: Upload[];
+
+  @OneToMany(() => Income, (income) => income.user)
+  incomes: Income[];
 }

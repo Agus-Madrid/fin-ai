@@ -6,10 +6,40 @@
   transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
 }
 
+.budget-list {
+  overflow-y: auto;
+  padding-right: 0.35rem;
+  max-height: 295px;
+}
+
+.budget-list::-webkit-scrollbar {
+  width: 7px;
+}
+
+.budget-list::-webkit-scrollbar-thumb {
+  background: rgba(140, 140, 152, 0.42);
+  border-radius: 999px;
+}
+
+.budget-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.budget-item--clickable {
+  cursor: pointer;
+}
+
 .budget-item:hover {
   transform: translateY(-1px);
   border-color: rgba(160, 160, 172, 0.38);
   box-shadow: 0 12px 22px rgba(0, 0, 0, 0.24);
+}
+
+.budget-item__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 .budget-row {
@@ -21,6 +51,10 @@
   border: 1px solid rgba(90, 90, 100, 0.22);
   background: rgba(255, 255, 255, 0.02);
   transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.budget-row--clickable {
+  cursor: pointer;
 }
 
 .budget-row:hover {
@@ -41,4 +75,75 @@
 
 .budget-row:hover .budget-row__icon {
   transform: scale(1.08);
+}
+
+.budget-actions {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.budget-actions__trigger {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 9px;
+}
+
+.budget-actions__menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 170px;
+  padding: 0.35rem;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: #0d1118;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  z-index: 50;
+}
+
+.budget-actions:focus-within .budget-actions__menu,
+.budget-actions:hover .budget-actions__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.budget-actions__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--app-text);
+  text-align: left;
+  font-size: 0.84rem;
+  font-weight: 600;
+  padding: 0.55rem 0.65rem;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.budget-actions__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.budget-actions__item.is-danger {
+  color: #fca5a5;
+}
+
+.budget-actions__item.is-danger:hover {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
 }

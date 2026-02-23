@@ -1,0 +1,33 @@
+<section class="modal-card app-card app-card--gradient" role="dialog" aria-modal="true" aria-labelledby="fixed-commitment-form-title">
+  <header class="modal-header">
+    <div>
+      <h2 id="fixed-commitment-form-title" class="modal-title">{{ title() }}</h2>
+      <p class="modal-subtitle">{{ subtitle() }}</p>
+    </div>
+    <button type="button" class="app-btn-ghost modal-close" aria-label="Close modal" (click)="dismissRequested.emit()">
+      <i class="bi bi-x-lg"></i>
+    </button>
+  </header>
+
+  <form *ngIf="form() as commitmentForm" class="modal-form" [formGroup]="commitmentForm">
+    <div class="form-group">
+      <label class="app-section-title" for="fixed-form-name">Nombre</label>
+      <input id="fixed-form-name" class="app-input" type="text" [formControlName]="formControlNames().name" />
+    </div>
+
+    <div class="form-group">
+      <label class="app-section-title" for="fixed-form-description">Descripcion</label>
+      <input id="fixed-form-description" class="app-input" type="text" [formControlName]="formControlNames().description" />
+    </div>
+
+    <div class="form-group">
+      <label class="app-section-title" for="fixed-form-amount">Monto</label>
+      <input id="fixed-form-amount" class="app-input" type="text" inputmode="decimal" lang="es-UY" [formControlName]="formControlNames().amount" />
+    </div>
+  </form>
+
+  <footer class="modal-actions">
+    <button type="button" class="app-btn-ghost" (click)="dismissRequested.emit()">{{ cancelText() }}</button>
+    <button type="button" class="app-btn-primary" (click)="onSave()">{{ saveText() }}</button>
+  </footer>
+</section>

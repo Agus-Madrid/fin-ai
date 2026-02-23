@@ -111,7 +111,9 @@
           <input
             id="review-amount"
             class="app-input"
-            type="number"
+            type="text"
+            inputmode="decimal"
+            lang="es-UY"
             [value]="form().amount"
             (input)="onFieldChange('amount', $any($event.target).value)"
           />
