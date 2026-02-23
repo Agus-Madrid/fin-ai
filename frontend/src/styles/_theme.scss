@@ -31,6 +31,7 @@ html {
     linear-gradient(180deg, #07080b 0%, #05060a 100%);
   background-repeat: no-repeat;
   background-attachment: fixed;
+  overscroll-behavior-x: none;
   overscroll-behavior-y: none;
 }
 
@@ -42,6 +43,7 @@ body {
     linear-gradient(180deg, #07080b 0%, #05060a 100%);
   background-repeat: no-repeat;
   background-attachment: fixed;
+  overscroll-behavior-x: none;
   overscroll-behavior-y: none;
   color: var(--app-text);
   font-family: "Inter", sans-serif;
