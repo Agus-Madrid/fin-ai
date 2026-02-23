@@ -10,6 +10,7 @@ const USER_RELATIONS = [
   'fixedCommitments',
   'uploads',
   'incomes',
+  'savingsLogs',
 ] as const;
 
 @Injectable()

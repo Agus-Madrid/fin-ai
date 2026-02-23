@@ -10,12 +10,13 @@ import {
   ResourceRef,
   viewChild
 } from '@angular/core';
-import { CurrencyPipe, NgClass, NgFor, SlicePipe } from '@angular/common';
+import { CurrencyPipe, DecimalPipe, NgClass, NgFor, NgIf, SlicePipe } from '@angular/common';
 import { FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { Chart, ScriptableContext, TooltipItem, registerables } from 'chart.js';
 import { Category } from '../../../shared/models/category.model';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
+import { SavingGoal } from '../../../shared/models/saving-goal.model';
 import { User } from '../../../shared/models/user.model';
 
 Chart.register(...registerables);
@@ -35,7 +36,7 @@ interface DashboardThemeColors {
 @Component({
   selector: 'app-dashboard-view',
   standalone: true,
-  imports: [NgFor, NgClass, CurrencyPipe, ReactiveFormsModule, SlicePipe],
+  imports: [NgFor, NgIf, NgClass, CurrencyPipe, DecimalPipe, ReactiveFormsModule, SlicePipe],
   templateUrl: './dashboard.view.component.html',
   styleUrl: './dashboard.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -60,6 +61,10 @@ export class DashboardViewComponent {
   private readonly trendDateFormatter = new Intl.DateTimeFormat(this.locale, {
     day: '2-digit',
     month: 'short'
+  });
+  private readonly goalDeadlineFormatter = new Intl.DateTimeFormat(this.locale, {
+    month: 'short',
+    year: 'numeric'
   });
 
   private readonly categoryChartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('categoryChart');
@@ -130,6 +135,58 @@ export class DashboardViewComponent {
       return 0;
     }
     return (amount / total) * 100;
+  }
+
+  getPrimarySavingGoal(): SavingGoal | null {
+    const savingGoals = this.user().savingGoals ?? [];
+    if (!savingGoals.length) {
+      return null;
+    }
+
+    return [...savingGoals].sort((a, b) => {
+      const byPriority = Number(a.priority ?? 1) - Number(b.priority ?? 1);
+      if (byPriority !== 0) {
+        return byPriority;
+      }
+
+      const aDeadline = new Date(a.deadline).getTime();
+      const bDeadline = new Date(b.deadline).getTime();
+      return aDeadline - bDeadline;
+    })[0] ?? null;
+  }
+
+  getSavingGoalProgressPercent(): number {
+    const savingGoal = this.getPrimarySavingGoal();
+    if (!savingGoal) {
+      return 0;
+    }
+
+    const targetAmount = Number(savingGoal.targetAmount);
+    if (!Number.isFinite(targetAmount) || targetAmount <= 0) {
+      return 0;
+    }
+
+    const currentTotalSavings = Number(this.user().currentTotalSavings);
+    if (!Number.isFinite(currentTotalSavings) || currentTotalSavings <= 0) {
+      return 0;
+    }
+
+    return Math.max(0, Math.min(100, (currentTotalSavings / targetAmount) * 100));
+  }
+
+  getSavingGoalProjectionLabel(): string {
+    const savingGoal = this.getPrimarySavingGoal();
+    if (!savingGoal) {
+      return 'Proyección: sin meta';
+    }
+
+    const deadline = new Date(savingGoal.deadline);
+    if (Number.isNaN(deadline.getTime())) {
+      return 'Proyección: sin fecha válida';
+    }
+
+    const formattedDeadline = this.goalDeadlineFormatter.format(deadline);
+    return `Proyección: ${formattedDeadline}`;
   }
 
   private renderCategoryChart(canvas: HTMLCanvasElement, categoryItems: CategorySpend[]) {

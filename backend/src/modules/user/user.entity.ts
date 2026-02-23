@@ -11,6 +11,7 @@ import { SavingGoal } from '../savings-goals/saving-goal.entity';
 import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
 import { Upload } from '../uploads/upload.entity';
 import { Income } from '../incomes/incomes.entity';
+import { SavingsLog } from '../savings-logs/savings-log.entity';
 
 @Entity('users')
 export class User {
@@ -29,10 +30,10 @@ export class User {
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 
-  @Column({ name: 'current_total_savings' })
+  @Column({ name: 'current_total_savings', default: 0 })
   currentTotalSavings: number;
 
-  @Column({ name: 'goal_monthly_savings' })
+  @Column({ name: 'goal_monthly_savings', default: 0 })
   goalMonthlySavings: number;
 
   @OneToMany(() => Transaction, (transaction) => transaction.user)
@@ -52,4 +53,7 @@ export class User {
 
   @OneToMany(() => Income, (income) => income.user)
   incomes: Income[];
+
+  @OneToMany(() => SavingsLog, (savingsLog) => savingsLog.user)
+  savingsLogs: SavingsLog[];
 }

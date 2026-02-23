@@ -10,6 +10,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/
 import { Income } from '../../../shared/models/income.model';
 import { FixedCommitment } from '../../../shared/models/fixed-commitment.model';
 import { FixedExpense, IncomeSource } from '../../../shared/models/budget.model';
+import { CreateSavingGoalRequest } from '../../../shared/models/saving-goal-create.model';
 import { FixedCommitmentFormModalContainerComponent } from '../modals/containers/fixed-commitment-form-modal.container.component';
 import {
   FIXED_COMMITMENT_FORM_CONTROL_NAMES,
@@ -23,13 +24,18 @@ import {
   imports: [BudgetPlannerViewComponent],
   template: `
     <app-budget-planner-view
-      [vm]="vm()"
+      [budgetViewModel]="budgetViewModel()"
       (addIncomeRequested)="openIncomeFormModal()"
       (editIncomeRequested)="editIncome($event)"
       (deleteIncomeRequested)="deleteIncome($event)"
       (addFixedCommitmentRequested)="openFixedCommitmentFormModal()"
       (editFixedCommitmentRequested)="editFixedCommitment($event)"
-      (deleteFixedCommitmentRequested)="deleteFixedCommitment($event)">
+      (deleteFixedCommitmentRequested)="deleteFixedCommitment($event)"
+      (createSavingGoalRequested)="createSavingGoal($event)"
+      (deleteSavingGoalRequested)="deleteSavingGoal($event)"
+      (updateMonthlyGoalRequested)="updateMonthlyGoalSavings($event)"
+      (confirmMonthlySavingsRequested)="confirmMonthlySavings($event)"
+      (skipMonthlySavingsRequested)="skipMonthlySavings()">
     </app-budget-planner-view>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -42,12 +48,11 @@ export class BudgetPlannerPageComponent {
 
   readonly incomesResource = this.budgetPlannerService.getIncomes();
   readonly fixedCommitmentsResource = this.budgetPlannerService.getFixedCommitments();
-  readonly vm = computed(() =>
-    this.data.buildBudgetVm(
-      this.incomesResource.value() ?? [],
-      this.fixedCommitmentsResource.value() ?? []
-    )
-  );
+  readonly savingGoalsResource = this.budgetPlannerService.getSavingGoals();
+  readonly currentPeriodSavingGoalsResource = this.budgetPlannerService.getActiveSavingGoals();
+  readonly userResource = this.budgetPlannerService.getUser();
+  readonly savingsLogsResource = this.budgetPlannerService.getSavingsLogs();
+  readonly budgetViewModel = computed(() => this.buildBudgetViewModel());
 
   openIncomeFormModal(income?: Income): void {
     const modalRef = this.modalService.open(IncomeFormModalContainerComponent, {
@@ -124,6 +129,52 @@ export class BudgetPlannerPageComponent {
       message: `Estas seguro de que deseas eliminar "${commitment.name}"? Esta accion no se puede deshacer.`,
       onConfirm: () => this.budgetPlannerService.deleteFixedCommitment(commitment.id),
       onCompleted: () => this.fixedCommitmentsResource.reload()
+    });
+  }
+
+  updateMonthlyGoalSavings(goalMonthlySavings: number) {
+    this.budgetPlannerService.updateMonthlyGoalSavings(goalMonthlySavings).subscribe({
+      next: () => this.userResource.reload()
+    });
+  }
+
+  confirmMonthlySavings(confirmedAmount: number) {
+    this.budgetPlannerService.confirmSavingsLog(
+      this.getCurrentPeriod(),
+      confirmedAmount,
+      'CONFIRMED'
+    ).subscribe({
+      next: () => this.reloadSavingsState()
+    });
+  }
+
+  skipMonthlySavings() {
+    this.budgetPlannerService.confirmSavingsLog(
+      this.getCurrentPeriod(),
+      undefined,
+      'SKIPPED'
+    ).subscribe({
+      next: () => this.reloadSavingsState()
+    });
+  }
+
+  createSavingGoal(request: CreateSavingGoalRequest) {
+    this.budgetPlannerService.createSavingGoal(request).subscribe({
+      next: () => this.reloadGoalsState()
+    });
+  }
+
+  deleteSavingGoal(goalId: string) {
+    const goal = (this.savingGoalsResource.value() ?? []).find((item) => item.id === goalId);
+    if (!goal) {
+      return;
+    }
+
+    this.openDeleteModal({
+      title: 'Eliminar meta de ahorro',
+      message: `Estas seguro de que deseas eliminar "${goal.name}"? Esta accion no se puede deshacer.`,
+      onConfirm: () => this.budgetPlannerService.deleteSavingGoal(goal.id),
+      onCompleted: () => this.reloadGoalsState()
     });
   }
 
@@ -243,5 +294,33 @@ export class BudgetPlannerPageComponent {
   private findCommitmentById(id: string): FixedCommitment | null {
     const commitments = this.fixedCommitmentsResource.value() ?? [];
     return commitments.find((commitment) => commitment.id === id) ?? null;
+  }
+
+  private reloadSavingsState() {
+    this.savingsLogsResource.reload();
+    this.userResource.reload();
+  }
+
+  private reloadGoalsState() {
+    this.savingGoalsResource.reload();
+    this.currentPeriodSavingGoalsResource.reload();
+    this.userResource.reload();
+  }
+
+  private getCurrentPeriod(): string {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${now.getFullYear()}-${month}`;
+  }
+
+  private buildBudgetViewModel() {
+    return this.data.buildBudgetViewModel(
+      this.incomesResource.value() ?? [],
+      this.fixedCommitmentsResource.value() ?? [],
+      this.userResource.value(),
+      this.savingsLogsResource.value() ?? [],
+      this.savingGoalsResource.value() ?? [],
+      this.currentPeriodSavingGoalsResource.value() ?? []
+    );
   }
 }

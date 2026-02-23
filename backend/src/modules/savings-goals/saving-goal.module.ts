@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
-import { CategoryController } from '../categories/category.controller';
-import { CategoryService } from './saving-goal.service';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '../user/user.entity';
+import { SavingGoalController } from './saving-goal.controller';
+import { SavingGoal } from './saving-goal.entity';
+import { SavingGoalService } from './saving-goal.service';
 
 @Module({
-  imports: [],
-  controllers: [CategoryController],
-  providers: [CategoryService],
+  imports: [TypeOrmModule.forFeature([SavingGoal, User])],
+  controllers: [SavingGoalController],
+  providers: [SavingGoalService],
+  exports: [SavingGoalService],
 })
-export class CategoryModule {}
+export class SavingsGoalsModule {}

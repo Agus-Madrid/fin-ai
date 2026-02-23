@@ -7,5 +7,6 @@ export interface User {
   email: string;
   createdAt: Date | string;
   currentTotalSavings: number;
+  goalMonthlySavings?: number;
   savingGoals: SavingGoal[];
 }

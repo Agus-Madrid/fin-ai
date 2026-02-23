@@ -20,7 +20,7 @@ import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
     <ng-container *ngIf="transactions">
       <app-dashboard-view
         [transactions]="transactions"
-        [user]="user"
+        [user]="dashboardUser()"
         [totalIncome]="totalIncome()"
         [totalFixedExpenses]="totalFixedExpenses()"
         [fixedExpensePercent]="fixedExpensePercent()"
@@ -55,6 +55,7 @@ export class DashboardPageComponent {
   readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
   readonly incomesResource = this.budgetPlannerService.getIncomes();
   readonly fixedCommitmentsResource = this.budgetPlannerService.getFixedCommitments();
+  readonly userResource = this.budgetPlannerService.getUser();
 
   readonly totalIncome = computed(() => this.sumAmounts(this.incomesResource.value() ?? []));
   readonly totalFixedExpenses = computed(() => this.sumAmounts(this.fixedCommitmentsResource.value() ?? []));
@@ -73,25 +74,9 @@ export class DashboardPageComponent {
     }
     return (this.spendableBalance() / income) * 100;
   });
+  readonly dashboardUser = computed(() => this.buildDashboardUser());
 
   readonly transactionCategories = computed(() => this.getTransactionCategories());
-  readonly user: User = {
-    id: 'user-001',
-    name: 'Sofia Mercado',
-    password: 'demo-password',
-    email: 'sofia.mercado@example.com',
-    createdAt: new Date('2026-02-10T10:00:00Z'),
-    currentTotalSavings: 1200,
-    savingGoals: [
-      {
-        id: 'goal-001',
-        name: 'Fondo de emergencia',
-        targetAmount: 5000,
-        deadline: new Date('2026-12-01'),
-        priority: 1
-      }
-    ]
-  };
 
   async createTransaction() {
     if (this.manualTransactionFormGroup.invalid) {
@@ -184,5 +169,26 @@ export class DashboardPageComponent {
       return 0;
     }
     return Math.max(0, Math.min(100, value));
+  }
+
+  private buildDashboardUser(): User {
+    const user = this.userResource.value();
+    if (user) {
+      return {
+        ...user,
+        savingGoals: user.savingGoals ?? []
+      };
+    }
+
+    return {
+      id: '',
+      name: 'Usuario',
+      password: '',
+      email: '',
+      createdAt: new Date(),
+      currentTotalSavings: 0,
+      goalMonthlySavings: 0,
+      savingGoals: []
+    };
   }
 }

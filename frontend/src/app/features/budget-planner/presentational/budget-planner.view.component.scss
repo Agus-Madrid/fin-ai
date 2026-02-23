@@ -1,3 +1,14 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+:host .app-grid.app-grid--two.budget-grid--uniform {
+  width: 100%;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  align-items: start;
+}
+
 .budget-item {
   padding: 1rem;
   border-radius: 14px;
@@ -146,4 +157,87 @@
 .budget-actions__item.is-danger:hover {
   background: rgba(239, 68, 68, 0.16);
   color: #fecaca;
+}
+
+.budget-card--full-width {
+  grid-column: 1 / -1;
+}
+
+.budget-savings__label {
+  font-size: 0.68rem;
+  letter-spacing: 0.16em;
+}
+
+.budget-savings-control__label {
+  display: block;
+  margin-bottom: 0.45rem;
+  font-size: 0.74rem;
+  color: var(--app-muted);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.budget-savings-control__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.budget-savings-chart {
+  height: 280px;
+}
+
+.commitment-caption {
+  font-size: 0.75rem;
+}
+
+.budget-goal-row {
+  padding: 0.9rem;
+  border-radius: 12px;
+  border: 1px solid rgba(90, 90, 100, 0.24);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.app-btn-ghost.is-danger {
+  color: #fca5a5;
+}
+
+.app-btn-ghost.is-danger:hover {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+.budget-goal-slider__controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.budget-goal-slider__button {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+
+.budget-goal-slider__button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  :host .app-grid.app-grid--two.budget-grid--uniform {
+    grid-template-columns: 1fr !important;
+  }
+
+  .budget-savings-control__row {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-savings-chart {
+    height: 240px;
+  }
 }
