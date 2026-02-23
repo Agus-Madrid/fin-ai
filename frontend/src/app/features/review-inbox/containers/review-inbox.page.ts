@@ -9,6 +9,7 @@ import { ReviewInboxForm } from '../models/review-inbox-form.model';
 import { CategoryService } from '../../dashboard/services/category.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
+import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
 
 @Component({
   selector: 'app-review-inbox-page',
@@ -74,9 +75,13 @@ export class ReviewInboxPageComponent {
     if (!form.id || form.id === 'empty') {
       return;
     }
+    const amount = parseUruguayNumber(form.amount);
+    if (!Number.isFinite(amount)) {
+      return;
+    }
 
     this.reviewInboxService.confirmTransaction(form.id, {
-      amount: Number(form.amount),
+      amount,
       date: form.date,
       description: form.merchant,
       categoryId: form.categoryId
@@ -144,7 +149,7 @@ export class ReviewInboxPageComponent {
       dateValue,
       amount,
       amountValue: this.formatAmountValue(amount),
-      currency: 'USD',
+      currency: 'UYU',
       status: 'Pendiente',
       confidence: 'medium',
       tag: transaction.category ? undefined : 'Sin categoria'
@@ -162,7 +167,7 @@ export class ReviewInboxPageComponent {
       dateValue: '',
       amount: 0,
       amountValue: '',
-      currency: 'USD',
+      currency: 'UYU',
       status: '',
       confidence: 'low'
     };
@@ -228,17 +233,17 @@ export class ReviewInboxPageComponent {
   }
 
   private parseAmount(amount: number | string): number {
-    if (typeof amount === 'number') {
-      return amount;
-    }
-    const parsed = Number(amount);
-    return Number.isNaN(parsed) ? 0 : parsed;
+    const parsed = parseUruguayNumber(amount);
+    return Number.isFinite(parsed) ? parsed : 0;
   }
 
   private formatAmountValue(amount: number): string {
     if (!Number.isFinite(amount)) {
       return '';
     }
-    return amount.toString();
+    return amount.toLocaleString('es-UY', {
+      useGrouping: false,
+      maximumFractionDigits: 2
+    });
   }
 }

@@ -47,6 +47,7 @@ export class SeedService implements OnApplicationBootstrap {
       email,
       password: 'demo',
       currentTotalSavings: 1200,
+      goalMonthlySavings: 500,
     });
     return this.users.save(user);
   }

@@ -8,13 +8,13 @@ import { UploadsViewComponent } from '../presentational/uploads.view.component';
   standalone: true,
   imports: [AsyncPipe, NgIf, UploadsViewComponent],
   template: `
-    <ng-container *ngIf="vm$ | async as vm">
-      <app-uploads-view [vm]="vm"></app-uploads-view>
+    <ng-container *ngIf="uploadViewModel$ | async as uploadViewModel">
+      <app-uploads-view [uploadViewModel]="uploadViewModel"></app-uploads-view>
     </ng-container>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UploadsPageComponent {
   private readonly data = inject(UploadsDataService);
-  readonly vm$ = this.data.getUploadsVm();
+  readonly uploadViewModel$ = this.data.getUploadsViewModel();
 }

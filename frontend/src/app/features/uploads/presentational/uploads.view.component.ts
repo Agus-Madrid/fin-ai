@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
 import { NgClass, NgFor, NgIf } from '@angular/common';
-import { UploadVm, UploadStatus } from '../../../shared/models/upload.model';
+import { UploadViewModel, UploadStatus } from '../../../shared/models/upload.model';
 
 @Component({
   selector: 'app-uploads-view',
@@ -11,7 +11,7 @@ import { UploadVm, UploadStatus } from '../../../shared/models/upload.model';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UploadsViewComponent {
-  readonly vm = input.required<UploadVm>();
+  readonly uploadViewModel = input.required<UploadViewModel>();
 
   getStatusLabel(status: UploadStatus) {
     if (status === 'processed') {

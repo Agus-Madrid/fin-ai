@@ -11,6 +11,9 @@ export class FixedCommitment {
   @Column({ name: 'name' })
   name: string;
 
+  @Column({ name: 'description', nullable: true })
+  description: string;
+
   @Column('decimal', {
     name: 'amount',
     precision: 12,

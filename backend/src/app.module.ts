@@ -12,6 +12,9 @@ import { UserModule } from './modules/user/user.module';
 import { FixedCommitmentsModule } from './modules/fixed-commitments/fixed-commitments.module';
 import { SeedModule } from './modules/seed/seed.module';
 import { CategoryModule } from './modules/categories/category.module';
+import { IncomesModule } from './modules/incomes/incomes.module';
+import { SavingsLogsModule } from './modules/savings-logs/savings-logs.module';
+import { SavingsGoalsModule } from './modules/savings-goals/saving-goal.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { CategoryModule } from './modules/categories/category.module';
     UserModule,
     FixedCommitmentsModule,
     SeedModule,
+    IncomesModule,
+    SavingsLogsModule,
+    SavingsGoalsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
