@@ -1,5 +1,5 @@
-﻿import { AsyncPipe, NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { NgIf } from '@angular/common';
+import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -20,7 +20,7 @@ import { TransactionStatus } from '../../../shared/enum/transaction-status.enum'
         [transactions]="transactions"
         [user]="user"
         [manualTransactionFormGroup]="manualTransactionFormGroup"
-        [transactionCategories]="getTransactionCategories()"
+        [transactionCategories]="transactionCategories()"
         [categories]="categories()"
         (submitTransaction)="createTransaction()"
       ></app-dashboard-view>
@@ -45,6 +45,7 @@ export class DashboardPageComponent {
   readonly categories = this.categoriesResource.value;
 
   readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
+  readonly transactionCategories = computed(() => this.getTransactionCategories());
   readonly user: User = {
     id: 'user-001',
     name: 'Sofia Mercado',
@@ -78,6 +79,8 @@ export class DashboardPageComponent {
         categoryId: formValue.categoryId
       })
     );
+
+    this.transactions.reload();
 
     this.manualTransactionFormGroup.reset({
       amount: 0,
@@ -121,7 +124,7 @@ export class DashboardPageComponent {
       const categoryFromCatalog = categoriesById.get(categoryId);
       const fallbackCategory: Category = {
         id: 'uncategorized',
-        name: 'Sin categoría',
+        name: 'Sin categoria',
         icon: 'bi bi-question-circle',
         color: '#7d7d86'
       };
@@ -133,4 +136,3 @@ export class DashboardPageComponent {
     return Array.from(categoriesMap.values()).sort((a, b) => b.amount - a.amount);
   }
 }
-

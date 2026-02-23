@@ -92,6 +92,7 @@
   font-size: 0.9rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  color-scheme: dark;
 }
 
 .app-input:focus,
@@ -99,6 +100,38 @@
 .app-textarea:focus {
   border-color: rgba(184, 184, 196, 0.6);
   box-shadow: 0 0 0 0.2rem rgba(184, 184, 196, 0.14);
+}
+
+.app-input::placeholder,
+.app-textarea::placeholder {
+  color: var(--app-muted-2);
+}
+
+.app-select option,
+.app-select optgroup {
+  background: #0f141a;
+  color: var(--app-text);
+}
+
+.app-input:-webkit-autofill,
+.app-input:-webkit-autofill:hover,
+.app-input:-webkit-autofill:focus,
+.app-textarea:-webkit-autofill,
+.app-textarea:-webkit-autofill:hover,
+.app-textarea:-webkit-autofill:focus,
+.app-select:-webkit-autofill,
+.app-select:-webkit-autofill:hover,
+.app-select:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--app-text);
+  box-shadow: 0 0 0 1000px #0f141a inset;
+  transition: background-color 9999s ease-out 0s;
+}
+
+.app-input:-moz-autofill,
+.app-textarea:-moz-autofill,
+.app-select:-moz-autofill {
+  box-shadow: 0 0 0 1000px #0f141a inset;
+  -moz-text-fill-color: var(--app-text);
 }
 
 .app-btn-primary {
