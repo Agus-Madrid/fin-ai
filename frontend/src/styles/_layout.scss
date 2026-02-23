@@ -11,12 +11,30 @@
 }
 
 .app-page__header {
+  position: relative;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid rgba(70, 70, 80, 0.42);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.08), transparent 44%),
+    radial-gradient(circle at 90% 0%, rgba(120, 120, 130, 0.08), transparent 40%),
+    linear-gradient(145deg, #0f1217 0%, #090c11 100%);
   margin-bottom: 2rem;
+  overflow: hidden;
+}
+
+.app-page__header::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
+  opacity: 0.35;
+  pointer-events: none;
 }
 
 .app-page__title {
@@ -47,8 +65,40 @@
   grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
 }
 
+app-dashboard-page,
+app-transactions-page,
+app-review-inbox-page,
+app-categories-page,
+app-budget-planner-page,
+app-uploads-page {
+  display: block;
+  animation: app-page-enter 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes app-page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 @media (max-width: 992px) {
   .app-grid--dash {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  app-dashboard-page,
+  app-transactions-page,
+  app-review-inbox-page,
+  app-categories-page,
+  app-budget-planner-page,
+  app-uploads-page {
+    animation: none;
   }
 }

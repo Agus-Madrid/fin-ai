@@ -1,83 +1,79 @@
-<section class="app-page__header">
+<section class="app-page__header tx-hero">
   <div>
-    <div class="app-page__title">Transactions Ledger</div>
+    <div class="app-page__title tx-hero__title">Transactions Ledger</div>
     <div class="app-page__subtitle">Todos los movimientos en cuentas conectadas.</div>
   </div>
-  <div class="d-flex flex-wrap align-items-center gap-2">
-    <button class="app-btn-ghost"><i class="bi bi-funnel me-2"></i>Filtros</button>
-    <button class="app-btn-ghost"><i class="bi bi-arrow-down-up me-2"></i>Ordenar</button>
-    <button class="app-btn-ghost"><i class="bi bi-download me-2"></i>Exportar</button>
-    <button class="app-btn-primary"><i class="bi bi-plus-lg me-2"></i>Nuevo gasto</button>
+  <div class="d-flex flex-wrap align-items-center gap-2 tx-hero__actions">
+    <button type="button" class="app-btn-ghost tx-btn-ghost"><i class="bi bi-funnel me-2"></i>Filtros</button>
+    <button type="button" class="app-btn-ghost tx-btn-ghost"><i class="bi bi-arrow-down-up me-2"></i>Ordenar</button>
+    <button type="button" class="app-btn-ghost tx-btn-ghost"><i class="bi bi-download me-2"></i>Exportar</button>
+    <button type="button" class="app-btn-primary" (click)="createTransaction()"><i class="bi bi-plus-lg me-2"></i>Nuevo gasto</button>
   </div>
 </section>
 
-<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3 tx-filters">
   <span class="text-muted text-uppercase" style="font-size: 0.7rem; letter-spacing: 0.14em;">Filtros activos</span>
-  <span class="app-pill">Fecha: {{ vm.filters.dateRange }}</span>
-  <span class="app-pill">Cuenta: {{ vm.filters.account }}</span>
-  <button class="app-btn-ghost">+ Agregar filtro</button>
+  <span class="app-pill">Fecha: </span>
+  <span class="app-pill">Cuenta: </span>
+  <button type="button" class="app-btn-ghost tx-btn-ghost">+ Agregar filtro</button>
 </div>
 
-<div class="app-card">
-  <div class="table-responsive">
-    <table class="app-table">
+<div class="app-card transactions-card">
+  <div class="table-responsive transactions-table-responsive">
+    <table class="app-table" >
       <thead>
         <tr>
           <th>Fecha</th>
           <th>Descripción</th>
           <th>Categoría</th>
-          <th>Método</th>
           <th class="text-end">Monto</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr *ngFor="let tx of vm.transactions" [class.is-highlight]="tx.id === vm.highlightedId">
-          <td>{{ tx.dateLabel }}</td>
+        <tr
+          *ngFor="let tx of transactions().value() ?? []; let index = index"
+          [class.bg-surface-2]="tx.status === TransactionStatus.PENDING"
+          [style.--row-index]="index">
+          <td>{{ tx.date }}</td>
           <td>
             <div class="d-flex align-items-center gap-2">
-              <span class="app-icon-pill" [class.bg-success]="tx.type === 'income'">
-                <i class="bi" [ngClass]="tx.icon"></i>
+              <span class="app-icon-pill" [style.background]="tx.category.color">
+                <i>{{tx.category.icon}}</i>
               </span>
               <div>
-                <div class="fw-semibold">{{ tx.merchant }}</div>
-                <div class="text-muted-2" style="font-size: 0.7rem;" *ngIf="tx.note">{{ tx.note }}</div>
+                <div class="fw-semibold">{{ tx.description }}</div>
               </div>
             </div>
           </td>
-          <td><span class="app-pill">{{ tx.category }}</span></td>
-          <td class="text-muted-2">{{ tx.method }}</td>
+          <td><span class="app-pill">{{ tx.category.name  }}</span></td>
           <td class="text-end fw-semibold">
-            {{ formatAmount(tx) | currency: vm.currency:'symbol':'1.0-2' }}
+            {{ tx.amount | currency: 'USD':'symbol':'1.0-2' }}
           </td>
           <td class="text-end">
-            <button class="app-btn-ghost"><i class="bi bi-three-dots"></i></button>
+            <div class="tx-actions">
+              <button type="button" class="app-btn-ghost tx-actions__trigger" aria-haspopup="menu" aria-label="Transaction actions">
+                <i class="bi bi-three-dots"></i>
+              </button>
+              <div class="tx-actions__menu" role="menu">
+                <button type="button" class="tx-actions__item" role="menuitem" (click)="editTransaction(tx)">
+                  <i class="bi bi-pencil-square"></i>
+                  Editar
+                </button>
+                <button type="button" class="tx-actions__item" role="menuitem">
+                  <i class="bi bi-arrow-counterclockwise"></i>
+                  Reabrir revisión
+                </button>
+                <button type="button" class="tx-actions__item is-danger" role="menuitem" (click)="deleteTransaction(tx)">
+                  <i class="bi bi-trash3"></i>
+                  Eliminar
+                </button>
+              </div>
+            </div>
           </td>
         </tr>
-        <tr class="is-edit">
-          <td><input class="app-input" value="20 Feb 2026" /></td>
-          <td>
-            <input class="app-input" value="Unknown Merchant 1002" />
-          </td>
-          <td>
-            <button class="app-btn-ghost w-100 d-flex align-items-center justify-content-between">
-              Seleccionar <i class="bi bi-chevron-down"></i>
-            </button>
-          </td>
-          <td class="text-muted-2">Visa ·• 8822</td>
-          <td class="text-end"><input class="app-input text-end" value="$210.00" /></td>
-          <td class="text-end">
-            <button class="app-btn-primary"><i class="bi bi-check-lg"></i></button>
-          </td>
-        </tr>
+       
       </tbody>
     </table>
-  </div>
-  <div class="d-flex align-items-center justify-content-between mt-3 text-muted-2" style="font-size: 0.75rem;">
-    <span>Mostrando {{ vm.rangeLabel }} de {{ vm.totalCount }} resultados</span>
-    <div class="d-flex gap-2">
-      <button class="app-btn-ghost"><i class="bi bi-chevron-left"></i></button>
-      <button class="app-btn-ghost"><i class="bi bi-chevron-right"></i></button>
-    </div>
   </div>
 </div>

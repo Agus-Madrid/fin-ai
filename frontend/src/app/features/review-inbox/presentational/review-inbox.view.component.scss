@@ -12,16 +12,24 @@
 .review-item {
   padding: 1rem;
   border-radius: 14px;
-  border: 1px solid transparent;
-  background: var(--app-surface-2);
+  border: 1px solid rgba(86, 86, 96, 0.28);
+  background: linear-gradient(180deg, #12161c 0%, #0e1218 100%);
   display: grid;
   gap: 0.4rem;
   cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+}
+
+.review-item:hover {
+  transform: translateY(-1px);
+  border-color: rgba(160, 160, 172, 0.36);
+  background: linear-gradient(180deg, #171c24 0%, #12171f 100%);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.25);
 }
 
 .review-item.is-active {
-  border-color: rgba(43, 108, 238, 0.5);
-  background: rgba(43, 108, 238, 0.08);
+  border-color: rgba(183, 183, 196, 0.4);
+  background: linear-gradient(180deg, #1d242f 0%, #141b26 100%);
 }
 
 .review-item__amount {
@@ -37,13 +45,18 @@
 }
 
 .review-avatar {
-  width: 52px;
-  height: 52px;
+  width: 68px;
+  height: 68px;
   border-radius: 50%;
-  background: #fff;
-  color: #111;
+  background: transparent;
+  color: inherit;
   display: grid;
   place-items: center;
   font-weight: 700;
-  font-size: 0.75rem;
+  font-size: 1.5rem;
+  transition: transform 0.2s ease;
+}
+
+.review-avatar:hover {
+  transform: scale(1.06);
 }

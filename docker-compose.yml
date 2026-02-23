@@ -1,0 +1,20 @@
+version: "3.9"
+
+services:
+  mysql:
+    build:
+      context: ./docker/mysql
+    container_name: finai-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: finai
+      MYSQL_USER: finai
+      MYSQL_PASSWORD: finai
+    volumes:
+      - finai-mysql-data:/var/lib/mysql
+    restart: unless-stopped
+
+volumes:
+  finai-mysql-data:

@@ -1,20 +1,34 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { CurrencyPipe, NgClass, NgFor, NgIf } from '@angular/common';
-import { TransactionsVm } from '../../../shared/models/transactions-page.model';
+import { ChangeDetectionStrategy, Component, input, output, ResourceRef } from '@angular/core';
+import { CurrencyPipe, NgClass, NgFor } from '@angular/common';
+import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
 
 @Component({
   selector: 'app-transactions-view',
   standalone: true,
-  imports: [NgFor, NgIf, NgClass, CurrencyPipe],
+  imports: [CurrencyPipe, NgFor],
   templateUrl: './transactions.view.component.html',
   styleUrl: './transactions.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class TransactionsViewComponent {
-  @Input({ required: true }) vm!: TransactionsVm;
+  TransactionStatus = TransactionStatus;
+  
+  readonly createRequested = output<void>();
+  readonly editRequested = output<Transaction>();
+  readonly deleteRequested = output<Transaction>();
+  readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
 
-  formatAmount(transaction: Transaction) {
-    return transaction.type === 'expense' ? -transaction.amount : transaction.amount;
+  createTransaction(): void {
+    this.createRequested.emit();
   }
+
+  editTransaction(tx:Transaction) {
+    this.editRequested.emit(tx);
+  }
+
+  deleteTransaction(tx: Transaction) {
+    this.deleteRequested.emit(tx);
+  }
+  
 }

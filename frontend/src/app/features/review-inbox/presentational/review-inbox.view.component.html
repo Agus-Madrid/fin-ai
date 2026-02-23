@@ -1,19 +1,21 @@
-<section class="app-page__header">
-  <div>
-    <div class="app-page__title">Review Inbox</div>
-    <div class="app-page__subtitle">Verifica y categoriza transacciones sugeridas por IA.</div>
-  </div>
-  <div class="d-flex align-items-center gap-3">
-    <span class="text-muted">{{ vm.pendingCount }} pendientes</span>
-    <button class="app-btn-primary">
-      <i class="bi bi-check-circle me-2"></i>
-      Aprobar todo
-    </button>
-  </div>
-</section>
+<div style="width: 100vw; margin-left: calc(50% - 50vw);">
+  <div style="max-width: 1200px; margin: 0 auto; padding: 0 1.5rem;">
+    <section class="app-page__header">
+      <div>
+        <div class="app-page__title">Review Inbox</div>
+        <div class="app-page__subtitle">Verifica y categoriza transacciones sugeridas por IA.</div>
+      </div>
+      <div class="d-flex align-items-center gap-3">
+        <span class="text-muted">{{ inbox().pendingCount }} pendientes</span>
+        <button class="app-btn-primary" (click)="confirmMany.emit()">
+          <i class="bi bi-check-circle me-2"></i>
+          Aprobar todo
+        </button>
+      </div>
+    </section>
 
-<section class="review-grid">
-  <div class="app-card">
+    <section class="review-grid">
+      <div class="app-card">
     <div class="d-flex align-items-center justify-content-between mb-3">
       <div class="fw-semibold">
         <i class="bi bi-clock-history me-2 text-warning"></i>
@@ -25,7 +27,13 @@
       </div>
     </div>
     <div class="review-list">
-      <div class="review-item" *ngFor="let item of vm.items" [class.is-active]="item.id === vm.selectedItem.id">
+      <div
+        class="review-item"
+        *ngFor="let item of inbox().items"
+        [class.is-active]="item.id === inbox().selectedItem.id"
+        (click)="selectItem.emit(item)"
+        (keydown.enter)="selectItem.emit(item)"
+      >
         <div class="review-item__main">
           <div class="fw-semibold">{{ item.merchant }}</div>
           <div class="text-muted-2">{{ item.category }} · {{ item.dateLabel }}</div>
@@ -55,16 +63,10 @@
     </div>
 
     <div class="d-flex align-items-center gap-3 mb-4">
-      <div class="review-avatar">UBER</div>
+      <div class="review-avatar">{{ inbox().selectedItem.categoryIcon }}</div>
       <div>
-        <div class="fw-semibold fs-5">{{ vm.selectedItem.merchant }}</div>
-        <div class="text-muted-2">{{ vm.selectedItem.dateLabel }}</div>
-      </div>
-      <div class="ms-auto text-end">
-        <div class="fw-bold fs-4">
-          -{{ vm.selectedItem.amount | currency: vm.selectedItem.currency:'symbol':'1.0-2' }}
-        </div>
-        <div class="text-muted-2 text-uppercase">Pendiente</div>
+        <div class="fw-semibold fs-5">{{ inbox().selectedItem.merchant }}</div>
+        <div class="text-muted-2">{{ inbox().selectedItem.dateLabel }}</div>
       </div>
     </div>
 
@@ -72,40 +74,59 @@
 
     <div class="d-flex flex-column gap-3">
       <div>
-        <label class="app-section-title">Categoría</label>
-        <select class="app-select">
-          <option>Transporte</option>
-          <option>Comida</option>
-          <option>Servicios</option>
+        <label class="app-section-title" for="review-category">Categoría</label>
+        <select
+          id="review-category"
+          class="app-select"
+          [value]="form().categoryId"
+          (change)="onFieldChange('categoryId', $any($event.target).value)"
+        >
+          <option *ngFor="let option of inbox().categoryOptions" [value]="option.id">
+            {{ option.name }}
+          </option>
         </select>
       </div>
       <div>
-        <label class="app-section-title">Comercio</label>
-        <input class="app-input" [value]="vm.selectedItem.merchant" />
+        <label class="app-section-title" for="review-merchant">Comercio</label>
+        <input
+          id="review-merchant"
+          class="app-input"
+          [value]="form().merchant"
+          (input)="onFieldChange('merchant', $any($event.target).value)"
+        />
       </div>
       <div class="row g-3">
         <div class="col-6">
-          <label class="app-section-title">Fecha</label>
-          <input class="app-input" type="date" value="2026-02-24" />
+          <label class="app-section-title" for="review-date">Fecha</label>
+          <input
+            id="review-date"
+            class="app-input"
+            type="date"
+            [value]="form().date"
+            (input)="onFieldChange('date', $any($event.target).value)"
+          />
         </div>
         <div class="col-6">
-          <label class="app-section-title">Monto</label>
-          <input class="app-input" type="number" value="24.50" />
+          <label class="app-section-title" for="review-amount">Monto</label>
+          <input
+            id="review-amount"
+            class="app-input"
+            type="number"
+            [value]="form().amount"
+            (input)="onFieldChange('amount', $any($event.target).value)"
+          />
         </div>
       </div>
-      <div>
-        <label class="app-section-title">Notas</label>
-        <textarea class="app-textarea" rows="3" placeholder="Agrega una nota"></textarea>
-      </div>
-      <div class="d-flex align-items-center gap-2">
-        <input class="form-check-input" type="checkbox" id="recurring" />
-        <label class="text-muted-2" for="recurring">Marcar como suscripción recurrente</label>
-      </div>
+      
     </div>
 
     <div class="d-flex justify-content-end gap-2 mt-4">
       <button class="app-btn-ghost">Saltar</button>
-      <button class="app-btn-primary">Aprobar transacción</button>
+      <button class="app-btn-primary" (click)="onConfirmTransaction()">Aprobar transacción</button>
     </div>
+      </div>
+    </section>
   </div>
-</section>
+</div>
+
+

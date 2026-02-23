@@ -1,0 +1,120 @@
+<section class="app-page__header">
+  <div>
+    <div class="app-page__title">Categorias</div>
+    <div class="app-page__subtitle">Crea y edita tus categorias personalizadas.</div>
+  </div>
+</section>
+
+<section class="categories-stack">
+  <article class="app-card categories-create-card">
+    <div class="fw-semibold mb-3">Nueva categoria</div>
+    <form class="categories-form" [formGroup]="createForm" (ngSubmit)="createCategory()">
+      <div class="categories-form-row">
+        <div>
+          <label class="app-section-title" for="new-category-name">Nombre</label>
+          <input
+            id="new-category-name"
+            class="app-input categories-name-input"
+            type="text"
+            placeholder="Ej: Salud y bienestar"
+            formControlName="name" />
+        </div>
+        <div>
+          <label class="app-section-title" for="new-category-icon">Emoji</label>
+          <input
+            id="new-category-icon"
+            class="app-input categories-icon-input"
+            type="text"
+            placeholder="💵"
+            formControlName="icon" />
+        </div>
+        <div>
+          <label class="app-section-title" for="new-category-color">Color</label>
+          <div class="categories-color-editor">
+            <input
+              id="new-category-color"
+              class="form-control form-control-color categories-color-input"
+              type="color"
+              formControlName="color" />
+            <input
+              class="app-input categories-color-code"
+              type="text"
+              placeholder="#64748b"
+              [value]="createForm.controls.color.value"
+              (input)="onCreateColorInput($event)" />
+          </div>
+        </div>
+        <button class="app-btn-primary categories-create-btn" type="submit">Crear categoria</button>
+      </div>
+    </form>
+  </article>
+
+  <article class="app-card categories-table-card">
+    <div class="fw-semibold mb-3">Categorias existentes</div>
+    <div class="table-responsive" *ngIf="categories().length > 0; else emptyState">
+      <table class="app-table">
+        <thead>
+          <tr>
+            <th>Vista</th>
+            <th>Emoji</th>
+            <th>Nombre</th>
+            <th>Color</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let category of categories(); trackBy: trackByCategoryId">
+            <td class="categories-preview-cell">
+              <div
+                class="categories-color-dot"
+                [style.background]="drafts()[category.id]?.color ?? category.color">
+              </div>
+              <span class="categories-emoji-preview">{{ drafts()[category.id]?.icon ?? category.icon }}</span>
+            </td>
+            <td class="categories-emoji-cell">
+              <input
+                class="app-input categories-icon-input"
+                type="text"
+                [value]="drafts()[category.id]?.icon ?? category.icon"
+                (input)="onDraftInput(category.id, 'icon', $event)" />
+            </td>
+            <td>
+              <input
+                class="app-input categories-name-input"
+                type="text"
+                [value]="drafts()[category.id]?.name ?? category.name"
+                (input)="onDraftInput(category.id, 'name', $event)" />
+            </td>
+            <td>
+              <div class="categories-color-editor">
+                <input
+                  class="form-control form-control-color categories-color-input"
+                  type="color"
+                  [value]="drafts()[category.id]?.color ?? category.color"
+                  (input)="onDraftInput(category.id, 'color', $event)" />
+                <input
+                  class="app-input categories-color-code"
+                  type="text"
+                  [value]="drafts()[category.id]?.color ?? category.color"
+                  (input)="onDraftInput(category.id, 'color', $event)" />
+              </div>
+            </td>
+            <td class="text-end">
+              <button
+                type="button"
+                class="app-btn-ghost"
+                [disabled]="!canSaveCategory(category)"
+                (click)="saveCategory(category)">
+                Guardar
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>
+
+<ng-template #emptyState>
+  <p class="mb-0 text-muted">No hay categorias para este usuario.</p>
+</ng-template>

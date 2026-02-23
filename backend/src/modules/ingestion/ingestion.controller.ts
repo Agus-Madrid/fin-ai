@@ -6,9 +6,10 @@ export class IngestionController {
   constructor(private readonly ingestionService: IngestionService) {}
 
   @Post('statement/preview')
-  async previewExtraction() {
+  previewExtraction() {
+    void this.ingestionService;
     return {
-      message: 'Endpoint placeholder. Wire file upload + AI extraction here.'
+      message: 'Endpoint placeholder. Wire file upload + AI extraction here.',
     };
   }
 }

@@ -2,6 +2,234 @@
   background: rgba(43, 108, 238, 0.08);
 }
 
+:host {
+  display: block;
+}
+
+.tx-hero {
+  position: relative;
+  padding: 1.15rem 1.25rem;
+  border: 1px solid rgba(70, 70, 80, 0.42);
+  border-radius: 18px;
+  background:
+    radial-gradient(circle at 10% 10%, rgba(255, 255, 255, 0.08), transparent 44%),
+    radial-gradient(circle at 90% 0%, rgba(120, 120, 130, 0.08), transparent 40%),
+    linear-gradient(145deg, #0f1217 0%, #090c11 100%);
+  overflow: hidden;
+}
+
+.tx-hero::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(120deg, transparent 40%, rgba(255, 255, 255, 0.08) 50%, transparent 60%);
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+.tx-hero__title {
+  background: linear-gradient(90deg, #f8f8f9 0%, #d8d8dd 58%, #b4b4bc 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.tx-hero__actions {
+  position: relative;
+  z-index: 1;
+}
+
+.tx-btn-ghost {
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+
+.tx-btn-ghost:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+  border-color: rgba(175, 175, 185, 0.5);
+  color: var(--app-text);
+}
+
+.tx-filters {
+  margin-top: 0.55rem;
+}
+
+.transactions-card {
+  min-height: 62vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background:
+    radial-gradient(circle at top right, rgba(255, 255, 255, 0.07), transparent 42%),
+    linear-gradient(160deg, #0f1218 0%, #0b0e13 48%, #080b10 100%);
+  border-color: rgba(70, 70, 80, 0.36);
+  overflow: hidden;
+}
+
+.transactions-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(120deg, transparent 18%, rgba(255, 255, 255, 0.03), transparent 78%);
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.transactions-table-responsive {
+  flex: 1;
+  overflow-y: visible;
+  position: relative;
+  z-index: 1;
+}
+
+.app-table thead th {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.app-table tbody tr {
+  position: relative;
+  z-index: 1;
+  animation: tx-row-in 0.34s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--row-index, 0) * 42ms);
+  transition: background 0.2s ease;
+}
+
+.app-table tbody tr:has(.tx-actions:hover),
+.app-table tbody tr:has(.tx-actions:focus-within) {
+  z-index: 90;
+}
+
+.app-table tbody tr:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.app-table tbody td {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: visible;
+}
+
+.app-table thead th:last-child,
+.app-table tbody td:last-child {
+  width: 78px;
+}
+
+.app-icon-pill {
+  transition: transform 0.22s ease, box-shadow 0.22s ease;
+}
+
+.app-table tbody tr:hover .app-icon-pill {
+  transform: scale(1.08);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+}
+
 .is-edit td {
   background: rgba(255, 255, 255, 0.02);
+}
+
+.tx-actions {
+  position: relative;
+  display: inline-flex;
+  justify-content: flex-end;
+  z-index: 2;
+}
+
+.tx-actions:hover,
+.tx-actions:focus-within {
+  z-index: 60;
+}
+
+.tx-actions__trigger {
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease;
+}
+
+.tx-actions__trigger:hover,
+.tx-actions__trigger:focus-visible {
+  border-color: rgba(180, 180, 190, 0.55);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.tx-actions__trigger:active {
+  transform: scale(0.95);
+}
+
+.tx-actions__menu {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  right: 0;
+  min-width: 210px;
+  padding: 0.4rem;
+  border-radius: 12px;
+  border: 1px solid var(--app-border);
+  background: #0d1118;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.42);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.16s ease, transform 0.16s ease, visibility 0.16s ease;
+  z-index: 120;
+}
+
+.tx-actions:focus-within .tx-actions__menu,
+.tx-actions:hover .tx-actions__menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0) scale(1);
+}
+
+.tx-actions__item {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--app-text);
+  text-align: left;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 0.6rem 0.7rem;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition: background 0.14s ease, color 0.14s ease;
+}
+
+.tx-actions__item i {
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.tx-actions__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.tx-actions__item.is-danger {
+  color: #fca5a5;
+}
+
+.tx-actions__item.is-danger:hover {
+  background: rgba(239, 68, 68, 0.16);
+  color: #fecaca;
+}
+
+@keyframes tx-row-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-table tbody tr {
+    animation: none;
+  }
 }
