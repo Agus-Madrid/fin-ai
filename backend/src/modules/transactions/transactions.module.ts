@@ -14,5 +14,6 @@ import { CategoryModule } from '../categories/category.module';
   ],
   controllers: [TransactionsController],
   providers: [TransactionsService],
+  exports: [TransactionsService],
 })
 export class TransactionsModule {}

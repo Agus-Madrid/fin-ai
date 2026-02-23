@@ -1,23 +1,43 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { TransactionService } from '../../dashboard/services/transaction.service';
 import { ReviewInboxViewComponent } from '../presentational/review-inbox.view.component';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
-import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
+import { CategoryOption, InboxItem, InboxState } from '../../../shared/models/inbox.model';
 import { Transaction } from '../../../shared/models/transaction.model';
+import { ReviewInboxService } from '../services/review-inbox.service';
+import { ReviewInboxForm } from '../models/review-inbox-form.model';
 
 @Component({
   selector: 'app-review-inbox-page',
   standalone: true,
   imports: [ReviewInboxViewComponent],
   template: `
-    <app-review-inbox-view [inbox]="inbox()" (selectItem)="onSelectItem($event)"></app-review-inbox-view>
+    <app-review-inbox-view
+      [inbox]="inbox()"
+      [form]="formState()"
+      (selectItem)="onSelectItem($event)"
+      (formChange)="onFormChange($event)"
+      (confirmTransaction)="onConfirmTransaction()"
+    ></app-review-inbox-view>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ReviewInboxPageComponent {
-  private readonly transactions = inject(TransactionService);
-  private readonly pendingResource = this.transactions.getTransactionsByStatus(TransactionStatus.PENDING);
+  private readonly transactionService = inject(TransactionService);
+  private readonly reviewInboxService = inject(ReviewInboxService);
+  private readonly pendingResource = this.transactionService.getTransactionsByStatus(TransactionStatus.PENDING);
   private readonly selectedItemId = signal<string | null>(null);
+  readonly formState = signal<ReviewInboxForm>(this.emptyForm());
+
+  constructor() {
+    effect(() => {
+      const selected = this.inbox().selectedItem;
+      if (!selected || selected.id === this.formState().id) {
+        return;
+      }
+      this.formState.set(this.toForm(selected));
+    });
+  }
 
   //Computed for mapping transactions to inbox state and have the reactivity to update the view
   readonly inbox = computed(() => {
@@ -36,6 +56,29 @@ export class ReviewInboxPageComponent {
     this.selectedItemId.set(item.id);
   }
 
+  onFormChange(formUpdate: Partial<ReviewInboxForm>) {
+    this.formState.update((current) => ({ ...current, ...formUpdate }));
+  }
+
+  onConfirmTransaction() {
+    const form = this.formState();
+    if (!form.id || form.id === 'empty') {
+      return;
+    }
+
+    this.reviewInboxService.confirmTransaction(form.id, {
+      amount: Number(form.amount),
+      date: form.date,
+      description: form.merchant,
+      categoryId: form.categoryId
+    }).subscribe({
+      next: () => {
+        this.pendingResource.reload();
+        this.selectedItemId.set(null);
+      }
+    });
+  }
+
   private pickSelectedItem(items: InboxItem[], selectedId: string | null): InboxItem {
     if (items.length === 0) {
       return this.emptyItem();
@@ -49,10 +92,12 @@ export class ReviewInboxPageComponent {
   private toInboxItem(transaction: Transaction): InboxItem {
     const categoryName = transaction.category?.name ?? 'Sin categoria';
     const categoryIcon = transaction.category?.icon ?? '';
+    const categoryId = transaction.category?.id ?? '';
     const dateValue = this.formatDateValue(transaction.date);
     const amount = this.parseAmount(transaction.amount);
     return {
       id: String(transaction.id),
+      categoryId,
       merchant: transaction.description,
       category: categoryName,
       categoryIcon,
@@ -70,6 +115,7 @@ export class ReviewInboxPageComponent {
   private emptyItem(): InboxItem {
     return {
       id: 'empty',
+      categoryId: '',
       merchant: 'Sin transacciones pendientes',
       category: '',
       categoryIcon: '',
@@ -83,14 +129,39 @@ export class ReviewInboxPageComponent {
     };
   }
 
-  private getCategoryOptions(items: InboxItem[]): string[] {
-    const options = Array.from(
-      new Set(items.map((item) => item.category).filter((category) => category))
-    );
-    if (options.length === 0) {
-      return ['Sin categoria'];
+  private toForm(item: InboxItem): ReviewInboxForm {
+    return {
+      id: item.id,
+      categoryId: item.categoryId ?? '',
+      merchant: item.merchant,
+      date: item.dateValue,
+      amount: item.amountValue
+    };
+  }
+
+  private emptyForm(): ReviewInboxForm {
+    return {
+      id: '',
+      categoryId: '',
+      merchant: '',
+      date: '',
+      amount: ''
+    };
+  }
+
+  private getCategoryOptions(items: InboxItem[]): CategoryOption[] {
+    const map = new Map<string, string>();
+    items.forEach((item) => {
+      if (item.categoryId) {
+        map.set(item.categoryId, item.category || 'Sin categoria');
+      }
+    });
+
+    if (map.size === 0) {
+      return [{ id: '', label: 'Sin categoria' }];
     }
-    return options;
+
+    return Array.from(map.entries()).map(([id, label]) => ({ id, label }));
   }
 
   private formatDateLabel(value: Date | string): string {

@@ -1,6 +1,7 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Output, input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
 import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
+import { ReviewInboxForm } from '../models/review-inbox-form.model';
 
 @Component({
   selector: 'app-review-inbox-view',
@@ -12,7 +13,11 @@ import { InboxItem, InboxState } from '../../../shared/models/inbox.model';
 })
 export class ReviewInboxViewComponent {
   readonly inbox = input.required<InboxState>();
-  @Output() readonly selectItem = new EventEmitter<InboxItem>();
+  readonly form = input.required<ReviewInboxForm>();
+
+  selectItem = output<InboxItem>();
+  formChange = output<Partial<ReviewInboxForm>>();
+  confirmTransaction = output<void>();
 
   getConfidenceLabel(confidence: string) {
     if (confidence === 'low') {
@@ -22,5 +27,17 @@ export class ReviewInboxViewComponent {
       return 'Alta';
     }
     return 'Media';
+  }
+
+  onConfirmTransaction() {
+    this.confirmTransaction.emit();
+  }
+
+  onSelectItem(item: InboxItem) {
+    this.selectItem.emit(item);
+  }
+
+  onFieldChange(field: keyof ReviewInboxForm, value: string) {
+    this.formChange.emit({ [field]: value });
   }
 }

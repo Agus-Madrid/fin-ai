@@ -32,6 +32,7 @@
         *ngFor="let item of inbox().items"
         [class.is-active]="item.id === inbox().selectedItem.id"
         (click)="selectItem.emit(item)"
+        (keydown.enter)="selectItem.emit(item)"
       >
         <div class="review-item__main">
           <div class="fw-semibold">{{ item.merchant }}</div>
@@ -74,24 +75,46 @@
     <div class="d-flex flex-column gap-3">
       <div>
         <label class="app-section-title" for="review-category">Categoría</label>
-        <select id="review-category" class="app-select" [value]="inbox().selectedItem.category">
-          <option *ngFor="let option of inbox().categoryOptions" [value]="option">
-            {{ option }}
+        <select
+          id="review-category"
+          class="app-select"
+          [value]="form().categoryId"
+          (change)="onFieldChange('categoryId', $any($event.target).value)"
+        >
+          <option *ngFor="let option of inbox().categoryOptions" [value]="option.id">
+            {{ option.label }}
           </option>
         </select>
       </div>
       <div>
         <label class="app-section-title" for="review-merchant">Comercio</label>
-        <input id="review-merchant" class="app-input" [value]="inbox().selectedItem.merchant" />
+        <input
+          id="review-merchant"
+          class="app-input"
+          [value]="form().merchant"
+          (input)="onFieldChange('merchant', $any($event.target).value)"
+        />
       </div>
       <div class="row g-3">
         <div class="col-6">
           <label class="app-section-title" for="review-date">Fecha</label>
-          <input id="review-date" class="app-input" type="date" [value]="inbox().selectedItem.dateValue" />
+          <input
+            id="review-date"
+            class="app-input"
+            type="date"
+            [value]="form().date"
+            (input)="onFieldChange('date', $any($event.target).value)"
+          />
         </div>
         <div class="col-6">
           <label class="app-section-title" for="review-amount">Monto</label>
-          <input id="review-amount" class="app-input" type="number" [value]="inbox().selectedItem.amountValue" />
+          <input
+            id="review-amount"
+            class="app-input"
+            type="number"
+            [value]="form().amount"
+            (input)="onFieldChange('amount', $any($event.target).value)"
+          />
         </div>
       </div>
       
@@ -99,7 +122,7 @@
 
     <div class="d-flex justify-content-end gap-2 mt-4">
       <button class="app-btn-ghost">Saltar</button>
-      <button class="app-btn-primary">Aprobar transacción</button>
+      <button class="app-btn-primary" (click)="onConfirmTransaction()">Aprobar transacción</button>
     </div>
       </div>
     </section>
