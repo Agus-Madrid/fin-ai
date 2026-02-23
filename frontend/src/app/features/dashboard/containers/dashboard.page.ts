@@ -58,6 +58,7 @@ export class DashboardPageComponent {
   readonly userResource = this.budgetPlannerService.getUser();
 
   readonly totalIncome = computed(() => this.sumAmounts(this.incomesResource.value() ?? []));
+  readonly totalMontlySavings = computed(() => this.userResource.value()?.goalMonthlySavings ?? 0);
   readonly totalFixedExpenses = computed(() => this.sumAmounts(this.fixedCommitmentsResource.value() ?? []));
   readonly fixedExpensePercent = computed(() => {
     const income = this.totalIncome();
@@ -66,7 +67,7 @@ export class DashboardPageComponent {
     }
     return this.clampPercent((this.totalFixedExpenses() / income) * 100);
   });
-  readonly spendableBalance = computed(() => this.totalIncome() - this.totalFixedExpenses());
+  readonly spendableBalance = computed(() => this.totalIncome() - this.totalFixedExpenses() - this.totalMontlySavings());
   readonly spendablePercent = computed(() => {
     const income = this.totalIncome();
     if (income <= 0) {
