@@ -21,8 +21,8 @@ export class IncomesService {
     });
   }
 
-  async create(createIncomeDto: CreateIncomeDto): Promise<Income> {
-    const user = await this.findUserById(createIncomeDto.userId);
+  async create(userId: string, createIncomeDto: CreateIncomeDto): Promise<Income> {
+    const user = await this.findUserById(userId);
     const income = this.incomeRepository.create({
       name: createIncomeDto.name,
       description: createIncomeDto.description,
@@ -32,14 +32,12 @@ export class IncomesService {
     return await this.incomeRepository.save(income);
   }
 
-  async update(id: string, updateData: UpdateIncomeDto): Promise<Income> {
-    const income = await this.incomeRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-    if (!income) {
-      throw new NotFoundException(`Income with id ${id} not found`);
-    }
+  async update(
+    userId: string,
+    id: string,
+    updateData: UpdateIncomeDto,
+  ): Promise<Income> {
+    const income = await this.findByIdForUser(id, userId);
 
     if (updateData.name !== undefined) {
       income.name = updateData.name;
@@ -53,18 +51,11 @@ export class IncomesService {
       income.amount = updateData.amount;
     }
 
-    if (updateData.userId !== undefined) {
-      income.user = await this.findUserById(updateData.userId);
-    }
-
     return await this.incomeRepository.save(income);
   }
 
-  async delete(id: string): Promise<void> {
-    const income = await this.incomeRepository.findOne({ where: { id } });
-    if (!income) {
-      throw new NotFoundException(`Income with id ${id} not found`);
-    }
+  async delete(userId: string, id: string): Promise<void> {
+    const income = await this.findByIdForUser(id, userId);
     await this.incomeRepository.remove(income);
   }
 
@@ -75,5 +66,18 @@ export class IncomesService {
     }
 
     return user;
+  }
+
+  private async findByIdForUser(id: string, userId: string): Promise<Income> {
+    const income = await this.incomeRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (!income) {
+      throw new NotFoundException(`Income with id ${id} not found for current user`);
+    }
+
+    return income;
   }
 }

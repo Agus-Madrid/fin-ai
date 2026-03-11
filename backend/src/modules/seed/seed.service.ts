@@ -1,5 +1,6 @@
 import { Injectable, OnApplicationBootstrap } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import { hash } from 'bcryptjs';
 import { Repository } from 'typeorm';
 import { Category } from '../categories/category.entity';
 import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
@@ -40,12 +41,16 @@ export class SeedService implements OnApplicationBootstrap {
   private async getOrCreateUser(email: string) {
     const existing = await this.users.findOne({ where: { email } });
     if (existing) {
+      if (!this.isBcryptHash(existing.password)) {
+        existing.password = await this.hashPassword(existing.password);
+        await this.users.save(existing);
+      }
       return existing;
     }
     const user = this.users.create({
       name: 'Demo User',
       email,
-      password: 'demo',
+      password: await this.hashPassword('demo'),
       currentTotalSavings: 1200,
       goalMonthlySavings: 500,
     });
@@ -152,5 +157,13 @@ export class SeedService implements OnApplicationBootstrap {
     const copy = new Date(date);
     copy.setMonth(copy.getMonth() + months);
     return copy;
+  }
+
+  private isBcryptHash(value: string): boolean {
+    return /^\$2[aby]\$\d{2}\$/.test(value);
+  }
+
+  private hashPassword(value: string): Promise<string> {
+    return hash(value, 10);
   }
 }

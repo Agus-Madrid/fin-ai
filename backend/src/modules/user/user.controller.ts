@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Put } from '@nestjs/common';
+import { Body, Controller, Get, Put } from '@nestjs/common';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
 import { UpdateMonthlyGoalSavingsDto } from './dtos/update-monthly-goal-savings.dto';
 import { UserService } from './user.service';
 
@@ -6,16 +8,20 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(private readonly userService: UserService) {}
 
-  @Get(':id')
-  findById(@Param('id') id: string) {
-    return this.userService.findById(id);
+  @Get('me')
+  findCurrentUser(@CurrentUser() user: AuthenticatedUser) {
+    return this.userService.findPublicById(user.userId);
   }
 
-  @Put(':id/monthly-goal-savings')
+  @Put('me/monthly-goal-savings')
   updateMonthlyGoalSavings(
-    @Param('id') id: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Body() dto: UpdateMonthlyGoalSavingsDto,
   ) {
-    return this.userService.updateMonthlyGoalSavings(id, dto.goalMonthlySavings);
+    return this.userService.updatePublicMonthlyGoalSavings(
+      user.userId,
+      dto.goalMonthlySavings,
+    );
   }
 }
+

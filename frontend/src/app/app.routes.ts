@@ -1,10 +1,16 @@
 import { Routes } from '@angular/router';
-import { authCanActivateChildGuard, authCanActivateGuard, authCanMatchGuard } from './core/auth/auth.guard';
+import {
+  authCanActivateChildGuard,
+  authCanActivateGuard,
+  authCanMatchGuard,
+  loginCanActivateGuard
+} from './core/auth/auth.guard';
 import { AppShellComponent } from './core/layout/app-shell.component';
 
 export const routes: Routes = [
   {
     path: 'login',
+    canActivate: [loginCanActivateGuard],
     loadComponent: () =>
       import('./features/auth/containers/login.page').then((m) => m.LoginPageComponent)
   },

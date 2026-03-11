@@ -113,13 +113,12 @@
   accent-color: var(--app-primary);
 }
 
-.login-form__shortcut {
-  color: #d3d8df;
-  font-size: 0.84rem;
-}
-
-.login-form__shortcut:hover {
-  color: #ffffff;
+.login-form__error--block {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border-radius: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: rgba(239, 68, 68, 0.1);
 }
 
 .login-form__submit {

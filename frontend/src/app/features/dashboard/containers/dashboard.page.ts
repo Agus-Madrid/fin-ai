@@ -184,7 +184,6 @@ export class DashboardPageComponent {
     return {
       id: '',
       name: 'Usuario',
-      password: '',
       email: '',
       createdAt: new Date(),
       currentTotalSavings: 0,

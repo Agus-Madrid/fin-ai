@@ -3,7 +3,7 @@ import { AiService } from '../../core/ai/ai.service';
 import {
   ExtractStatementInput,
   ExtractStatementResult,
-} from '../../core/ai/ai.types';
+} from '../../core/ai/interfaces';
 
 @Injectable()
 export class IngestionService {
@@ -15,3 +15,4 @@ export class IngestionService {
     return this.aiService.extractStatement(input);
   }
 }
+

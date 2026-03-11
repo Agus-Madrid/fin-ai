@@ -10,10 +10,10 @@ import {
   UrlSegment,
   UrlTree
 } from '@angular/router';
-import { FakeAuthService } from './fake-auth.service';
+import { AuthService } from './auth.service';
 
 function buildAuthResult(targetUrl: string): boolean | UrlTree {
-  const authService = inject(FakeAuthService);
+  const authService = inject(AuthService);
   const router = inject(Router);
 
   if (authService.canAccessProtectedRoute()) {
@@ -23,6 +23,17 @@ function buildAuthResult(targetUrl: string): boolean | UrlTree {
   return router.createUrlTree(['/login'], {
     queryParams: { returnUrl: targetUrl || '/dashboard' }
   });
+}
+
+function buildLoginPageResult(): boolean | UrlTree {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.canAccessProtectedRoute()) {
+    return router.createUrlTree(['/dashboard']);
+  }
+
+  return true;
 }
 
 export const authCanActivateGuard: CanActivateFn = (
@@ -41,3 +52,5 @@ export const authCanMatchGuard: CanMatchFn = (route: Route, segments: UrlSegment
   const combined = [routePath, segmentsPath].filter(Boolean).join('/');
   return buildAuthResult(`/${combined}`);
 };
+
+export const loginCanActivateGuard: CanActivateFn = () => buildLoginPageResult();

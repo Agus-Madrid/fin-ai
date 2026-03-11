@@ -34,7 +34,7 @@ export class SavingsLogsService {
     });
   }
 
-  async confirm(dto: ConfirmSavingsLogDto): Promise<SavingsLog> {
+  async confirm(userId: string, dto: ConfirmSavingsLogDto): Promise<SavingsLog> {
     this.validatePeriod(dto.period);
     const status = this.resolveStatus(dto.status);
 
@@ -42,9 +42,9 @@ export class SavingsLogsService {
       const userRepository = manager.getRepository(User);
       const savingsLogRepository = manager.getRepository(SavingsLog);
 
-      const user = await userRepository.findOne({ where: { id: dto.userId } });
+      const user = await userRepository.findOne({ where: { id: userId } });
       if (!user) {
-        throw new NotFoundException(`User with id ${dto.userId} not found`);
+        throw new NotFoundException(`User with id ${userId} not found`);
       }
 
       const monthlyGoalSnapshot = this.normalizeAmount(

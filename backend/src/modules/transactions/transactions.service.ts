@@ -4,12 +4,12 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Transaction } from './transaction.entity';
 import { Repository } from 'typeorm';
-import { CreateTransactionDto } from './dtos/create-transaction.dto';
-import { TransactionStatus } from './transaction.enum';
-import { User } from '../user/user.entity';
 import { Category } from '../categories/category.entity';
+import { User } from '../user/user.entity';
+import { CreateTransactionDto } from './dtos/create-transaction.dto';
+import { Transaction } from './transaction.entity';
+import { TransactionStatus } from './transaction.enum';
 
 const TRANSACTION_RELATIONS = ['category', 'user'] as const;
 
@@ -24,64 +24,52 @@ export class TransactionsService {
     private readonly categoryRepository: Repository<Category>,
   ) {}
 
-  async findAll(): Promise<Transaction[]> {
-    return await this.transactionRepository.find({
-      relations: [...TRANSACTION_RELATIONS],
-    });
-  }
-
   async findAllByUser(userId: string): Promise<Transaction[]> {
-    const transactions = await this.transactionRepository.find({
+    return this.transactionRepository.find({
       where: { user: { id: userId } },
       relations: [...TRANSACTION_RELATIONS],
     });
-
-    return transactions;
   }
 
   async findAllByUserStatus(
     userId: string,
     status: TransactionStatus,
   ): Promise<Transaction[]> {
-    const dbStatus = `${status}`;
-    const transactions = await this.transactionRepository.find({
-      where: { user: { id: userId }, status: dbStatus as unknown as TransactionStatus },
+    const statusValue = this.toStoredStatus(status);
+
+    return this.transactionRepository.find({
+      where: {
+        user: { id: userId },
+        status: statusValue as unknown as TransactionStatus,
+      },
       relations: [...TRANSACTION_RELATIONS],
     });
-
-    return transactions;
   }
 
-  async findLatestByUser(
-    userId: string,
-    limit: number,
-  ): Promise<Transaction[]> {
-    const confirmedStatus = `${TransactionStatus.CONFIRMED}`;
-    const transactions = await this.transactionRepository.find({
-      where: { user: { id: userId }, status: confirmedStatus as unknown as TransactionStatus },
+  async findLatestByUser(userId: string, limit: number): Promise<Transaction[]> {
+    const confirmedStatus = this.toStoredStatus(TransactionStatus.CONFIRMED);
+
+    return this.transactionRepository.find({
+      where: {
+        user: { id: userId },
+        status: confirmedStatus as unknown as TransactionStatus,
+      },
       order: { date: 'DESC' },
       take: limit,
       relations: [...TRANSACTION_RELATIONS],
     });
-
-    return transactions;
   }
 
-  async findById(id: number): Promise<Transaction> {
-    const transaction = await this.transactionRepository.findOne({
-      where: { id },
-      relations: [...TRANSACTION_RELATIONS],
-    });
+  async create(
+    userId: string,
+    transactionData: CreateTransactionDto,
+  ): Promise<Transaction> {
+    const user = await this.findUserById(userId);
+    const category = await this.findCategoryByIdForUser(
+      transactionData.categoryId,
+      userId,
+    );
 
-    if (!transaction) {
-      throw new NotFoundException(`Transaction with id ${id} not found`);
-    }
-    return transaction;
-  }
-
-  async create(transactionData: CreateTransactionDto): Promise<Transaction> {
-    const user = await this.findUserById(transactionData.userId);
-    const category = await this.findCategoryById(transactionData.categoryId);
     const transaction = this.transactionRepository.create({
       amount: transactionData.amount,
       description: transactionData.description,
@@ -90,44 +78,44 @@ export class TransactionsService {
       user,
       category,
     });
-    return await this.transactionRepository.save(transaction);
+
+    return this.transactionRepository.save(transaction);
   }
 
   async update(
+    userId: string,
     id: number,
     updateData: CreateTransactionDto,
   ): Promise<Transaction> {
-    const transaction = await this.findById(id);
-    const user = await this.findUserById(updateData.userId);
-    const category = await this.findCategoryById(updateData.categoryId);
+    const transaction = await this.findByIdForUser(id, userId);
+    const category = await this.findCategoryByIdForUser(updateData.categoryId, userId);
 
     Object.assign(transaction, {
       amount: updateData.amount,
       description: updateData.description,
       date: this.normalizeDate(updateData.date),
       status: updateData.status,
-      user,
       category,
     });
-    return await this.transactionRepository.save(transaction);
+
+    return this.transactionRepository.save(transaction);
   }
 
-  async delete(id: number): Promise<void> {
-    const result = await this.transactionRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Transaction with id ${id} not found`);
-    }
+  async delete(userId: string, id: number): Promise<void> {
+    const transaction = await this.findByIdForUser(id, userId);
+    await this.transactionRepository.remove(transaction);
   }
 
-  async confirm(id: number): Promise<Transaction> {
-    return this.confirmWithUpdates(id, {});
+  async confirm(userId: string, id: number): Promise<Transaction> {
+    return this.confirmWithUpdates(userId, id, {});
   }
 
   async confirmWithUpdates(
+    userId: string,
     id: number,
     updates: Partial<CreateTransactionDto> & { date?: Date | string },
   ): Promise<Transaction> {
-    const transaction = await this.findById(id);
+    const transaction = await this.findByIdForUser(id, userId);
 
     if (updates.description !== undefined) {
       transaction.description = updates.description;
@@ -142,20 +130,36 @@ export class TransactionsService {
     }
 
     if (updates.categoryId !== undefined) {
-      const category = await this.findCategoryById(updates.categoryId);
+      const category = await this.findCategoryByIdForUser(updates.categoryId, userId);
       transaction.category = category;
     }
 
     transaction.status = TransactionStatus.CONFIRMED;
-    return await this.transactionRepository.save(transaction);
+    return this.transactionRepository.save(transaction);
   }
 
-  async confirmMany(ids: number[]): Promise<Transaction[]> {
+  async confirmMany(userId: string, ids: number[]): Promise<Transaction[]> {
     const transactions: Transaction[] = [];
-    for(const id of ids) {
-      transactions.push(await this.confirm(id));
+    for (const id of ids) {
+      transactions.push(await this.confirm(userId, id));
     }
+
     return transactions;
+  }
+
+  private async findByIdForUser(id: number, userId: string): Promise<Transaction> {
+    const transaction = await this.transactionRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: [...TRANSACTION_RELATIONS],
+    });
+
+    if (!transaction) {
+      throw new NotFoundException(
+        `Transaction with id ${id} not found for current user`,
+      );
+    }
+
+    return transaction;
   }
 
   private normalizeDate(input: Date | string): string {
@@ -177,6 +181,10 @@ export class TransactionsService {
     return `${year}-${month}-${day}`;
   }
 
+  private toStoredStatus(status: TransactionStatus): string {
+    return `${status}`;
+  }
+
   private async findUserById(userId: string): Promise<User> {
     const user = await this.userRepository.findOne({ where: { id: userId } });
     if (!user) {
@@ -186,12 +194,17 @@ export class TransactionsService {
     return user;
   }
 
-  private async findCategoryById(categoryId: string): Promise<Category> {
+  private async findCategoryByIdForUser(
+    categoryId: string,
+    userId: string,
+  ): Promise<Category> {
     const category = await this.categoryRepository.findOne({
-      where: { id: categoryId },
+      where: { id: categoryId, user: { id: userId } },
     });
     if (!category) {
-      throw new NotFoundException(`Category with id ${categoryId} not found`);
+      throw new NotFoundException(
+        `Category with id ${categoryId} not found for current user`,
+      );
     }
 
     return category;

@@ -24,7 +24,14 @@
         <span class="app-top-nav__dot"></span>
       </button>
       <div class="app-top-nav__divider"></div>
-      <div class="app-top-nav__avatar">JD</div>
+      <div class="app-top-nav__user">
+        <span class="app-top-nav__user-name">{{ currentUser()?.name || 'Usuario' }}</span>
+        <span class="app-top-nav__user-email">{{ currentUser()?.email || '' }}</span>
+      </div>
+      <div class="app-top-nav__avatar">{{ avatarLabel() }}</div>
+      <button type="button" class="app-top-nav__logout" (click)="onSignOut()">
+        Salir
+      </button>
     </div>
   </div>
 </header>

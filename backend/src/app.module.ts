@@ -1,8 +1,11 @@
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { JwtAuthGuard } from './common/guards/jwt-auth.guard';
 import { CoreModule } from './core/core.module';
+import { AuthModule } from './modules/auth/auth.module';
 import { BudgetsModule } from './modules/budgets/budgets.module';
 import { IngestionModule } from './modules/ingestion/ingestion.module';
 import { ReviewInboxModule } from './modules/review-inbox/review-inbox.module';
@@ -30,6 +33,7 @@ import { SavingsGoalsModule } from './modules/savings-goals/saving-goal.module';
       synchronize: true,
     }),
     CoreModule,
+    AuthModule,
     CategoryModule,
     TransactionsModule,
     IngestionModule,
@@ -44,6 +48,13 @@ import { SavingsGoalsModule } from './modules/savings-goals/saving-goal.module';
     SavingsGoalsModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,
+    },
+  ],
 })
 export class AppModule {}
+

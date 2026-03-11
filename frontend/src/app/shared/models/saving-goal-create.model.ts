@@ -5,10 +5,6 @@ export interface CreateSavingGoalRequest {
   priority?: number;
 }
 
-export interface CreateSavingGoalDto extends CreateSavingGoalRequest {
-  userId: string;
-}
-
 export interface UpdateSavingGoalRequest {
   name?: string;
   targetAmount?: number;

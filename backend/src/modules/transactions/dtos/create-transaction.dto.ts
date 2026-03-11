@@ -6,5 +6,4 @@ export class CreateTransactionDto {
   description: string;
   status: TransactionStatus;
   categoryId: string;
-  userId: string;
 }

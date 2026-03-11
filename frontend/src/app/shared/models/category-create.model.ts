@@ -3,7 +3,3 @@ export interface CreateCategoryRequest {
   icon?: string;
   color?: string;
 }
-
-export interface CreateCategoryDto extends CreateCategoryRequest {
-  userId: string;
-}

@@ -1,4 +1,4 @@
-import { ExtractStatementInput, ExtractStatementResult } from './ai.types';
+import { ExtractStatementInput, ExtractStatementResult } from './interfaces';
 
 export interface AiClient {
   extractStatement(
@@ -7,3 +7,4 @@ export interface AiClient {
 }
 
 export const AI_CLIENT = Symbol('AI_CLIENT');
+

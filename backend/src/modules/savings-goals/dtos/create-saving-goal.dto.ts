@@ -3,5 +3,4 @@ export class CreateSavingGoalDto {
   targetAmount: number;
   deadline: Date | string;
   priority?: number;
-  userId: string;
 }

@@ -48,7 +48,7 @@
             Ingresa tu password.
           </small>
           <small class="login-form__error" *ngIf="hasError('password', 'minlength')">
-            Debe tener al menos 6 caracteres.
+            Debe tener al menos 4 caracteres.
           </small>
         </div>
 
@@ -57,8 +57,11 @@
             <input type="checkbox" formControlName="rememberMe" />
             <span>Recordarme en este dispositivo</span>
           </label>
-          <a routerLink="/dashboard" class="login-form__shortcut">Entrar sin bloqueo</a>
         </div>
+
+        <p class="login-form__error login-form__error--block" *ngIf="errorMessage()">
+          {{ errorMessage() }}
+        </p>
 
         <button class="app-btn-primary w-100 login-form__submit" type="submit" [disabled]="isSubmitting()">
           <ng-container *ngIf="!isSubmitting(); else submittingLabel">Entrar</ng-container>

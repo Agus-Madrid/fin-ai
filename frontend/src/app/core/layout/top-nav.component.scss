@@ -134,6 +134,37 @@
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
+.app-top-nav__user {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+}
+
+.app-top-nav__user-name {
+  font-size: 0.8rem;
+  color: #fff;
+}
+
+.app-top-nav__user-email {
+  font-size: 0.72rem;
+  color: var(--app-muted);
+}
+
+.app-top-nav__logout {
+  border: 1px solid rgba(160, 160, 172, 0.36);
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+  border-radius: 10px;
+  padding: 0.35rem 0.75rem;
+  font-size: 0.8rem;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.app-top-nav__logout:hover {
+  border-color: rgba(190, 190, 205, 0.55);
+  background: rgba(255, 255, 255, 0.14);
+}
+
 @media (max-width: 992px) {
   .app-top-nav__inner {
     flex-wrap: wrap;

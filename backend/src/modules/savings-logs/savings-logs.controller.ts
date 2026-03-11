@@ -1,4 +1,6 @@
-import { Body, Controller, Get, Param, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ConfirmSavingsLogDto } from './dtos/confirm-savings-log.dto';
 import { SavingsLogsService } from './savings-logs.service';
 
@@ -6,16 +8,20 @@ import { SavingsLogsService } from './savings-logs.service';
 export class SavingsLogsController {
   constructor(private readonly savingsLogsService: SavingsLogsService) {}
 
-  @Get('user/:userId')
+  @Get()
   getAllByUser(
-    @Param('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('period') period?: string,
   ) {
-    return this.savingsLogsService.findAllByUser(userId, period);
+    return this.savingsLogsService.findAllByUser(user.userId, period);
   }
 
   @Post('confirm')
-  confirm(@Body() dto: ConfirmSavingsLogDto) {
-    return this.savingsLogsService.confirm(dto);
+  confirm(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() dto: ConfirmSavingsLogDto,
+  ) {
+    return this.savingsLogsService.confirm(user.userId, dto);
   }
 }
+

@@ -20,8 +20,11 @@ export class FixedCommitmentsService {
         });
     }
 
-    async create(createFixedCommitmentDto: CreateFixedCommitmentDto): Promise<FixedCommitment> {
-        const user = await this.findUserById(createFixedCommitmentDto.userId);
+    async create(
+        userId: string,
+        createFixedCommitmentDto: CreateFixedCommitmentDto,
+    ): Promise<FixedCommitment> {
+        const user = await this.findUserById(userId);
         
         const fixedCommitment = this.fixedCommitmentRepository.create({
             ...createFixedCommitmentDto,
@@ -30,14 +33,12 @@ export class FixedCommitmentsService {
         return await this.fixedCommitmentRepository.save(fixedCommitment);
     }
 
-    async update(id: string, updateData: Partial<CreateFixedCommitmentDto>): Promise<FixedCommitment> {
-        const fixedCommitment = await this.fixedCommitmentRepository.findOne({
-            where: { id },
-            relations: ['user'],
-        });
-        if (!fixedCommitment) {
-            throw new NotFoundException(`Fixed commitment with id ${id} not found`);
-        }
+    async update(
+        userId: string,
+        id: string,
+        updateData: Partial<CreateFixedCommitmentDto>,
+    ): Promise<FixedCommitment> {
+        const fixedCommitment = await this.findByIdForUser(id, userId);
         if (updateData.name !== undefined) {
             fixedCommitment.name = updateData.name;
         }
@@ -47,17 +48,12 @@ export class FixedCommitmentsService {
         if (updateData.amount !== undefined) {
             fixedCommitment.amount = updateData.amount;
         }
-        if (updateData.userId !== undefined) {
-            fixedCommitment.user = await this.findUserById(updateData.userId);
-        }
         return await this.fixedCommitmentRepository.save(fixedCommitment);
     }
 
-    async delete(id: string): Promise<void> {
-        const result = await this.fixedCommitmentRepository.delete(id);
-        if (result.affected === 0) {
-            throw new NotFoundException(`Fixed commitment with id ${id} not found`);
-        }
+    async delete(userId: string, id: string): Promise<void> {
+        const fixedCommitment = await this.findByIdForUser(id, userId);
+        await this.fixedCommitmentRepository.remove(fixedCommitment);
     }
 
     private async findUserById(userId: string): Promise<User> {
@@ -67,5 +63,23 @@ export class FixedCommitmentsService {
         }
 
         return user;
+    }
+
+    private async findByIdForUser(
+        id: string,
+        userId: string,
+    ): Promise<FixedCommitment> {
+        const fixedCommitment = await this.fixedCommitmentRepository.findOne({
+            where: { id, user: { id: userId } },
+            relations: ['user'],
+        });
+
+        if (!fixedCommitment) {
+            throw new NotFoundException(
+                `Fixed commitment with id ${id} not found for current user`,
+            );
+        }
+
+        return fixedCommitment;
     }
 }
