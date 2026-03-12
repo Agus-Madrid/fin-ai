@@ -1,15 +1,20 @@
-import { Controller, Post } from '@nestjs/common';
+import { Controller, Param, Post } from '@nestjs/common';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
 import { IngestionService } from './ingestion.service';
 
 @Controller('ingestion')
 export class IngestionController {
   constructor(private readonly ingestionService: IngestionService) {}
 
-  @Post('statement/preview')
-  previewExtraction() {
-    void this.ingestionService;
-    return {
-      message: 'Endpoint placeholder. Wire file upload + AI extraction here.',
-    };
+  @Post('uploads/:uploadId/process')
+  processUpload(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('uploadId') uploadId: string,
+  ) {
+    return this.ingestionService.processUploadWithPipeline(
+      user.userId,
+      uploadId,
+    );
   }
 }

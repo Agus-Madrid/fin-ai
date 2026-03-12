@@ -1,17 +1,39 @@
-import { Injectable } from '@nestjs/common';
-import { AiService } from '../../core/ai/ai.service';
-import {
-  ExtractStatementInput,
-  ExtractStatementResult,
-} from '../../core/ai/interfaces';
+import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import { ProcessUploadResponseDto } from './dtos/process-upload-response.dto';
+import { PipelineOrchestratorService } from './pipeline/pipeline-orchestrator.service';
 
 @Injectable()
 export class IngestionService {
-  constructor(private readonly aiService: AiService) {}
+  constructor(private readonly pipelineOrchestrator: PipelineOrchestratorService) {}
 
-  async extractStatement(
-    input: ExtractStatementInput,
-  ): Promise<ExtractStatementResult> {
-    return this.aiService.extractStatement(input);
+  async processUploadWithPipeline(
+    userId: string,
+    uploadId: string,
+  ): Promise<ProcessUploadResponseDto> {
+    const context =
+      await this.pipelineOrchestrator.executeUploadIngestionPipeline({
+        userId,
+        uploadId,
+        warnings: [],
+        executedStages: [],
+        meta: {},
+      });
+
+    if (!context.upload) {
+      throw new InternalServerErrorException(
+        'Pipeline completed without upload metadata',
+      );
+    }
+
+    return {
+      uploadId: context.uploadId,
+      status: 'TEXT_EXTRACTED',
+      extractedTextLength: context.extractedText?.length ?? 0,
+      filename: context.upload.filename,
+      contentType: context.upload.contentType,
+      sizeBytes: context.upload.sizeBytes,
+      warnings: context.warnings,
+      executedStages: context.executedStages,
+    };
   }
 }

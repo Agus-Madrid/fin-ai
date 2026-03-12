@@ -13,8 +13,10 @@ import { UploadViewModel, UploadStatus } from '../../../shared/models/upload.mod
 export class UploadsViewComponent {
   readonly uploadViewModel = input.required<UploadViewModel>();
   readonly uploading = input(false);
+  readonly processingUploadId = input<string | null>(null);
   readonly errorMessage = input<string | null>(null);
   readonly uploadRequested = output<File>();
+  readonly processRequested = output<string>();
   readonly openRequested = output<string>();
   readonly isDragging = signal(false);
 
@@ -68,5 +70,13 @@ export class UploadsViewComponent {
 
   onOpenRequested(uploadId: string) {
     this.openRequested.emit(uploadId);
+  }
+
+  onProcessRequested(uploadId: string) {
+    this.processRequested.emit(uploadId);
+  }
+
+  isProcessing(uploadId: string): boolean {
+    return this.processingUploadId() === uploadId;
   }
 }

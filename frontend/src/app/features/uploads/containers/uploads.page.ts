@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { UploadsDataService } from '../../../core/data/uploads-data.service';
+import { IngestionService } from '../services/ingestion.service';
 import { UploadsViewComponent } from '../presentational/uploads.view.component';
 
 @Component({
@@ -14,8 +15,10 @@ import { UploadsViewComponent } from '../presentational/uploads.view.component';
       <app-uploads-view
         [uploadViewModel]="uploadViewModel"
         [uploading]="uploading()"
+        [processingUploadId]="processingUploadId()"
         [errorMessage]="errorMessage()"
         (uploadRequested)="onUploadRequested($event)"
+        (processRequested)="onProcessRequested($event)"
         (openRequested)="onOpenRequested($event)"
       ></app-uploads-view>
     </ng-container>
@@ -24,7 +27,9 @@ import { UploadsViewComponent } from '../presentational/uploads.view.component';
 })
 export class UploadsPageComponent {
   private readonly data = inject(UploadsDataService);
+  private readonly ingestionService = inject(IngestionService);
   readonly uploading = signal(false);
+  readonly processingUploadId = signal<string | null>(null);
   readonly errorMessage = signal<string | null>(null);
   readonly uploadViewModel$ = this.data.getUploadsViewModel();
 
@@ -52,16 +57,30 @@ export class UploadsPageComponent {
     }
   }
 
+  async onProcessRequested(uploadId: string) {
+    this.errorMessage.set(null);
+    this.processingUploadId.set(uploadId);
+
+    try {
+      await firstValueFrom(this.ingestionService.processUpload(uploadId));
+      this.data.reloadUploads();
+    } catch (error: unknown) {
+      this.errorMessage.set(this.resolveErrorMessage(error));
+    } finally {
+      this.processingUploadId.set(null);
+    }
+  }
+
   private resolveErrorMessage(error: unknown): string {
     if (error instanceof HttpErrorResponse) {
       const message = this.readBackendMessage(error.error);
       if (message) {
         return message;
       }
-      return 'No fue posible subir el archivo PDF.';
+      return 'No fue posible completar la operacion con el archivo PDF.';
     }
 
-    return 'No fue posible subir el archivo PDF.';
+    return 'No fue posible completar la operacion con el archivo PDF.';
   }
 
   private readBackendMessage(errorBody: unknown): string | null {

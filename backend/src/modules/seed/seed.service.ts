@@ -85,7 +85,7 @@ export class SeedService implements OnApplicationBootstrap {
       mimeType: 'application/pdf',
       sizeBytes: 0,
       storageProvider: 'local',
-      status: 'COMPLETED',
+      status: 'PROCESSING',
       user,
     });
     await this.uploads.save(upload);
