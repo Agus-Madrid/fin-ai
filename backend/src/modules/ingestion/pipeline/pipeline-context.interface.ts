@@ -8,6 +8,8 @@ export interface PipelineContextMeta {
   model?: string;
   promptVersion?: string;
   latencyMs?: number;
+  textSource?: 'embedded-pdf-text' | 'ocr' | 'none';
+  ocrProvider?: string;
 }
 
 export interface PipelineContext {

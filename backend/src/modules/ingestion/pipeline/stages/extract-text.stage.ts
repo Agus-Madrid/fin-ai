@@ -20,10 +20,16 @@ export class ExtractTextStage implements PipelineStage {
       warnings.push('No text could be extracted from PDF with current extractor.');
     }
 
+    const textSource = extractedText.trim() ? 'embedded-pdf-text' : 'none';
+
     return {
       ...context,
       extractedText,
       warnings,
+      meta: {
+        ...context.meta,
+        textSource,
+      },
     };
   }
 

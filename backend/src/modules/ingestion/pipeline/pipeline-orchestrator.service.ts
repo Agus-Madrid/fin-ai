@@ -3,6 +3,7 @@ import { PipelineContext } from './pipeline-context.interface';
 import { PipelineStage } from './pipeline-stage.interface';
 import { ExtractTextStage } from './stages/extract-text.stage';
 import { LoadUploadStage } from './stages/load-upload.stage';
+import { OcrFallbackStage } from './stages/ocr-fallback.stage';
 
 @Injectable()
 export class PipelineOrchestratorService {
@@ -11,8 +12,9 @@ export class PipelineOrchestratorService {
   constructor(
     private readonly loadUploadStage: LoadUploadStage,
     private readonly extractTextStage: ExtractTextStage,
+    private readonly ocrFallbackStage: OcrFallbackStage,
   ) {
-    this.pipelineStages = [loadUploadStage, extractTextStage];
+    this.pipelineStages = [loadUploadStage, extractTextStage, ocrFallbackStage];
   }
 
   async executeUploadIngestionPipeline(
