@@ -11,5 +11,4 @@ import { User } from '../user/user.entity';
   providers: [IncomesService],
   exports: [IncomesService],
 })
-
 export class IncomesModule {}

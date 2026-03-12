@@ -13,4 +13,3 @@ export class AiService {
     return this.client.extractStatement(input);
   }
 }
-

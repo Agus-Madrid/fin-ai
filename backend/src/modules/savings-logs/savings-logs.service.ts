@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { User } from '../user/user.entity';
@@ -34,7 +38,10 @@ export class SavingsLogsService {
     });
   }
 
-  async confirm(userId: string, dto: ConfirmSavingsLogDto): Promise<SavingsLog> {
+  async confirm(
+    userId: string,
+    dto: ConfirmSavingsLogDto,
+  ): Promise<SavingsLog> {
     this.validatePeriod(dto.period);
     const status = this.resolveStatus(dto.status);
 
@@ -82,7 +89,8 @@ export class SavingsLogsService {
       user.currentTotalSavings = nextTotalSavings;
       await userRepository.save(user);
 
-      const confirmedAt = status === SavingsLogStatus.SKIPPED ? null : new Date();
+      const confirmedAt =
+        status === SavingsLogStatus.SKIPPED ? null : new Date();
 
       if (existing) {
         existing.monthlyGoalSnapshot = monthlyGoalSnapshot;

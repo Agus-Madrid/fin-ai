@@ -24,4 +24,3 @@ export class SavingsLogsController {
     return this.savingsLogsService.confirm(user.userId, dto);
   }
 }
-

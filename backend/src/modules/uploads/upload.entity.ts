@@ -18,6 +18,15 @@ export class Upload {
   @Column({ name: 'storageKey' })
   storageKey: string; // this is url on s3 or other storage service
 
+  @Column({ name: 'mime_type', default: 'application/pdf' })
+  mimeType: string;
+
+  @Column({ name: 'size_bytes', type: 'bigint', default: 0 })
+  sizeBytes: number;
+
+  @Column({ name: 'storage_provider', default: 'local' })
+  storageProvider: 'local' | 's3';
+
   @Column({
     type: 'enum',
     enum: ['PROCESSING', 'COMPLETED', 'FAILED'],

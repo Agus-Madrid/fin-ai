@@ -15,4 +15,3 @@ export class IngestionService {
     return this.aiService.extractStatement(input);
   }
 }
-
