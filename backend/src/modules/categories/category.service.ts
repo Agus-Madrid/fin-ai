@@ -43,7 +43,10 @@ export class CategoryService {
     });
   }
 
-  async create(userId: string, categoryData: CreateCategoryDto): Promise<Category> {
+  async create(
+    userId: string,
+    categoryData: CreateCategoryDto,
+  ): Promise<Category> {
     const name = this.normalizeName(categoryData.name);
     const user = await this.findUserById(userId);
 

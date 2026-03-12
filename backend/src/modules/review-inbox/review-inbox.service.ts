@@ -14,11 +14,7 @@ export class ReviewInboxService {
     );
   }
 
-  confirmTransaction(
-    userId: string,
-    id: number,
-    update: ReviewTransactionDto,
-  ) {
+  confirmTransaction(userId: string, id: number, update: ReviewTransactionDto) {
     return this.transactionsService.confirmWithUpdates(userId, id, update);
   }
 

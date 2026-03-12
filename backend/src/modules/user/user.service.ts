@@ -39,13 +39,19 @@ export class UserService {
     return user;
   }
 
-  async updateMonthlyGoalSavings(userId: string, goalMonthlySavings: number): Promise<User> {
+  async updateMonthlyGoalSavings(
+    userId: string,
+    goalMonthlySavings: number,
+  ): Promise<User> {
     const user = await this.findById(userId);
     user.goalMonthlySavings = goalMonthlySavings;
     return await this.userRepository.save(user);
   }
 
-  async updateCurrentTotalSavings(userId: string, currentTotalSavings: number): Promise<User> {
+  async updateCurrentTotalSavings(
+    userId: string,
+    currentTotalSavings: number,
+  ): Promise<User> {
     const user = await this.findById(userId);
     user.currentTotalSavings = currentTotalSavings;
     return await this.userRepository.save(user);
@@ -60,7 +66,10 @@ export class UserService {
     userId: string,
     goalMonthlySavings: number,
   ): Promise<PublicUser> {
-    const user = await this.updateMonthlyGoalSavings(userId, goalMonthlySavings);
+    const user = await this.updateMonthlyGoalSavings(
+      userId,
+      goalMonthlySavings,
+    );
     return this.toPublicUser(user);
   }
 

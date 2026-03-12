@@ -46,7 +46,10 @@ export class TransactionsService {
     });
   }
 
-  async findLatestByUser(userId: string, limit: number): Promise<Transaction[]> {
+  async findLatestByUser(
+    userId: string,
+    limit: number,
+  ): Promise<Transaction[]> {
     const confirmedStatus = this.toStoredStatus(TransactionStatus.CONFIRMED);
 
     return this.transactionRepository.find({
@@ -88,7 +91,10 @@ export class TransactionsService {
     updateData: CreateTransactionDto,
   ): Promise<Transaction> {
     const transaction = await this.findByIdForUser(id, userId);
-    const category = await this.findCategoryByIdForUser(updateData.categoryId, userId);
+    const category = await this.findCategoryByIdForUser(
+      updateData.categoryId,
+      userId,
+    );
 
     Object.assign(transaction, {
       amount: updateData.amount,
@@ -130,7 +136,10 @@ export class TransactionsService {
     }
 
     if (updates.categoryId !== undefined) {
-      const category = await this.findCategoryByIdForUser(updates.categoryId, userId);
+      const category = await this.findCategoryByIdForUser(
+        updates.categoryId,
+        userId,
+      );
       transaction.category = category;
     }
 
@@ -147,7 +156,10 @@ export class TransactionsService {
     return transactions;
   }
 
-  private async findByIdForUser(id: number, userId: string): Promise<Transaction> {
+  private async findByIdForUser(
+    id: number,
+    userId: string,
+  ): Promise<Transaction> {
     const transaction = await this.transactionRepository.findOne({
       where: { id, user: { id: userId } },
       relations: [...TRANSACTION_RELATIONS],

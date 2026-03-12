@@ -1,5 +1,5 @@
 export class CreateFixedCommitmentDto {
-    name: string;
-    description?: string;
-    amount: number;
+  name: string;
+  description?: string;
+  amount: number;
 }

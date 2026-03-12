@@ -7,6 +7,7 @@ export interface UploadItem {
   uploadedLabel: string;
   status: UploadStatus;
   extractedCount?: number;
+  fileUrl?: string;
 }
 
 export interface UploadViewModel {

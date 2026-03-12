@@ -82,6 +82,9 @@ export class SeedService implements OnApplicationBootstrap {
     const upload = this.uploads.create({
       filename: 'statement_demo_feb_2026.pdf',
       storageKey: 'seed/statement_demo_feb_2026.pdf',
+      mimeType: 'application/pdf',
+      sizeBytes: 0,
+      storageProvider: 'local',
       status: 'COMPLETED',
       user,
     });

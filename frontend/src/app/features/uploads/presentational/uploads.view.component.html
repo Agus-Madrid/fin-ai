@@ -1,60 +1,100 @@
 ﻿<section class="app-page__header">
   <div>
     <div class="app-page__title">File Management</div>
-    <div class="app-page__subtitle">Gestiona estados de cuenta y recibos para IA.</div>
+    <div class="app-page__subtitle">Gestiona estados de cuenta PDF para IA.</div>
   </div>
-  <button class="app-btn-primary">
+  <button class="app-btn-primary" type="button" (click)="fileInput.click()" [disabled]="uploading()">
     <i class="bi bi-cloud-upload me-2"></i>
-    Subir manualmente
+    {{ uploading() ? 'Subiendo...' : 'Cargar archivo' }}
   </button>
+  <input
+    #fileInput
+    type="file"
+    class="d-none"
+    accept=".pdf,application/pdf"
+    (change)="onFileInputChange($event)"
+  />
 </section>
 
-<section class="app-card app-card--flat upload-dropzone mb-4">
+<section
+  class="app-card app-card--flat upload-dropzone mb-4"
+  [class.is-dragging]="isDragging()"
+  [class.is-disabled]="uploading()"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
   <div class="upload-dropzone__icon">
     <i class="bi bi-file-earmark-arrow-up"></i>
   </div>
-  <div class="fw-semibold">Arrastra tus estados de cuenta aquÃ­</div>
-  <div class="text-muted-2">
-    PDF, CSV o imÃ¡genes. MÃ¡x 25MB. Cifrado AES-256 antes de procesar.
+  <div class="fw-semibold">Arrastra y suelta tu PDF aqui</div>
+  <div class="text-muted-2">Solo PDF. Tamano maximo 25MB.</div>
+  <div
+    class="d-flex align-items-center justify-content-center gap-3 mt-3 text-muted-2"
+    style="font-size: 0.75rem"
+  >
+    <span><i class="bi bi-file-earmark-pdf me-1"></i>Formato PDF</span>
+    <span>|</span>
+    <span><i class="bi bi-stars me-1"></i>Listo para pipeline IA</span>
   </div>
-  <div class="d-flex align-items-center justify-content-center gap-3 mt-3 text-muted-2" style="font-size: 0.75rem;">
-    <span><i class="bi bi-shield-lock me-1"></i>Encriptado</span>
-    <span>â€¢</span>
-    <span><i class="bi bi-stars me-1"></i>Parsing IA</span>
+</section>
+
+<section class="mb-3" *ngIf="errorMessage() || uploading()">
+  <div class="upload-feedback upload-feedback--error" *ngIf="errorMessage()">
+    <i class="bi bi-exclamation-circle me-2"></i>{{ errorMessage() }}
+  </div>
+  <div class="upload-feedback upload-feedback--pending" *ngIf="uploading()">
+    <i class="bi bi-arrow-repeat me-2"></i>Subiendo PDF...
   </div>
 </section>
 
 <section class="app-card">
-  <div class="d-flex align-items-center justify-content-between mb-3">
-    <div class="fw-semibold">Recent Uploads</div>
-    <div class="d-flex gap-2">
-      <button class="app-btn-ghost">Todos</button>
-      <button class="app-btn-ghost">Procesando</button>
-      <button class="app-btn-ghost">Completados</button>
-      <button class="app-btn-ghost">Errores</button>
-    </div>
+  <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+    <div class="fw-semibold">Subidas recientes</div>
+    <div class="text-muted-2" style="font-size: 0.8rem">{{ uploadViewModel().uploads.length }} archivo(s)</div>
   </div>
-  <div class="d-flex flex-column gap-2">
+
+  <div class="d-flex flex-column gap-2" *ngIf="uploadViewModel().uploads.length > 0; else emptyState">
     <div class="upload-item" *ngFor="let upload of uploadViewModel().uploads">
-      <div class="upload-item__icon" [class.is-error]="upload.status === 'error'" [class.is-pending]="upload.status === 'pending'">
-        <i class="bi" [ngClass]="upload.status === 'error' ? 'bi-exclamation-triangle' : upload.status === 'pending' ? 'bi-hourglass-split' : 'bi-check-circle'"></i>
+      <div
+        class="upload-item__icon"
+        [class.is-error]="upload.status === 'error'"
+        [class.is-pending]="upload.status === 'pending'"
+      >
+        <i
+          class="bi"
+          [ngClass]="upload.status === 'error' ? 'bi-exclamation-triangle' : upload.status === 'pending' ? 'bi-hourglass-split' : 'bi-check-circle'"
+        ></i>
       </div>
       <div class="flex-grow-1">
         <div class="fw-semibold">{{ upload.name }}</div>
-        <div class="text-muted-2" style="font-size: 0.75rem;">
-          {{ upload.uploadedLabel }} Â· {{ upload.sizeLabel }}
-        </div>
+        <div class="text-muted-2" style="font-size: 0.75rem">{{ upload.uploadedLabel }} · {{ upload.sizeLabel }}</div>
       </div>
       <div class="text-end">
-        <div class="app-chip" [class.app-chip--success]="upload.status === 'processed'" [class.app-chip--warning]="upload.status === 'pending'" [class.app-chip--danger]="upload.status === 'error'">
+        <div
+          class="app-chip"
+          [class.app-chip--success]="upload.status === 'processed'"
+          [class.app-chip--warning]="upload.status === 'pending'"
+          [class.app-chip--danger]="upload.status === 'error'"
+        >
           {{ getStatusLabel(upload.status) }}
         </div>
-        <div class="text-muted-2" style="font-size: 0.7rem;" *ngIf="upload.extractedCount">
-          {{ upload.extractedCount }} transacciones extraÃ­das
-        </div>
       </div>
+      <button
+        *ngIf="upload.fileUrl && upload.status === 'processed'"
+        class="app-btn-ghost upload-item__link"
+        type="button"
+        (click)="onOpenRequested(upload.id)"
+      >
+        Abrir PDF
+      </button>
     </div>
   </div>
-  <div class="text-center text-muted-2 mt-3">Cargar mÃ¡s historial</div>
-</section>
 
+  <ng-template #emptyState>
+    <div class="upload-empty">
+      <i class="bi bi-inbox"></i>
+      <span>Aun no hay archivos subidos</span>
+    </div>
+  </ng-template>
+</section>

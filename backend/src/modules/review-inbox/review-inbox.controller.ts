@@ -1,4 +1,11 @@
-import { Controller, Get, Param, ParseIntPipe, Put, Body } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Put,
+  Body,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { ReviewInboxService } from './review-inbox.service';
@@ -34,4 +41,3 @@ export class ReviewInboxController {
     return this.reviewInboxService.confirmMany(user.userId, ids);
   }
 }
-

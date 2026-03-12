@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { CreateSavingGoalDto } from './dtos/create-saving-goal.dto';
@@ -14,10 +23,12 @@ export class SavingGoalController {
     @CurrentUser() user: AuthenticatedUser,
     @Query('activeOnly') activeOnly?: string,
   ) {
-    const shouldFilterActive =
-      activeOnly === 'true' || activeOnly === '1';
+    const shouldFilterActive = activeOnly === 'true' || activeOnly === '1';
 
-    return this.savingGoalService.findAllByUser(user.userId, shouldFilterActive);
+    return this.savingGoalService.findAllByUser(
+      user.userId,
+      shouldFilterActive,
+    );
   }
 
   @Post()
@@ -38,11 +49,7 @@ export class SavingGoalController {
   }
 
   @Delete(':id')
-  delete(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  delete(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.savingGoalService.delete(user.userId, id);
   }
 }
-

@@ -21,7 +21,10 @@ export class IncomesService {
     });
   }
 
-  async create(userId: string, createIncomeDto: CreateIncomeDto): Promise<Income> {
+  async create(
+    userId: string,
+    createIncomeDto: CreateIncomeDto,
+  ): Promise<Income> {
     const user = await this.findUserById(userId);
     const income = this.incomeRepository.create({
       name: createIncomeDto.name,
@@ -75,7 +78,9 @@ export class IncomesService {
     });
 
     if (!income) {
-      throw new NotFoundException(`Income with id ${id} not found for current user`);
+      throw new NotFoundException(
+        `Income with id ${id} not found for current user`,
+      );
     }
 
     return income;

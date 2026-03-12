@@ -1,4 +1,12 @@
-import { Body, Controller, Delete, Get, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { IncomesService } from './incomes.service';
@@ -13,7 +21,7 @@ export class IncomesController {
   getAllByUser(@CurrentUser() user: AuthenticatedUser) {
     return this.incomesService.findAllByUser(user.userId);
   }
-  
+
   @Post()
   create(
     @CurrentUser() user: AuthenticatedUser,
@@ -32,11 +40,7 @@ export class IncomesController {
   }
 
   @Delete(':id')
-  delete(
-    @CurrentUser() user: AuthenticatedUser,
-    @Param('id') id: string,
-  ) {
+  delete(@CurrentUser() user: AuthenticatedUser, @Param('id') id: string) {
     return this.incomesService.delete(user.userId, id);
   }
 }
-
