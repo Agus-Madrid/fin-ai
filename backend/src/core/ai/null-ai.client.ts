@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { AiClient } from './ai.client';
 import {
+  CheckCategoryMatchInput,
+  CheckCategoryMatchResult,
   ExtractStatementInput,
   ExtractStatementResult,
   ExtractTransactionsFromTextInput,
@@ -24,6 +26,18 @@ export class NullAiClient implements AiClient {
     void input;
     return Promise.resolve({
       transactions: [],
+      warnings: ['AI client not configured.'],
+    });
+  }
+
+  checkCategoryMatch(
+    input: CheckCategoryMatchInput,
+  ): Promise<CheckCategoryMatchResult> {
+    void input;
+    return Promise.resolve({
+      selectedCategoryId: null,
+      confidence: 0,
+      shouldCreateCategory: false,
       warnings: ['AI client not configured.'],
     });
   }

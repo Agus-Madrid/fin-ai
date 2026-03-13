@@ -1,142 +1,121 @@
-import { Injectable } from "@nestjs/common";
-import { PipelineStage } from "../pipeline-stage.interface";
-import { PipelineContext } from "../pipeline-context.interface";
-import { ExtractedTransaction } from "src/core/ai/interfaces";
+import { Injectable } from '@nestjs/common';
+import { ExtractedTransaction } from '../../../../core/ai/interfaces';
+import { PipelineContext } from '../pipeline-context.interface';
+import { PipelineStage } from '../pipeline-stage.interface';
 
 @Injectable()
 export class ValidationNormalizationStage implements PipelineStage {
-    readonly name = "validation-normalization";
-    readonly supportedCurrencies = ["USD", "EUR", "UYU"];
-    readonly actualTargetCurrency = this.supportedCurrencies[2]; 
+    readonly name = 'validation-normalization';
+    private readonly supportedCurrencies = ['USD', 'EUR', 'UYU'];
 
     async executeStage(context: PipelineContext): Promise<PipelineContext> {
-        const warnings = [...context.warnings];
-
-        if (!context.extractedText) {
-            warnings.push("No extracted text available for validation and normalization.");
-            return {
-                ...context,
-                warnings,
-            };
+        const transactions = context.extractedTransactions ?? [];
+        if (transactions.length === 0) {
+            return context;
         }
 
-        this.normalizeFromExtracted(context.extractedTransactions);
-        const { validTransactions, invalidTransactions } = this.splitValidAndInvalidTransactions(context.extractedTransactions);
-        this.pushInvalidTransactionWarnings(invalidTransactions, warnings);
+        const normalizedTransactions = this.normalizeTransactions(transactions, context);
+        const warnings = this.validateTransactions(normalizedTransactions, context);
 
         return {
             ...context,
             warnings,
-            extractedTransactions: validTransactions,
+            extractedTransactions: normalizedTransactions,
         };
     }
 
-    private pushInvalidTransactionWarnings(
-        invalidTransactions: { index: number; errors: string[] }[],
-        warnings: string[],
-    ) {
-        invalidTransactions.forEach(({ index, errors }) => {
-            warnings.push(`Transaction at index ${index} has validation errors: ${errors.join(", ")}`);
+    private validateTransactions(transactions: ExtractedTransaction[], context: PipelineContext): string[] {
+        const warnings = [...context.warnings];
+
+        transactions.forEach((transaction, index) => {
+            const errors = this.validateTransaction(transaction);
+            if (errors.length === 0) {
+                return;
+            }
+            warnings.push(this.formatTransactionValidationWarning(index, errors));
         });
+
+        return warnings;
     }
 
-    private normalizeFromExtracted(extractedTransactions: ExtractedTransaction[] | undefined) {
-        const actualCurrency = this.actualTargetCurrency;
+    private normalizeTransactions(transactions: ExtractedTransaction[], context: PipelineContext): ExtractedTransaction[] {
 
-        extractedTransactions?.forEach((transaction) => {
-            this.normalizateCurrencyForTransaction(transaction, actualCurrency);
-            this.normalizateTextFieldsForTransaction(transaction);
-            this.normalizateDateForTransaction(transaction);
-            this.normalizateAmountForTransaction(transaction);
+        const normalizedTransactions = transactions.map((transaction) =>
+            this.normalizeTransaction(transaction),
+        );
+        const warnings = [...context.warnings];
 
+        normalizedTransactions.forEach((transaction, index) => {
+            const errors = this.validateTransaction(transaction);
+            if (errors.length === 0) {
+                return;
+            }
+
+            warnings.push(this.formatTransactionValidationWarning(index, errors));
         });
+
+        return normalizedTransactions;
     }
 
-    private normalizateCurrencyForTransaction(transaction: ExtractedTransaction, targetCurrency: string) {
-        if (transaction.currency !== targetCurrency) {
-            const currentValue = this.currencyExchange(transaction.currency, transaction.amount);
-            transaction.amount = currentValue;
-            transaction.currency = targetCurrency;
-        }
-    }
-
-    private normalizateTextFieldsForTransaction(transaction: ExtractedTransaction) {
-        transaction.merchant = transaction.merchant?.trim() ?? "";
-        transaction.category = transaction.category?.trim() || "Uncategorized";
+    private normalizeTransaction(
+        transaction: ExtractedTransaction,
+    ): ExtractedTransaction {
+        return {
+            ...transaction,
+            date: (transaction.date ?? '').trim(),
+            merchant: (transaction.merchant ?? '').trim(),
+            currency: (transaction.currency ?? '').trim().toUpperCase(),
+            description: transaction.description?.trim() || undefined,
+            category: transaction.category?.trim() || 'Uncategorized',
+            amount: this.roundToTwoDecimals(transaction.amount),
+        };
     }
     
-    private normalizateDateForTransaction(transaction: ExtractedTransaction) {
-        if (!transaction.date) return;
-        transaction.date = transaction.date.trim();
-    }
-
-    private normalizateAmountForTransaction(transaction: ExtractedTransaction) {
-        if (transaction.amount <= 0) {
-            transaction.amount = 0;
-        }
-    }
-
-    private splitValidAndInvalidTransactions(extractedTransactions: ExtractedTransaction[] | undefined): {
-        validTransactions: ExtractedTransaction[];
-        invalidTransactions: { index: number; errors: string[] }[]} {
-        const validTransactions: ExtractedTransaction[] = [];
-        const invalidTransactions: { index: number; errors: string[] }[] = [];
-
-        extractedTransactions?.forEach((transaction, index) => {
-            const errors = this.validateRequiredFields(transaction);
-            if (errors.length === 0) {
-                validTransactions.push(transaction);
-            } else {
-                invalidTransactions.push({ index, errors });
-            }
-        });
-
-        return { validTransactions, invalidTransactions };
-    }
-
-    private validateRequiredFields(transaction: ExtractedTransaction): string[] {
+    private validateTransaction(transaction: ExtractedTransaction): string[] {
         const errors: string[] = [];
-        if (transaction.date) {
-            const dateErrors = this.validateDateFormat(transaction);
-            errors.push(...dateErrors);
-        } else {
-            errors.push("Missing required field: date");
+
+        if (!transaction.date) {
+            errors.push('Missing required field: date');
+        } else if (!this.isValidIsoDate(transaction.date)) {
+            errors.push(`Invalid date format: ${transaction.date}`);
         }
+
         if (!transaction.merchant) {
-            errors.push("Missing required field: merchant");
+            errors.push('Missing required field: merchant');
         }
-        if (transaction.currency) {
-            const currencyErrors = this.validateCurrencySupport(transaction);
-            errors.push(...currencyErrors);
-        } else {
-            errors.push("Missing required field: currency");
+
+        if (!transaction.currency) {
+            errors.push('Missing required field: currency');
+        } else if (!this.supportedCurrencies.includes(transaction.currency)) {
+            errors.push(`Unsupported currency: ${transaction.currency}`);
         }
-        if (transaction.amount === undefined || transaction.amount === null || transaction.amount <= 0) {
-            errors.push("Missing required field: amount");
+
+        if (
+            transaction.amount === undefined ||
+            transaction.amount === null ||
+            !Number.isFinite(transaction.amount) ||
+            transaction.amount <= 0
+        ) {
+            errors.push('Missing required field: amount');
         }
+
         return errors;
     }
 
-    private validateCurrencySupport(extractedTransactions: ExtractedTransaction): string[] {
-        const errors: string[] = [];
-        if (extractedTransactions.currency && !this.supportedCurrencies.includes(extractedTransactions.currency)) {
-            errors.push(`Unsupported currency: ${extractedTransactions.currency}`);
+    private roundToTwoDecimals(amount: number): number {
+        if (!Number.isFinite(amount)) {
+            return amount;
         }
-        return errors;
+
+        return Math.round(amount * 100) / 100;
     }
 
-    private validateDateFormat(extractedTransactions: ExtractedTransaction): string[] {
-        const errors: string[] = [];
-        if (extractedTransactions.date && !this.isValidDate(extractedTransactions.date)) {
-            errors.push(`Invalid date format: ${extractedTransactions.date}`);
+    private isValidIsoDate(value: string): boolean {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+            return false;
         }
-        return errors;
-    }
 
-    private isValidDate(date: string): boolean {
-        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return false;
-
-        const [year, month, day] = date.split("-").map(Number);
+        const [year, month, day] = value.split('-').map(Number);
         const parsed = new Date(Date.UTC(year, month - 1, day));
 
         return (
@@ -146,23 +125,10 @@ export class ValidationNormalizationStage implements PipelineStage {
         );
     }
 
-    private currencyExchange(sourceCurrency: string, amount: number): number {
-        const exchangeRates: Record<string, number> = {
-            //TODO: These rates should be fetched from an api or a library, not hardcoded
-            "USD": 40.38,
-            "EUR": 46.07,
-        };
-
-        if (sourceCurrency !== this.actualTargetCurrency) {
-            const rate = exchangeRates[sourceCurrency];
-            if (!rate) {
-                throw new Error(`Unsupported source currency: ${sourceCurrency}`);
-            }
-
-            return amount * rate;
-        }
-
-        return amount;
-
+    private formatTransactionValidationWarning(
+        index: number,
+        errors: string[],
+    ): string {
+        return `TransactionValidationIssue[index=${index}]: ${errors.join(', ')}`;
     }
 }

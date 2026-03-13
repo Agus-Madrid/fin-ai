@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { UploadsModule } from '../uploads/uploads.module';
+import { CategoryModule } from '../categories/category.module';
 import { IngestionController } from './ingestion.controller';
 import { IngestionService } from './ingestion.service';
 import { DOCUMENT_OCR_SERVICE } from './ocr/ocr.constants';
@@ -7,11 +8,15 @@ import type { DocumentOcrService } from './ocr/interfaces/document-ocr-service.i
 import { NullDocumentOcrService } from './ocr/null-document-ocr.service';
 import { TesseractCliDocumentOcrService } from './ocr/tesseract-cli-document-ocr.service';
 import { PipelineOrchestratorService } from './pipeline/pipeline-orchestrator.service';
+import { CurrencyExchangeStage } from './pipeline/stages/currency-exchange.stage';
 import { ExtractTextStage } from './pipeline/stages/extract-text.stage';
+import { IssueDescriptionStage } from './pipeline/stages/issue-description.stage';
 import { LlmExtractStage } from './pipeline/stages/llm-extract.stage';
 import { LoadUploadStage } from './pipeline/stages/load-upload.stage';
 import { OcrFallbackStage } from './pipeline/stages/ocr-fallback.stage';
+import { ResolveCategoriesStage } from './pipeline/stages/resolve-categories.stage';
 import { AiModule } from '../../core/ai/ai.module';
+import { ValidationNormalizationStage } from './pipeline/stages/validation-normalization.stage';
 
 function parsePositiveInt(
   value: string | undefined,
@@ -49,7 +54,7 @@ function createDocumentOcrService(): DocumentOcrService {
 }
 
 @Module({
-  imports: [AiModule, UploadsModule],
+  imports: [AiModule, UploadsModule, CategoryModule],
   controllers: [IngestionController],
   providers: [
     IngestionService,
@@ -58,6 +63,10 @@ function createDocumentOcrService(): DocumentOcrService {
     ExtractTextStage,
     OcrFallbackStage,
     LlmExtractStage,
+    ValidationNormalizationStage,
+    ResolveCategoriesStage,
+    CurrencyExchangeStage,
+    IssueDescriptionStage,
     {
       provide: DOCUMENT_OCR_SERVICE,
       useFactory: createDocumentOcrService,

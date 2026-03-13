@@ -1,10 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PipelineContext } from './pipeline-context.interface';
 import { PipelineStage } from './pipeline-stage.interface';
+import { CurrencyExchangeStage } from './stages/currency-exchange.stage';
 import { ExtractTextStage } from './stages/extract-text.stage';
+import { IssueDescriptionStage } from './stages/issue-description.stage';
 import { LlmExtractStage } from './stages/llm-extract.stage';
 import { LoadUploadStage } from './stages/load-upload.stage';
 import { OcrFallbackStage } from './stages/ocr-fallback.stage';
+import { ResolveCategoriesStage } from './stages/resolve-categories.stage';
+import { ValidationNormalizationStage } from './stages/validation-normalization.stage';
 
 @Injectable()
 export class PipelineOrchestratorService {
@@ -15,12 +19,20 @@ export class PipelineOrchestratorService {
     private readonly extractTextStage: ExtractTextStage,
     private readonly ocrFallbackStage: OcrFallbackStage,
     private readonly llmExtractStage: LlmExtractStage,
+    private readonly validationNormalizationStage: ValidationNormalizationStage,
+    private readonly resolveCategoriesStage: ResolveCategoriesStage,
+    private readonly currencyExchangeStage: CurrencyExchangeStage,
+    private readonly issueDescriptionStage: IssueDescriptionStage,
   ) {
     this.pipelineStages = [
       loadUploadStage,
       extractTextStage,
       ocrFallbackStage,
       llmExtractStage,
+      validationNormalizationStage,
+      resolveCategoriesStage,
+      currencyExchangeStage,
+      issueDescriptionStage,
     ];
   }
 

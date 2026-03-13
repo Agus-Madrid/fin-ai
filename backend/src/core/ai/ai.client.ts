@@ -1,4 +1,6 @@
 import {
+  CheckCategoryMatchInput,
+  CheckCategoryMatchResult,
   ExtractStatementInput,
   ExtractStatementResult,
   ExtractTransactionsFromTextInput,
@@ -11,6 +13,9 @@ export interface AiClient {
   extractTransactionsFromText(
     input: ExtractTransactionsFromTextInput,
   ): Promise<ExtractStatementResult>;
+  checkCategoryMatch(
+    input: CheckCategoryMatchInput,
+  ): Promise<CheckCategoryMatchResult>;
 }
 
 export const AI_CLIENT = Symbol('AI_CLIENT');

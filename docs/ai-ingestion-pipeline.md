@@ -1,6 +1,6 @@
 # AI Ingestion Pipeline - Handoff Brief
 
-Last updated: 2026-03-12  
+Last updated: 2026-03-13  
 Branch: `feat/ai`  
 Scope: pipeline para convertir PDFs bancarios en transacciones `PENDING` para `review-inbox`.
 
@@ -14,8 +14,9 @@ Automatizar ingestion de estados de cuenta sin perder control humano:
 Backend:
 - Upload de PDF ya implementado (validacion + persistencia + lectura por `uploadId`).
 - Storage desacoplado por adapter (`local` o `s3`).
-- Abstraccion de IA existe (`AiClient`), proveedor real aun no implementado (`NullAiClient`).
-- `ingestion` aun placeholder.
+- Abstraccion de IA implementada (`AiClient`) con proveedor `GoogleAiStudioClient` + `NullAiClient` fallback.
+- OCR fallback implementado por driver (`none` o `tesseract-cli`).
+- Pipeline de ingestion implementado hasta post-procesamiento de transacciones extraidas (aun no persiste en `review-inbox`).
 - `review-inbox`, `transactions` y `categories` ya funcionan.
 
 Frontend:
@@ -27,11 +28,13 @@ Frontend:
 2. Usuario dispara proceso IA por `uploadId`.
 3. Pipeline lee PDF desde storage.
 4. IA extrae transacciones.
-5. Pipeline valida y normaliza.
-6. Pipeline resuelve categorias existentes.
-7. Si no hay match, puede crear categoria nueva (con guardas).
-8. Pipeline guarda transacciones como `PENDING`.
-9. Usuario confirma en `review-inbox`.
+5. Pipeline normaliza/valida y marca warnings por transaccion.
+6. Pipeline resuelve categorias existentes con doble check (deterministico + LLM).
+7. Pipeline convierte moneda (step separado).
+8. Pipeline marca `description` con `(Issue)` para transacciones invalidas.
+9. Si no hay match, puede crear categoria nueva (con guardas).
+10. Pipeline guarda transacciones como `PENDING`.
+11. Usuario confirma en `review-inbox`.
 
 ## 4. Reglas Duras
 - Human-in-the-loop obligatorio.
@@ -64,23 +67,33 @@ Ubicacion sugerida: `backend/src/modules/ingestion/pipeline/`
 - Convierte texto a transacciones estructuradas.
 - Debe devolver warnings cuando hay ambiguedad.
 
-5. `NormalizeValidateStage`
-- Fecha, monto, moneda, descripcion, dedupe interno.
-- Output: transacciones normalizadas + warnings por fila.
+5. `ValidationNormalizationStage`
+- Normaliza campos post-LLM (date/merchant/currency/category/description/amount).
+- Valida requeridos y genera warnings por indice (`TransactionValidationIssue[index=n]`).
+- No descarta transacciones.
 
 6. `ResolveCategoriesStage`
-- Match contra categorias existentes del usuario.
-- No forzar categoria cuando hay duda.
+- Doble check obligatorio: score deterministico + verificacion LLM.
+- Asigna categoria solo cuando ambos checks coinciden y pasan umbral.
+- Si no hay acuerdo, deja warning y no fuerza categoria.
 
-7. `CreateCategoriesStage`
+7. `CurrencyExchangeStage`
+- Step separado con conversion hardcodeada a `UYU` (temporal).
+- Agrega warning si moneda no soportada por tabla de cambio.
+
+8. `IssueDescriptionStage`
+- Lee warnings de validacion.
+- Si una transaccion tiene warning, prefija `description` con `(Issue)`.
+
+9. `CreateCategoriesStage`
 - Crea categoria solo cuando no hay match valido.
 - Evitar duplicados por similitud.
 
-8. `PersistPendingTransactionsStage`
+10. `PersistPendingTransactionsStage`
 - Persiste transacciones en estado `PENDING`.
 - Mantener idempotencia por hash/clave estable.
 
-9. `BuildReviewSummaryStage`
+11. `BuildReviewSummaryStage`
 - Retorna resumen de corrida para UI/logs.
 
 ## 7. Endpoint Objetivo
@@ -105,9 +118,4 @@ Registrar por corrida:
 - Chat assistant de usuario.
 
 ## 10. Siguiente Paso
-Implementar esqueleto tecnico minimo:
-- `PipelineOrchestrator`
-- contrato de `PipelineContext`
-- contrato de `PipelineStage`
-- `LoadUploadStage` funcional
-
+Implementar `CreateCategoriesStage` usando las sugerencias de `ResolveCategoriesStage`.
