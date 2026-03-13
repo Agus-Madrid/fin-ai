@@ -27,7 +27,7 @@ export class IngestionService {
 
     return {
       uploadId: context.uploadId,
-      status: 'TEXT_EXTRACTED',
+      status: 'LLM_EXTRACTED',
       extractedTextLength: context.extractedText?.length ?? 0,
       textSource: context.meta.textSource ?? 'none',
       filename: context.upload.filename,

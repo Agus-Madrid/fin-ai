@@ -1,8 +1,15 @@
-import { ExtractStatementInput, ExtractStatementResult } from './interfaces';
+import {
+  ExtractStatementInput,
+  ExtractStatementResult,
+  ExtractTransactionsFromTextInput,
+} from './interfaces';
 
 export interface AiClient {
   extractStatement(
     input: ExtractStatementInput,
+  ): Promise<ExtractStatementResult>;
+  extractTransactionsFromText(
+    input: ExtractTransactionsFromTextInput,
   ): Promise<ExtractStatementResult>;
 }
 

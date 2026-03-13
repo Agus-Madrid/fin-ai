@@ -1,3 +1,5 @@
+import type { ExtractedTransaction } from '../../../core/ai/interfaces';
+
 export interface PipelineUploadMetadata {
   filename: string;
   contentType: string;
@@ -21,4 +23,5 @@ export interface PipelineContext {
   upload?: PipelineUploadMetadata;
   fileBuffer?: Buffer;
   extractedText?: string;
+  extractedTransactions?: ExtractedTransaction[];
 }

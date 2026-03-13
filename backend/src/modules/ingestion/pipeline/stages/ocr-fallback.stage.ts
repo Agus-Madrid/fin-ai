@@ -17,6 +17,18 @@ export class OcrFallbackStage implements PipelineStage {
   async executeStage(context: PipelineContext): Promise<PipelineContext> {
     const currentText = context.extractedText ?? '';
     if (this.hasEnoughText(currentText)) {
+      console.log(
+        '[OcrFallbackStage] skipped',
+        JSON.stringify(
+          {
+            uploadId: context.uploadId,
+            reason: 'embedded text is sufficient',
+            textLength: currentText.length,
+          },
+          null,
+          2,
+        ),
+      );
       return context;
     }
 
@@ -36,6 +48,18 @@ export class OcrFallbackStage implements PipelineStage {
 
     if (!ocrText) {
       warnings.push('OCR fallback did not extract any text.');
+      console.log(
+        '[OcrFallbackStage] no text extracted',
+        JSON.stringify(
+          {
+            uploadId: context.uploadId,
+            provider: this.documentOcrService.providerName,
+            warnings,
+          },
+          null,
+          2,
+        ),
+      );
       return {
         ...context,
         warnings,

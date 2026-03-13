@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PipelineContext } from './pipeline-context.interface';
 import { PipelineStage } from './pipeline-stage.interface';
 import { ExtractTextStage } from './stages/extract-text.stage';
+import { LlmExtractStage } from './stages/llm-extract.stage';
 import { LoadUploadStage } from './stages/load-upload.stage';
 import { OcrFallbackStage } from './stages/ocr-fallback.stage';
 
@@ -13,8 +14,14 @@ export class PipelineOrchestratorService {
     private readonly loadUploadStage: LoadUploadStage,
     private readonly extractTextStage: ExtractTextStage,
     private readonly ocrFallbackStage: OcrFallbackStage,
+    private readonly llmExtractStage: LlmExtractStage,
   ) {
-    this.pipelineStages = [loadUploadStage, extractTextStage, ocrFallbackStage];
+    this.pipelineStages = [
+      loadUploadStage,
+      extractTextStage,
+      ocrFallbackStage,
+      llmExtractStage,
+    ];
   }
 
   async executeUploadIngestionPipeline(

@@ -7,6 +7,7 @@ import {
   ModelExtractionPayload,
   ExtractStatementInput,
   ExtractStatementResult,
+  ExtractTransactionsFromTextInput,
 } from './interfaces';
 
 export class GoogleAiStudioClient implements AiClient {
@@ -25,25 +26,9 @@ export class GoogleAiStudioClient implements AiClient {
   async extractStatement(
     input: ExtractStatementInput,
   ): Promise<ExtractStatementResult> {
-    const endpoint = `${this.apiBaseUrl}/v1beta/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
-
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(this.buildRequestBody(input)),
-    });
-
-    if (!response.ok) {
-      const responseBody = await response.text().catch(() => '');
-      throw new ServiceUnavailableException(
-        `Google AI Studio request failed with status ${response.status}${responseBody ? `: ${responseBody}` : ''}`,
-      );
-    }
-
-    const data = (await response.json()) as GeminiGenerateContentResponse;
-    const modelText = this.readModelText(data);
+    const modelText = await this.generateModelText(
+      this.buildPdfExtractionRequestBody(input),
+    );
     const parsedPayload = this.parseModelPayload(modelText);
 
     const warnings = this.toWarnings(parsedPayload.warnings);
@@ -55,7 +40,46 @@ export class GoogleAiStudioClient implements AiClient {
     };
   }
 
-  private buildRequestBody(input: ExtractStatementInput) {
+  async extractTransactionsFromText(
+    input: ExtractTransactionsFromTextInput,
+  ): Promise<ExtractStatementResult> {
+    const modelText = await this.generateModelText(
+      this.buildTextExtractionRequestBody(input),
+    );
+    const parsedPayload = this.parseModelPayload(modelText);
+
+    const warnings = this.toWarnings(parsedPayload.warnings);
+    const normalized = this.normalizeTransactions(parsedPayload.transactions);
+
+    return {
+      transactions: normalized.transactions,
+      warnings: [...warnings, ...normalized.warnings],
+    };
+  }
+
+  private async generateModelText(requestBody: unknown): Promise<string> {
+    const endpoint = `${this.apiBaseUrl}/v1beta/models/${encodeURIComponent(this.model)}:generateContent?key=${encodeURIComponent(this.apiKey)}`;
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    if (!response.ok) {
+      const responseBody = await response.text().catch(() => '');
+      throw new ServiceUnavailableException(
+        `Google AI Studio request failed with status ${response.status}${responseBody ? `: ${responseBody}` : ''}`,
+      );
+    }
+
+    const data = (await response.json()) as GeminiGenerateContentResponse;
+    return this.readModelText(data);
+  }
+
+  private buildPdfExtractionRequestBody(input: ExtractStatementInput) {
     const prompt = this.buildExtractionPrompt(input.filename);
 
     return {
@@ -82,10 +106,30 @@ export class GoogleAiStudioClient implements AiClient {
     };
   }
 
-  private buildExtractionPrompt(filename: string): string {
+  private buildTextExtractionRequestBody(input: ExtractTransactionsFromTextInput) {
+    const prompt = this.buildExtractionPrompt(input.filename);
+    return {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: `${prompt}\n\nStatement text:\n${input.text}`,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.1,
+        responseMimeType: 'application/json',
+      },
+    };
+  }
+
+  private buildExtractionPrompt(filename?: string): string {
     return [
       'You extract bank statement transactions from a PDF file.',
-      `Filename: ${filename}`,
+      filename ? `Filename: ${filename}` : 'Filename: unknown',
       'Return JSON only. No markdown.',
       'Expected JSON format:',
       '{',

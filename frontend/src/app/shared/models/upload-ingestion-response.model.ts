@@ -1,6 +1,6 @@
 export interface UploadIngestionResponse {
   uploadId: string;
-  status: 'TEXT_EXTRACTED';
+  status: 'LLM_EXTRACTED';
   extractedTextLength: number;
   textSource: 'embedded-pdf-text' | 'ocr' | 'none';
   filename: string;

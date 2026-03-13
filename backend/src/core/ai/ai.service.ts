@@ -1,7 +1,11 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { AI_CLIENT } from './ai.client';
 import type { AiClient } from './ai.client';
-import { ExtractStatementInput, ExtractStatementResult } from './interfaces';
+import {
+  ExtractStatementInput,
+  ExtractStatementResult,
+  ExtractTransactionsFromTextInput,
+} from './interfaces';
 
 @Injectable()
 export class AiService {
@@ -11,5 +15,11 @@ export class AiService {
     input: ExtractStatementInput,
   ): Promise<ExtractStatementResult> {
     return this.client.extractStatement(input);
+  }
+
+  async extractTransactionsFromText(
+    input: ExtractTransactionsFromTextInput,
+  ): Promise<ExtractStatementResult> {
+    return this.client.extractTransactionsFromText(input);
   }
 }

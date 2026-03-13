@@ -8,8 +8,10 @@ import { NullDocumentOcrService } from './ocr/null-document-ocr.service';
 import { TesseractCliDocumentOcrService } from './ocr/tesseract-cli-document-ocr.service';
 import { PipelineOrchestratorService } from './pipeline/pipeline-orchestrator.service';
 import { ExtractTextStage } from './pipeline/stages/extract-text.stage';
+import { LlmExtractStage } from './pipeline/stages/llm-extract.stage';
 import { LoadUploadStage } from './pipeline/stages/load-upload.stage';
 import { OcrFallbackStage } from './pipeline/stages/ocr-fallback.stage';
+import { AiModule } from '../../core/ai/ai.module';
 
 function parsePositiveInt(
   value: string | undefined,
@@ -47,7 +49,7 @@ function createDocumentOcrService(): DocumentOcrService {
 }
 
 @Module({
-  imports: [UploadsModule],
+  imports: [AiModule, UploadsModule],
   controllers: [IngestionController],
   providers: [
     IngestionService,
@@ -55,6 +57,7 @@ function createDocumentOcrService(): DocumentOcrService {
     LoadUploadStage,
     ExtractTextStage,
     OcrFallbackStage,
+    LlmExtractStage,
     {
       provide: DOCUMENT_OCR_SERVICE,
       useFactory: createDocumentOcrService,
