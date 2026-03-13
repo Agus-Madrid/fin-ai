@@ -27,6 +27,34 @@ export class ResolveCategoriesStage implements PipelineStage {
   private readonly deterministicConfidenceThreshold = 0.45;
   private readonly llmConfidenceThreshold = 0.7;
   private readonly llmCandidateLimit = 5;
+  private readonly comparableTokenAliases: Record<string, string> = {
+    grocery: 'supermercado',
+    groceries: 'supermercado',
+    market: 'supermercado',
+    supermarket: 'supermercado',
+    super: 'supermercado',
+    food: 'alimentos',
+    restaurant: 'restaurante',
+    restaurants: 'restaurante',
+    transport: 'transporte',
+    taxi: 'transporte',
+    uber: 'transporte',
+    fuel: 'combustible',
+    gasoline: 'combustible',
+    gasoil: 'combustible',
+    internet: 'servicios',
+    electricity: 'servicios',
+    electric: 'servicios',
+    water: 'servicios',
+    phone: 'servicios',
+    medical: 'salud',
+    doctor: 'salud',
+    pharmacy: 'salud',
+    pharma: 'salud',
+    entertainment: 'entretenimiento',
+    subscription: 'suscripciones',
+    subscriptions: 'suscripciones',
+  };
 
   constructor(
     private readonly categoryService: CategoryService,
@@ -561,7 +589,16 @@ export class ResolveCategoriesStage implements PipelineStage {
 
     return normalized
       .split(' ')
-      .map((token) => token.trim())
+      .map((token) => this.normalizeComparableToken(token))
       .filter((token) => token.length >= 2);
+  }
+
+  private normalizeComparableToken(token: string): string {
+    const normalizedToken = token.trim();
+    if (!normalizedToken) {
+      return '';
+    }
+
+    return this.comparableTokenAliases[normalizedToken] ?? normalizedToken;
   }
 }

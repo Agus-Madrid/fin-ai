@@ -15,6 +15,25 @@ import { PipelineStage } from '../pipeline-stage.interface';
 @Injectable()
 export class CreateCategoriesStage implements PipelineStage {
   readonly name = 'create-categories';
+  private readonly spanishCategoryNameAliases: Record<string, string> = {
+    food: 'Alimentos',
+    groceries: 'Supermercado',
+    grocery: 'Supermercado',
+    supermarket: 'Supermercado',
+    market: 'Supermercado',
+    transport: 'Transporte',
+    fuel: 'Combustible',
+    gasoline: 'Combustible',
+    subscription: 'Suscripciones',
+    subscriptions: 'Suscripciones',
+    entertainment: 'Entretenimiento',
+    healthcare: 'Salud',
+    health: 'Salud',
+    medical: 'Salud',
+    pharmacy: 'Salud',
+    utilities: 'Servicios',
+    services: 'Servicios',
+  };
 
   constructor(private readonly categoryService: CategoryService) {}
 
@@ -171,7 +190,7 @@ export class CreateCategoriesStage implements PipelineStage {
       return undefined;
     }
 
-    return preferredName;
+    return this.mapCategoryNameToSpanish(preferredName);
   }
 
   private appendCategoryCreationRequest(
@@ -301,7 +320,7 @@ export class CreateCategoriesStage implements PipelineStage {
       return undefined;
     }
 
-    return preferredName;
+    return this.mapCategoryNameToSpanish(preferredName);
   }
 
   private buildCreateCategoriesStageResult(
@@ -420,5 +439,15 @@ export class CreateCategoriesStage implements PipelineStage {
       .replaceAll(/[^a-z0-9\s]/g, ' ')
       .replaceAll(/\s+/g, ' ')
       .trim();
+  }
+
+  private mapCategoryNameToSpanish(value: string): string {
+    const trimmedValue = value.trim();
+    const normalizedValue = this.normalizeCategoryName(trimmedValue);
+    if (!normalizedValue) {
+      return trimmedValue;
+    }
+
+    return this.spanishCategoryNameAliases[normalizedValue] ?? trimmedValue;
   }
 }
