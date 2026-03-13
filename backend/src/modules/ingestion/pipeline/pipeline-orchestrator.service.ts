@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PipelineContext } from './pipeline-context.interface';
 import { PipelineStage } from './pipeline-stage.interface';
+import { CreateCategoriesStage } from './stages/create-categories.stage';
 import { CurrencyExchangeStage } from './stages/currency-exchange.stage';
 import { ExtractTextStage } from './stages/extract-text.stage';
 import { IssueDescriptionStage } from './stages/issue-description.stage';
@@ -21,6 +22,7 @@ export class PipelineOrchestratorService {
     private readonly llmExtractStage: LlmExtractStage,
     private readonly validationNormalizationStage: ValidationNormalizationStage,
     private readonly resolveCategoriesStage: ResolveCategoriesStage,
+    private readonly createCategoriesStage: CreateCategoriesStage,
     private readonly currencyExchangeStage: CurrencyExchangeStage,
     private readonly issueDescriptionStage: IssueDescriptionStage,
   ) {
@@ -31,6 +33,7 @@ export class PipelineOrchestratorService {
       llmExtractStage,
       validationNormalizationStage,
       resolveCategoriesStage,
+      createCategoriesStage,
       currencyExchangeStage,
       issueDescriptionStage,
     ];

@@ -432,6 +432,8 @@ export class ResolveCategoriesStage implements PipelineStage {
         ...transaction,
         categoryId: undefined,
         categoryMatchConfidence: undefined,
+        needsCategoryCreation: decision.needsCategoryCreation,
+        suggestedCategoryName: decision.suggestedCategoryName,
       };
     }
 
@@ -440,6 +442,8 @@ export class ResolveCategoriesStage implements PipelineStage {
       categoryId: decision.selectedCategoryId,
       category: decision.selectedCategoryName ?? transaction.category,
       categoryMatchConfidence: decision.confidence ?? undefined,
+      needsCategoryCreation: false,
+      suggestedCategoryName: undefined,
     };
   }
 

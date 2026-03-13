@@ -7,5 +7,7 @@ export interface ExtractedTransaction {
   category?: string;
   categoryId?: string;
   categoryMatchConfidence?: number;
+  needsCategoryCreation?: boolean;
+  suggestedCategoryName?: string;
   confidence?: number;
 }

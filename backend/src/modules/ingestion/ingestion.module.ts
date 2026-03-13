@@ -8,6 +8,7 @@ import type { DocumentOcrService } from './ocr/interfaces/document-ocr-service.i
 import { NullDocumentOcrService } from './ocr/null-document-ocr.service';
 import { TesseractCliDocumentOcrService } from './ocr/tesseract-cli-document-ocr.service';
 import { PipelineOrchestratorService } from './pipeline/pipeline-orchestrator.service';
+import { CreateCategoriesStage } from './pipeline/stages/create-categories.stage';
 import { CurrencyExchangeStage } from './pipeline/stages/currency-exchange.stage';
 import { ExtractTextStage } from './pipeline/stages/extract-text.stage';
 import { IssueDescriptionStage } from './pipeline/stages/issue-description.stage';
@@ -65,6 +66,7 @@ function createDocumentOcrService(): DocumentOcrService {
     LlmExtractStage,
     ValidationNormalizationStage,
     ResolveCategoriesStage,
+    CreateCategoriesStage,
     CurrencyExchangeStage,
     IssueDescriptionStage,
     {

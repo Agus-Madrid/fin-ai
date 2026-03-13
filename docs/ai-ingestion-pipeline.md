@@ -16,7 +16,7 @@ Backend:
 - Storage desacoplado por adapter (`local` o `s3`).
 - Abstraccion de IA implementada (`AiClient`) con proveedor `GoogleAiStudioClient` + `NullAiClient` fallback.
 - OCR fallback implementado por driver (`none` o `tesseract-cli`).
-- Pipeline de ingestion implementado hasta post-procesamiento de transacciones extraidas (aun no persiste en `review-inbox`).
+- Pipeline de ingestion implementado hasta creacion/asignacion de categorias (aun no persiste en `review-inbox`).
 - `review-inbox`, `transactions` y `categories` ya funcionan.
 
 Frontend:
@@ -86,8 +86,8 @@ Ubicacion sugerida: `backend/src/modules/ingestion/pipeline/`
 - Si una transaccion tiene warning, prefija `description` con `(Issue)`.
 
 9. `CreateCategoriesStage`
-- Crea categoria solo cuando no hay match valido.
-- Evitar duplicados por similitud.
+- Crea categoria solo cuando no hay match valido (sugerencias del stage de resolucion).
+- Evita duplicados por nombre normalizado y reasigna `categoryId` a transacciones.
 
 10. `PersistPendingTransactionsStage`
 - Persiste transacciones en estado `PENDING`.
@@ -118,4 +118,4 @@ Registrar por corrida:
 - Chat assistant de usuario.
 
 ## 10. Siguiente Paso
-Implementar `CreateCategoriesStage` usando las sugerencias de `ResolveCategoriesStage`.
+Implementar `PersistPendingTransactionsStage` (guardar transacciones como `PENDING` con idempotencia).
