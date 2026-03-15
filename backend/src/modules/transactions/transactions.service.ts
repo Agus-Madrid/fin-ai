@@ -68,7 +68,7 @@ export class TransactionsService {
     transactionData: CreateTransactionDto,
   ): Promise<Transaction> {
     const user = await this.findUserById(userId);
-    const category = await this.findCategoryByIdForUser(
+    const category = await this.resolveCategoryForTransactionWrite(
       transactionData.categoryId,
       userId,
     );
@@ -91,17 +91,18 @@ export class TransactionsService {
     updateData: CreateTransactionDto,
   ): Promise<Transaction> {
     const transaction = await this.findByIdForUser(id, userId);
-    const category = await this.findCategoryByIdForUser(
-      updateData.categoryId,
-      userId,
-    );
+    if (this.shouldUpdateTransactionCategory(updateData.categoryId)) {
+      transaction.category = await this.resolveCategoryForTransactionWrite(
+        updateData.categoryId,
+        userId,
+      );
+    }
 
     Object.assign(transaction, {
       amount: updateData.amount,
       description: updateData.description,
       date: this.normalizeDate(updateData.date),
       status: updateData.status,
-      category,
     });
 
     return this.transactionRepository.save(transaction);
@@ -136,11 +137,10 @@ export class TransactionsService {
     }
 
     if (updates.categoryId !== undefined) {
-      const category = await this.findCategoryByIdForUser(
+      transaction.category = await this.resolveCategoryForTransactionWrite(
         updates.categoryId,
         userId,
       );
-      transaction.category = category;
     }
 
     transaction.status = TransactionStatus.CONFIRMED;
@@ -195,6 +195,37 @@ export class TransactionsService {
 
   private toStoredStatus(status: TransactionStatus): string {
     return `${status}`;
+  }
+
+  private shouldUpdateTransactionCategory(
+    categoryId: string | null | undefined,
+  ): boolean {
+    return categoryId !== undefined;
+  }
+
+  private async resolveCategoryForTransactionWrite(
+    categoryId: string | null | undefined,
+    userId: string,
+  ): Promise<Category | null> {
+    const normalizedCategoryId = this.normalizeCategoryId(categoryId);
+    if (normalizedCategoryId === null) {
+      return null;
+    }
+
+    return this.findCategoryByIdForUser(normalizedCategoryId, userId);
+  }
+
+  private normalizeCategoryId(categoryId: string | null | undefined): string | null {
+    if (categoryId === null || categoryId === undefined) {
+      return null;
+    }
+
+    const normalizedCategoryId = categoryId.trim();
+    if (!normalizedCategoryId) {
+      return null;
+    }
+
+    return normalizedCategoryId;
   }
 
   private async findUserById(userId: string): Promise<User> {
