@@ -1,0 +1,1 @@
+export const DOCUMENT_OCR_SERVICE = Symbol('DOCUMENT_OCR_SERVICE');

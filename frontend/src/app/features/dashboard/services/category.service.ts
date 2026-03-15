@@ -35,4 +35,10 @@ export class CategoryService {
       request,
     );
   }
+
+  delete(categoryId: string) {
+    return this.http.delete(
+      joinUrl(this.config.apiBaseUrl(), `/categories/${categoryId}`),
+    );
+  }
 }

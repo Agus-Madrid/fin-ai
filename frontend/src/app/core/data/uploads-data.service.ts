@@ -42,6 +42,10 @@ export class UploadsDataService {
     });
   }
 
+  reloadUploads(): void {
+    this.reloadTrigger$.next(undefined);
+  }
+
   private toViewModel(upload: UploadApiModel): UploadItem {
     return {
       id: upload.id,
@@ -54,7 +58,7 @@ export class UploadsDataService {
   }
 
   private mapStatus(status: UploadApiModel['status']): UploadStatus {
-    if (status === 'COMPLETED') {
+    if (status === 'COMPLETED' || status === 'PROCESSED') {
       return 'processed';
     }
     if (status === 'FAILED') {

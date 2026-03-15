@@ -37,11 +37,22 @@ export class Transaction {
   })
   status: TransactionStatus;
 
+  @Column('varchar', { name: 'source_upload_id', nullable: true, length: 36 })
+  sourceUploadId: string | null;
+
+  @Column('varchar', {
+    name: 'ingestion_key',
+    nullable: true,
+    unique: true,
+    length: 64,
+  })
+  ingestionKey: string | null;
+
   @ManyToOne(() => User, (user) => user.transactions)
   @JoinColumn({ name: 'user_id' })
   user: User;
 
-  @ManyToOne(() => Category, { nullable: true })
+  @ManyToOne(() => Category, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn()
-  category: Category;
+  category: Category | null;
 }

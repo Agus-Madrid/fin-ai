@@ -1,4 +1,9 @@
-export type ApiUploadStatus = 'PROCESSING' | 'COMPLETED' | 'FAILED';
+export type ApiUploadStatus =
+  | 'PROCESSING'
+  | 'COMPLETED'
+  | 'FAILED'
+  | 'PENDING'
+  | 'PROCESSED';
 
 export interface UploadApiModel {
   id: string;

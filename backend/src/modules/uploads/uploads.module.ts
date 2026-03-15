@@ -60,5 +60,6 @@ function createStorageAdapter(): FileStorageAdapter {
       useFactory: createStorageAdapter,
     },
   ],
+  exports: [UploadsService],
 })
 export class UploadsModule {}

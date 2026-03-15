@@ -13,19 +13,13 @@ import { Upload } from './upload.entity';
 import { FILE_STORAGE_ADAPTER } from './uploads.constants';
 import type { FileStorageAdapter } from './interfaces/file-storage-adapter.interface';
 import { UploadedFilePayload } from './interfaces/uploaded-file.interface';
+import { UploadFileResult } from './interfaces/upload-file-result.interface';
 import {
   hasPdfMimeType,
   hasPdfSignature,
   isPdfFilename,
 } from './utils/pdf-validation.util';
 import { buildStorageKey } from './utils/storage-key.util';
-
-interface UploadFileResult {
-  filename: string;
-  body: Buffer;
-  contentType: string;
-  sizeBytes: number;
-}
 
 @Injectable()
 export class UploadsService {
@@ -86,10 +80,7 @@ export class UploadsService {
       throw new InternalServerErrorException('File upload failed');
     }
 
-    upload.status = 'COMPLETED';
-    const savedUpload = await this.uploadsRepository.save(upload);
-
-    return this.toUploadResponse(savedUpload);
+    return this.toUploadResponse(upload);
   }
 
   async getUploadFile(
@@ -104,8 +95,8 @@ export class UploadsService {
       throw new NotFoundException(`Upload with id ${uploadId} not found`);
     }
 
-    if (upload.status !== 'COMPLETED') {
-      throw new BadRequestException('Upload is not ready to be consumed');
+    if (upload.status === 'FAILED') {
+      throw new BadRequestException('Upload failed and cannot be consumed');
     }
 
     try {
@@ -119,6 +110,27 @@ export class UploadsService {
     } catch {
       throw new NotFoundException('Stored file was not found');
     }
+  }
+
+  async markUploadAsCompleted(userId: string, uploadId: string): Promise<void> {
+    const upload = await this.uploadsRepository.findOne({
+      where: { id: uploadId, user: { id: userId } },
+    });
+
+    if (!upload) {
+      throw new NotFoundException(`Upload with id ${uploadId} not found`);
+    }
+
+    if (upload.status === 'FAILED') {
+      throw new BadRequestException('Upload failed and cannot be completed');
+    }
+
+    if (upload.status === 'COMPLETED') {
+      return;
+    }
+
+    upload.status = 'COMPLETED';
+    await this.uploadsRepository.save(upload);
   }
 
   private validatePdfFile(file: UploadedFilePayload): void {

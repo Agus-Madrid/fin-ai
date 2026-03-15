@@ -81,7 +81,16 @@
         </div>
       </div>
       <button
-        *ngIf="upload.fileUrl && upload.status === 'processed'"
+        *ngIf="upload.status === 'pending'"
+        class="app-btn-ghost upload-item__link"
+        type="button"
+        [disabled]="uploading() || isProcessing(upload.id)"
+        (click)="onProcessRequested(upload.id)"
+      >
+        {{ isProcessing(upload.id) ? 'Procesando...' : 'Procesar' }}
+      </button>
+      <button
+        *ngIf="upload.fileUrl && upload.status !== 'error'"
         class="app-btn-ghost upload-item__link"
         type="button"
         (click)="onOpenRequested(upload.id)"
