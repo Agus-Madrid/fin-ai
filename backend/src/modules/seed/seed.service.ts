@@ -26,8 +26,20 @@ export class SeedService implements OnApplicationBootstrap {
   ) {}
 
   async onApplicationBootstrap() {
-    const seedEmail = 'demo@finai.local';
-    const user = await this.getOrCreateUser(seedEmail);
+    const [user] = await Promise.all([
+      this.getOrCreateUser({
+        name: 'Demo User',
+        email: 'demo@finai.local',
+        password: 'demo',
+        currentTotalSavings: 1200,
+        goalMonthlySavings: 500,
+      }),
+      this.getOrCreateUser({
+        name: 'Agustin Guzaram',
+        email: 'aguzaram33@gmail.com',
+        password: '12345678',
+      }),
+    ]);
 
     await Promise.all([
       this.ensureTransaction(user),
@@ -38,7 +50,21 @@ export class SeedService implements OnApplicationBootstrap {
     ]);
   }
 
-  private async getOrCreateUser(email: string) {
+  private async getOrCreateUser(params: {
+    name: string;
+    email: string;
+    password: string;
+    currentTotalSavings?: number;
+    goalMonthlySavings?: number;
+  }) {
+    const {
+      name,
+      email,
+      password,
+      currentTotalSavings = 0,
+      goalMonthlySavings = 0,
+    } = params;
+
     const existing = await this.users.findOne({ where: { email } });
     if (existing) {
       if (!this.isBcryptHash(existing.password)) {
@@ -48,11 +74,11 @@ export class SeedService implements OnApplicationBootstrap {
       return existing;
     }
     const user = this.users.create({
-      name: 'Demo User',
+      name,
       email,
-      password: await this.hashPassword('demo'),
-      currentTotalSavings: 1200,
-      goalMonthlySavings: 500,
+      password: await this.hashPassword(password),
+      currentTotalSavings,
+      goalMonthlySavings,
     });
     return this.users.save(user);
   }
