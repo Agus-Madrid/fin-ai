@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/user.entity';
@@ -37,9 +41,15 @@ export class SavingGoalService {
     return query.getMany();
   }
 
-  async create(createDto: CreateSavingGoalDto): Promise<SavingGoal> {
-    const user = await this.findUserById(createDto.userId);
-    const targetAmount = this.normalizeAmount(createDto.targetAmount, 'targetAmount');
+  async create(
+    userId: string,
+    createDto: CreateSavingGoalDto,
+  ): Promise<SavingGoal> {
+    const user = await this.findUserById(userId);
+    const targetAmount = this.normalizeAmount(
+      createDto.targetAmount,
+      'targetAmount',
+    );
     const priority = this.normalizePriority(createDto.priority);
     const deadline = this.normalizeDeadline(createDto.deadline);
 
@@ -58,14 +68,12 @@ export class SavingGoalService {
     return this.savingGoalRepository.save(savingGoal);
   }
 
-  async update(id: string, updateDto: UpdateSavingGoalDto): Promise<SavingGoal> {
-    const goal = await this.savingGoalRepository.findOne({
-      where: { id },
-      relations: ['user'],
-    });
-    if (!goal) {
-      throw new NotFoundException(`Saving goal with id ${id} not found`);
-    }
+  async update(
+    userId: string,
+    id: string,
+    updateDto: UpdateSavingGoalDto,
+  ): Promise<SavingGoal> {
+    const goal = await this.findByIdForUser(id, userId);
 
     if (updateDto.name !== undefined) {
       const name = updateDto.name?.trim();
@@ -76,7 +84,10 @@ export class SavingGoalService {
     }
 
     if (updateDto.targetAmount !== undefined) {
-      goal.targetAmount = this.normalizeAmount(updateDto.targetAmount, 'targetAmount');
+      goal.targetAmount = this.normalizeAmount(
+        updateDto.targetAmount,
+        'targetAmount',
+      );
     }
 
     if (updateDto.priority !== undefined) {
@@ -90,11 +101,9 @@ export class SavingGoalService {
     return this.savingGoalRepository.save(goal);
   }
 
-  async delete(id: string): Promise<void> {
-    const result = await this.savingGoalRepository.delete(id);
-    if (result.affected === 0) {
-      throw new NotFoundException(`Saving goal with id ${id} not found`);
-    }
+  async delete(userId: string, id: string): Promise<void> {
+    const goal = await this.findByIdForUser(id, userId);
+    await this.savingGoalRepository.remove(goal);
   }
 
   private async findUserById(userId: string): Promise<User> {
@@ -103,6 +112,24 @@ export class SavingGoalService {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
     return user;
+  }
+
+  private async findByIdForUser(
+    id: string,
+    userId: string,
+  ): Promise<SavingGoal> {
+    const goal = await this.savingGoalRepository.findOne({
+      where: { id, user: { id: userId } },
+      relations: ['user'],
+    });
+
+    if (!goal) {
+      throw new NotFoundException(
+        `Saving goal with id ${id} not found for current user`,
+      );
+    }
+
+    return goal;
   }
 
   private normalizeAmount(value: unknown, fieldName: string): number {

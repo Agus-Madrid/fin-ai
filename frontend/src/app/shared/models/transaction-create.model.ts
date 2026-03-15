@@ -9,5 +9,4 @@ export interface CreateTransactionRequest {
 
 export interface CreateTransactionDto extends CreateTransactionRequest {
   status: TransactionStatus;
-  userId: string;
 }

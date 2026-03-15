@@ -1,6 +1,5 @@
 export class CreateIncomeDto {
-    name: string;
-    description?: string;
-    amount: number;
-    userId: string;
+  name: string;
+  description?: string;
+  amount: number;
 }

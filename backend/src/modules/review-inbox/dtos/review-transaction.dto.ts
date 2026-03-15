@@ -2,5 +2,5 @@ export class ReviewTransactionDto {
   amount?: number;
   date?: Date | string;
   description?: string;
-  categoryId?: string;
+  categoryId?: string | null;
 }

@@ -13,6 +13,8 @@ const USER_RELATIONS = [
   'savingsLogs',
 ] as const;
 
+export type PublicUser = Omit<User, 'password'>;
+
 @Injectable()
 export class UserService {
   constructor(
@@ -37,15 +39,43 @@ export class UserService {
     return user;
   }
 
-  async updateMonthlyGoalSavings(userId: string, goalMonthlySavings: number): Promise<User> {
+  async updateMonthlyGoalSavings(
+    userId: string,
+    goalMonthlySavings: number,
+  ): Promise<User> {
     const user = await this.findById(userId);
     user.goalMonthlySavings = goalMonthlySavings;
     return await this.userRepository.save(user);
   }
 
-  async updateCurrentTotalSavings(userId: string, currentTotalSavings: number): Promise<User> {
+  async updateCurrentTotalSavings(
+    userId: string,
+    currentTotalSavings: number,
+  ): Promise<User> {
     const user = await this.findById(userId);
     user.currentTotalSavings = currentTotalSavings;
     return await this.userRepository.save(user);
+  }
+
+  async findPublicById(id: string): Promise<PublicUser> {
+    const user = await this.findById(id);
+    return this.toPublicUser(user);
+  }
+
+  async updatePublicMonthlyGoalSavings(
+    userId: string,
+    goalMonthlySavings: number,
+  ): Promise<PublicUser> {
+    const user = await this.updateMonthlyGoalSavings(
+      userId,
+      goalMonthlySavings,
+    );
+    return this.toPublicUser(user);
+  }
+
+  private toPublicUser(user: User): PublicUser {
+    const { password, ...publicUser } = user;
+    void password;
+    return publicUser;
   }
 }

@@ -22,8 +22,8 @@ export class FixedCommitment {
   })
   amount: number;
 
-  @ManyToOne(() => Category, { nullable: true })
-  category: Category;
+  @ManyToOne(() => Category, { nullable: true, onDelete: 'SET NULL' })
+  category: Category | null;
 
   @ManyToOne(() => User, (user) => user.fixedCommitments)
   user: User;

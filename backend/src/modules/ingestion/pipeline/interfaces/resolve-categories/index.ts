@@ -1,0 +1,9 @@
+export type { CategoryCandidateProfile } from './category-candidate-profile.interface';
+export type { RankedCategoryCandidate } from './ranked-category-candidate.interface';
+export type { DeterministicCategoryMatch } from './deterministic-category-match.interface';
+export type { CategoryResolutionDecision } from './category-resolution-decision.interface';
+export type { CategoryCreationSuggestion } from './category-creation-suggestion.interface';
+export type { TransactionCategoryResolution } from './transaction-category-resolution.interface';
+export type { CategoryResolutionAggregate } from './category-resolution-aggregate.interface';
+export type { CategoryResolutionContextSummary } from './category-resolution-context-summary.interface';
+export type { CategoryResolutionCheckInput } from './category-resolution-check-input.interface';

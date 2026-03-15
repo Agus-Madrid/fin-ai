@@ -1,0 +1,3 @@
+export const FILE_STORAGE_ADAPTER = Symbol('FILE_STORAGE_ADAPTER');
+
+export const MAX_UPLOAD_FILE_SIZE_BYTES = 25 * 1024 * 1024;

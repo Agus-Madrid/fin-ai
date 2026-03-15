@@ -4,12 +4,14 @@ import {
   Controller,
   Delete,
   Get,
-  Param,
   ParseIntPipe,
   Post,
   Put,
   Query,
+  Param,
 } from '@nestjs/common';
+import type { AuthenticatedUser } from '../../common/interfaces/authenticated-user.interface';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 import { TransactionsService } from './transactions.service';
 import { CreateTransactionDto } from './dtos/create-transaction.dto';
 import { TransactionStatus } from './transaction.enum';
@@ -19,17 +21,12 @@ export class TransactionsController {
   constructor(private readonly transactionsService: TransactionsService) {}
 
   @Get()
-  getAll() {
-    return this.transactionsService.findAll();
-  }
-
-  @Get('user/:userId')
   getAllByUser(
-    @Param('userId') userId: string,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('status') status?: string,
   ) {
     if (status === undefined) {
-      return this.transactionsService.findAllByUser(userId);
+      return this.transactionsService.findAllByUser(user.userId);
     }
 
     const parsedStatus = Number.parseInt(status, 10);
@@ -38,34 +35,50 @@ export class TransactionsController {
     }
 
     return this.transactionsService.findAllByUserStatus(
-      userId,
+      user.userId,
       parsedStatus as TransactionStatus,
     );
   }
 
-  @Get('user/:userId/latest')
+  @Get('latest')
   getLatestByUser(
-    @Param('userId') userId: string,
-    @Query('limit') limit: number = 5,
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('limit') limit?: string,
   ) {
-    return this.transactionsService.findLatestByUser(userId, limit);
+    const parsedLimit = limit === undefined ? 5 : Number.parseInt(limit, 10);
+    if (!Number.isInteger(parsedLimit) || parsedLimit <= 0) {
+      throw new BadRequestException('limit must be a positive integer');
+    }
+
+    return this.transactionsService.findLatestByUser(user.userId, parsedLimit);
   }
 
   @Post()
-  create(@Body() CreateTransactionDto: CreateTransactionDto) {
-    return this.transactionsService.create(CreateTransactionDto);
+  create(
+    @CurrentUser() user: AuthenticatedUser,
+    @Body() createTransactionDto: CreateTransactionDto,
+  ) {
+    return this.transactionsService.create(user.userId, createTransactionDto);
   }
 
   @Put(':id')
   update(
+    @CurrentUser() user: AuthenticatedUser,
     @Param('id', ParseIntPipe) transactionId: number,
     @Body() updateTransactionDto: CreateTransactionDto,
   ) {
-    return this.transactionsService.update(transactionId, updateTransactionDto);
+    return this.transactionsService.update(
+      user.userId,
+      transactionId,
+      updateTransactionDto,
+    );
   }
 
   @Delete(':id')
-  delete(@Param('id', ParseIntPipe) transactionId: number) {
-    return this.transactionsService.delete(transactionId);
+  delete(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseIntPipe) transactionId: number,
+  ) {
+    return this.transactionsService.delete(user.userId, transactionId);
   }
 }

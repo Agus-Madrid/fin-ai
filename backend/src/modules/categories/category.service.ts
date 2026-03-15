@@ -21,35 +21,34 @@ export class CategoryService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) {}
+  ) { }
 
-  async findAll(): Promise<Category[]> {
-    return await this.categoryRepository.find({
-      relations: [...CATEGORY_RELATIONS],
-    });
-  }
-
-  async findById(id: string): Promise<Category> {
+  async findById(id: string, userId: string): Promise<Category> {
     const category = await this.categoryRepository.findOne({
-      where: { id },
+      where: { id, userId },
       relations: [...CATEGORY_RELATIONS],
     });
     if (!category) {
-      throw new NotFoundException(`Category with id ${id} not found`);
+      throw new NotFoundException(
+        `Category with id ${id} not found for current user`,
+      );
     }
     return category;
   }
 
-  async findByUserId(userId: string): Promise<Category[]> {
+  async findAllByUser(userId: string): Promise<Category[]> {
     return await this.categoryRepository.find({
       where: { userId },
       relations: [...CATEGORY_RELATIONS],
     });
   }
 
-  async create(categoryData: CreateCategoryDto): Promise<Category> {
+  async create(
+    userId: string,
+    categoryData: CreateCategoryDto,
+  ): Promise<Category> {
     const name = this.normalizeName(categoryData.name);
-    const user = await this.findUserById(categoryData.userId);
+    const user = await this.findUserById(userId);
 
     const category = this.categoryRepository.create({
       name,
@@ -62,8 +61,12 @@ export class CategoryService {
     return await this.categoryRepository.save(category);
   }
 
-  async update(id: string, updateData: UpdateCategoryDto): Promise<Category> {
-    const category = await this.findById(id);
+  async update(
+    userId: string,
+    id: string,
+    updateData: UpdateCategoryDto,
+  ): Promise<Category> {
+    const category = await this.findById(id, userId);
 
     if (updateData.name !== undefined) {
       category.name = this.normalizeName(updateData.name);
@@ -78,6 +81,14 @@ export class CategoryService {
     }
 
     return await this.categoryRepository.save(category);
+  }
+  
+  async delete(
+    userId: string,
+    id: string,
+  ): Promise<void> {
+    const category = await this.findById(id, userId);
+    await this.categoryRepository.remove(category);
   }
 
   private normalizeName(name: string): string {

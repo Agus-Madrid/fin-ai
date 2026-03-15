@@ -9,5 +9,5 @@ export interface Transaction {
   description: string;
   date: Date;
   status: TransactionStatus;
-  category: Category;
+  category?: Category;
 }

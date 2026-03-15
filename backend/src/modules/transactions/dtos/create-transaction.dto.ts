@@ -5,6 +5,5 @@ export class CreateTransactionDto {
   date: Date | string;
   description: string;
   status: TransactionStatus;
-  categoryId: string;
-  userId: string;
+  categoryId?: string | null;
 }
