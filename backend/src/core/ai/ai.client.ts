@@ -4,6 +4,8 @@ import {
   ExtractStatementInput,
   ExtractStatementResult,
   ExtractTransactionsFromTextInput,
+  GenerateCategoryVisualsInput,
+  GenerateCategoryVisualsResult,
 } from './interfaces';
 
 export interface AiClient {
@@ -16,6 +18,9 @@ export interface AiClient {
   checkCategoryMatch(
     input: CheckCategoryMatchInput,
   ): Promise<CheckCategoryMatchResult>;
+  generateCategoryVisuals(
+    input: GenerateCategoryVisualsInput,
+  ): Promise<GenerateCategoryVisualsResult>;
 }
 
 export const AI_CLIENT = Symbol('AI_CLIENT');

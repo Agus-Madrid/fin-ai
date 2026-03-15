@@ -10,6 +10,7 @@ import { LoadUploadStage } from './stages/load-upload.stage';
 import { OcrFallbackStage } from './stages/ocr-fallback.stage';
 import { ResolveCategoriesStage } from './stages/resolve-categories.stage';
 import { ValidationNormalizationStage } from './stages/validation-normalization.stage';
+import { PersistPendingTransactionsStage } from './stages/persist-pending-transactions.stage';
 
 @Injectable()
 export class PipelineOrchestratorService {
@@ -25,6 +26,7 @@ export class PipelineOrchestratorService {
     private readonly createCategoriesStage: CreateCategoriesStage,
     private readonly currencyExchangeStage: CurrencyExchangeStage,
     private readonly issueDescriptionStage: IssueDescriptionStage,
+    private readonly persistPendingTransactionsStage: PersistPendingTransactionsStage,
   ) {
     this.pipelineStages = [
       loadUploadStage,
@@ -36,6 +38,7 @@ export class PipelineOrchestratorService {
       createCategoriesStage,
       currencyExchangeStage,
       issueDescriptionStage,
+      persistPendingTransactionsStage,
     ];
   }
 

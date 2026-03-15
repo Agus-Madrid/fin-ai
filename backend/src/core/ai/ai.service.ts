@@ -7,6 +7,8 @@ import {
   ExtractStatementInput,
   ExtractStatementResult,
   ExtractTransactionsFromTextInput,
+  GenerateCategoryVisualsInput,
+  GenerateCategoryVisualsResult,
 } from './interfaces';
 
 @Injectable()
@@ -29,5 +31,11 @@ export class AiService {
     input: CheckCategoryMatchInput,
   ): Promise<CheckCategoryMatchResult> {
     return this.client.checkCategoryMatch(input);
+  }
+
+  async generateCategoryVisuals(
+    input: GenerateCategoryVisualsInput,
+  ): Promise<GenerateCategoryVisualsResult> {
+    return this.client.generateCategoryVisuals(input);
   }
 }

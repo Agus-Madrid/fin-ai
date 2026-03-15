@@ -24,4 +24,6 @@ export interface PipelineContext {
   fileBuffer?: Buffer;
   extractedText?: string;
   extractedTransactions?: ExtractedTransaction[];
+  persistedPendingTransactionsCount?: number;
+  skippedPendingTransactionsCount?: number;
 }

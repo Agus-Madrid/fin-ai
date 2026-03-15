@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
-import { ExtractedTransaction } from '../../../../core/ai/interfaces';
+import {
+  CategoryVisualSuggestion,
+  ExtractedTransaction,
+  GenerateCategoryVisualsResult,
+} from '../../../../core/ai/interfaces';
+import { AiService } from '../../../../core/ai/ai.service';
 import { CategoryService } from '../../../categories/category.service';
 import {
   CategoryCreationOutcome,
@@ -15,6 +20,17 @@ import { PipelineStage } from '../pipeline-stage.interface';
 @Injectable()
 export class CreateCategoriesStage implements PipelineStage {
   readonly name = 'create-categories';
+  private readonly fallbackCategoryIcon = '\uD83D\uDCC1';
+  private readonly fallbackColorPalette = [
+    '#7DB7FF',
+    '#7ACAA6',
+    '#F5A971',
+    '#E68CB2',
+    '#A5A1F2',
+    '#F2C96D',
+    '#83C5E8',
+    '#C9B07E',
+  ];
   private readonly spanishCategoryNameAliases: Record<string, string> = {
     food: 'Alimentos',
     groceries: 'Supermercado',
@@ -35,7 +51,10 @@ export class CreateCategoriesStage implements PipelineStage {
     services: 'Servicios',
   };
 
-  constructor(private readonly categoryService: CategoryService) {}
+  constructor(
+    private readonly categoryService: CategoryService,
+    private readonly aiService: AiService,
+  ) {}
 
   async executeStage(context: PipelineContext): Promise<PipelineContext> {
     const transactions = this.readTransactionsFromContext(context);
@@ -51,11 +70,20 @@ export class CreateCategoriesStage implements PipelineStage {
       initialCategoryLookup,
     );
     this.logCategoryCreationPlan(contextSummary, creationPlan.requests);
+    const visualSuggestionResult = await this.generateCategoryVisualsForRequests(
+      creationPlan.requests,
+    );
+    this.logCategoryVisualSuggestions(contextSummary, visualSuggestionResult);
+    const visualSuggestionLookup = this.buildCategoryVisualSuggestionLookup(
+      visualSuggestionResult.visuals,
+    );
 
     const creationOutcome = await this.createCategoriesFromPlan(
       context.userId,
       creationPlan.requests,
       initialCategoryLookup,
+      visualSuggestionLookup,
+      visualSuggestionResult.warnings,
     );
     const transactionsWithCategories = this.assignCategoriesToTransactions(
       transactions,
@@ -88,12 +116,12 @@ export class CreateCategoriesStage implements PipelineStage {
 
   private loadUserCategories(
     userId: string,
-  ): Promise<Array<{ id: string; name: string }>> {
+  ): Promise<Array<{ id: string; name: string; icon?: string; color?: string }>> {
     return this.categoryService.findAllByUser(userId);
   }
 
   private buildCategoryLookup(
-    categories: Array<{ id: string; name: string }>,
+    categories: Array<{ id: string; name: string; icon?: string; color?: string }>,
   ): Map<string, CategoryReference> {
     const lookup = new Map<string, CategoryReference>();
 
@@ -109,11 +137,15 @@ export class CreateCategoriesStage implements PipelineStage {
   private mapCategoryToReference(category: {
     id: string;
     name: string;
+    icon?: string;
+    color?: string;
   }): CategoryReference {
     return {
       id: category.id,
       name: category.name,
       normalizedName: this.normalizeCategoryName(category.name),
+      icon: category.icon,
+      color: category.color,
     };
   }
 
@@ -212,14 +244,62 @@ export class CreateCategoriesStage implements PipelineStage {
     });
   }
 
+  private async generateCategoryVisualsForRequests(
+    requests: CategoryCreationRequest[],
+  ): Promise<GenerateCategoryVisualsResult> {
+    if (requests.length === 0) {
+      return {
+        visuals: [],
+        warnings: [],
+      };
+    }
+
+    try {
+      return await this.aiService.generateCategoryVisuals({
+        categories: requests.map((request) => ({
+          normalizedName: request.normalizedName,
+          displayName: request.displayName,
+        })),
+      });
+    } catch (error) {
+      return {
+        visuals: [],
+        warnings: [this.buildCategoryVisualsGenerationWarning(error)],
+      };
+    }
+  }
+
+  private buildCategoryVisualSuggestionLookup(
+    visuals: CategoryVisualSuggestion[],
+  ): Map<string, CategoryVisualSuggestion> {
+    const lookup = new Map<string, CategoryVisualSuggestion>();
+
+    visuals.forEach((visual) => {
+      lookup.set(visual.normalizedName, visual);
+    });
+
+    return lookup;
+  }
+
+  private buildCategoryVisualsGenerationWarning(error: unknown): string {
+    const rawMessage = error instanceof Error ? error.message : 'unknown error';
+    const normalizedMessage = rawMessage.trim().slice(0, 200);
+    return [
+      'CreateCategoriesStage: failed to generate category visuals with AI.',
+      `Using fallback visuals. Reason: ${normalizedMessage || 'unknown error'}.`,
+    ].join(' ');
+  }
+
   private async createCategoriesFromPlan(
     userId: string,
     requests: CategoryCreationRequest[],
     initialCategoryLookup: Map<string, CategoryReference>,
+    visualSuggestionLookup: Map<string, CategoryVisualSuggestion>,
+    visualWarnings: string[],
   ): Promise<CategoryCreationOutcome> {
     const categoryLookup = new Map(initialCategoryLookup);
     const createdCategories: CategoryReference[] = [];
-    const warnings: string[] = [];
+    const warnings: string[] = [...visualWarnings];
 
     for (const request of requests) {
       await this.createCategoryFromRequest(
@@ -227,6 +307,7 @@ export class CreateCategoriesStage implements PipelineStage {
         request,
         categoryLookup,
         createdCategories,
+        visualSuggestionLookup,
         warnings,
       );
     }
@@ -243,6 +324,7 @@ export class CreateCategoriesStage implements PipelineStage {
     request: CategoryCreationRequest,
     categoryLookup: Map<string, CategoryReference>,
     createdCategories: CategoryReference[],
+    visualSuggestionLookup: Map<string, CategoryVisualSuggestion>,
     warnings: string[],
   ): Promise<void> {
     if (categoryLookup.has(request.normalizedName)) {
@@ -250,8 +332,14 @@ export class CreateCategoriesStage implements PipelineStage {
     }
 
     try {
+      const categoryVisual = this.resolveCategoryVisual(
+        request.normalizedName,
+        visualSuggestionLookup,
+      );
       const createdCategory = await this.categoryService.create(userId, {
         name: request.displayName,
+        icon: categoryVisual.icon,
+        color: categoryVisual.color,
       });
       const createdCategoryReference = this.mapCategoryToReference(createdCategory);
       categoryLookup.set(
@@ -264,6 +352,44 @@ export class CreateCategoriesStage implements PipelineStage {
         `CreateCategoriesStage: failed to create category "${request.displayName}".`,
       );
     }
+  }
+
+  private resolveCategoryVisual(
+    normalizedCategoryName: string,
+    visualSuggestionLookup: Map<string, CategoryVisualSuggestion>,
+  ): { icon: string; color: string } {
+    const suggestedVisual = visualSuggestionLookup.get(normalizedCategoryName);
+    if (suggestedVisual) {
+      return {
+        icon: suggestedVisual.icon,
+        color: suggestedVisual.color,
+      };
+    }
+
+    return {
+      icon: this.fallbackCategoryIcon,
+      color: this.pickFallbackColor(normalizedCategoryName),
+    };
+  }
+
+  private pickFallbackColor(normalizedCategoryName: string): string {
+    const paletteSize = this.fallbackColorPalette.length;
+    if (paletteSize === 0) {
+      return '#7DB7FF';
+    }
+
+    const hash = this.hashText(normalizedCategoryName);
+    const paletteIndex = hash % paletteSize;
+    return this.fallbackColorPalette[paletteIndex];
+  }
+
+  private hashText(value: string): number {
+    let hash = 0;
+    for (let index = 0; index < value.length; index += 1) {
+      hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+    }
+
+    return hash;
   }
 
   private assignCategoriesToTransactions(
@@ -392,6 +518,27 @@ export class CreateCategoriesStage implements PipelineStage {
           userId: contextSummary.userId,
           requestCount: requests.length,
           requests,
+        },
+        null,
+        2,
+      ),
+    );
+  }
+
+  private logCategoryVisualSuggestions(
+    contextSummary: CreateCategoriesContextSummary,
+    visualSuggestionResult: GenerateCategoryVisualsResult,
+  ): void {
+    console.log(
+      '[CreateCategoriesStage] visual suggestions',
+      JSON.stringify(
+        {
+          uploadId: contextSummary.uploadId,
+          userId: contextSummary.userId,
+          visualCount: visualSuggestionResult.visuals.length,
+          visuals: visualSuggestionResult.visuals,
+          warningCount: visualSuggestionResult.warnings.length,
+          warnings: visualSuggestionResult.warnings,
         },
         null,
         2,

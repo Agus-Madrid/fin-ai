@@ -1,6 +1,6 @@
 # AI Ingestion Pipeline - Handoff Brief
 
-Last updated: 2026-03-13  
+Last updated: 2026-03-15  
 Branch: `feat/ai`  
 Scope: pipeline para convertir PDFs bancarios en transacciones `PENDING` para `review-inbox`.
 
@@ -16,7 +16,7 @@ Backend:
 - Storage desacoplado por adapter (`local` o `s3`).
 - Abstraccion de IA implementada (`AiClient`) con proveedor `GoogleAiStudioClient` + `NullAiClient` fallback.
 - OCR fallback implementado por driver (`none` o `tesseract-cli`).
-- Pipeline de ingestion implementado hasta creacion/asignacion de categorias (aun no persiste en `review-inbox`).
+- Pipeline de ingestion implementado hasta persistencia de transacciones `PENDING` con idempotencia por `ingestionKey`.
 - `review-inbox`, `transactions` y `categories` ya funcionan.
 
 Frontend:
@@ -118,4 +118,4 @@ Registrar por corrida:
 - Chat assistant de usuario.
 
 ## 10. Siguiente Paso
-Implementar `PersistPendingTransactionsStage` (guardar transacciones como `PENDING` con idempotencia).
+Implementar `BuildReviewSummaryStage` (resumen final de corrida para UI/logs).

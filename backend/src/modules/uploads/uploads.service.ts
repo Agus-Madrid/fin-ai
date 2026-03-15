@@ -112,6 +112,27 @@ export class UploadsService {
     }
   }
 
+  async markUploadAsCompleted(userId: string, uploadId: string): Promise<void> {
+    const upload = await this.uploadsRepository.findOne({
+      where: { id: uploadId, user: { id: userId } },
+    });
+
+    if (!upload) {
+      throw new NotFoundException(`Upload with id ${uploadId} not found`);
+    }
+
+    if (upload.status === 'FAILED') {
+      throw new BadRequestException('Upload failed and cannot be completed');
+    }
+
+    if (upload.status === 'COMPLETED') {
+      return;
+    }
+
+    upload.status = 'COMPLETED';
+    await this.uploadsRepository.save(upload);
+  }
+
   private validatePdfFile(file: UploadedFilePayload): void {
     if (!isPdfFilename(file.originalname)) {
       throw new BadRequestException('Only .pdf files are allowed');

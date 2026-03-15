@@ -6,6 +6,8 @@ import {
   ExtractStatementInput,
   ExtractStatementResult,
   ExtractTransactionsFromTextInput,
+  GenerateCategoryVisualsInput,
+  GenerateCategoryVisualsResult,
 } from './interfaces';
 
 @Injectable()
@@ -38,6 +40,16 @@ export class NullAiClient implements AiClient {
       selectedCategoryId: null,
       confidence: 0,
       shouldCreateCategory: false,
+      warnings: ['AI client not configured.'],
+    });
+  }
+
+  generateCategoryVisuals(
+    input: GenerateCategoryVisualsInput,
+  ): Promise<GenerateCategoryVisualsResult> {
+    void input;
+    return Promise.resolve({
+      visuals: [],
       warnings: ['AI client not configured.'],
     });
   }

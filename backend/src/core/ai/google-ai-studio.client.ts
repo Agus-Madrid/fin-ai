@@ -2,12 +2,17 @@ import { ServiceUnavailableException } from '@nestjs/common';
 import { AiClient } from './ai.client';
 import {
   CategoryCandidate,
+  CategoryVisualRequest,
+  CategoryVisualSuggestion,
   CheckCategoryMatchInput,
   CheckCategoryMatchResult,
   ExtractedTransaction,
+  GenerateCategoryVisualsInput,
+  GenerateCategoryVisualsResult,
   GeminiGenerateContentResponse,
   GoogleAiStudioClientOptions,
   ModelCategoryMatchPayload,
+  ModelCategoryVisualsPayload,
   ModelExtractionPayload,
   ExtractStatementInput,
   ExtractStatementResult,
@@ -69,6 +74,24 @@ export class GoogleAiStudioClient implements AiClient {
     );
     const payload = this.parseCategoryMatchPayload(modelText);
     return this.normalizeCategoryMatch(payload, input.candidates);
+  }
+
+  async generateCategoryVisuals(
+    input: GenerateCategoryVisualsInput,
+  ): Promise<GenerateCategoryVisualsResult> {
+    if (input.categories.length === 0) {
+      return {
+        visuals: [],
+        warnings: [],
+      };
+    }
+
+    const modelText = await this.generateModelText(
+      this.buildCategoryVisualsRequestBody(input),
+    );
+    const payload = this.parseCategoryVisualsPayload(modelText);
+
+    return this.normalizeCategoryVisuals(payload, input.categories);
   }
 
   private async generateModelText(requestBody: unknown): Promise<string> {
@@ -161,6 +184,27 @@ export class GoogleAiStudioClient implements AiClient {
     };
   }
 
+  private buildCategoryVisualsRequestBody(input: GenerateCategoryVisualsInput) {
+    const prompt = this.buildCategoryVisualsPrompt(input);
+
+    return {
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            {
+              text: prompt,
+            },
+          ],
+        },
+      ],
+      generationConfig: {
+        temperature: 0.2,
+        responseMimeType: 'application/json',
+      },
+    };
+  }
+
   private buildExtractionPrompt(filename?: string): string {
     return [
       'Extrae transacciones de gastos desde un estado de cuenta bancario.',
@@ -220,6 +264,33 @@ export class GoogleAiStudioClient implements AiClient {
     ].join('\n');
   }
 
+  private buildCategoryVisualsPrompt(input: GenerateCategoryVisualsInput): string {
+    return [
+      'Genera visuales para categorias financieras en una app dark mode.',
+      'Responde solo JSON. Sin markdown.',
+      'Formato JSON esperado:',
+      '{',
+      '  "visuals": [',
+      '    {',
+      '      "normalizedName": "string",',
+      '      "icon": "emoji",',
+      '      "color": "#RRGGBB"',
+      '    }',
+      '  ],',
+      '  "warnings": ["string"]',
+      '}',
+      'Reglas:',
+      '- Devuelve exactamente una entrada por cada categoria enviada.',
+      '- normalizedName debe coincidir exactamente con la entrada recibida.',
+      '- icon debe ser un emoji simple y representativo de la categoria.',
+      '- color debe ser hexadecimal valido #RRGGBB.',
+      '- Usa colores con buen contraste sobre fondo oscuro #191919.',
+      '- No cambies ni traduzcas normalizedName.',
+      '',
+      `Categorias: ${JSON.stringify(input.categories)}`,
+    ].join('\n');
+  }
+
   private readModelText(response: GeminiGenerateContentResponse): string {
     const text =
       response.candidates?.[0]?.content?.parts?.find(
@@ -265,6 +336,21 @@ export class GoogleAiStudioClient implements AiClient {
     }
   }
 
+  private parseCategoryVisualsPayload(text: string): ModelCategoryVisualsPayload {
+    try {
+      const parsed = JSON.parse(text) as ModelCategoryVisualsPayload;
+      if (!parsed || typeof parsed !== 'object') {
+        return {};
+      }
+
+      return parsed;
+    } catch {
+      throw new ServiceUnavailableException(
+        'Google AI Studio returned non-JSON output for category visuals',
+      );
+    }
+  }
+
   private toWarnings(rawWarnings: unknown): string[] {
     if (!Array.isArray(rawWarnings)) {
       return [];
@@ -301,6 +387,70 @@ export class GoogleAiStudioClient implements AiClient {
       suggestedCategoryName:
         this.readStringField(payload.suggestedCategoryName) || undefined,
       reason: this.readStringField(payload.reason) || undefined,
+      warnings,
+    };
+  }
+
+  private normalizeCategoryVisuals(
+    payload: ModelCategoryVisualsPayload,
+    categories: CategoryVisualRequest[],
+  ): GenerateCategoryVisualsResult {
+    const warnings = this.toWarnings(payload.warnings);
+    if (!Array.isArray(payload.visuals)) {
+      warnings.push('Model response did not include a valid visuals array.');
+      return {
+        visuals: [],
+        warnings,
+      };
+    }
+
+    const allowedCategoryNames = new Set(
+      categories.map((category) => category.normalizedName),
+    );
+    const visualByNormalizedName = new Map<string, CategoryVisualSuggestion>();
+
+    for (const row of payload.visuals) {
+      if (!row || typeof row !== 'object') {
+        warnings.push('Skipped invalid category visual row.');
+        continue;
+      }
+
+      const candidate = row as Record<string, unknown>;
+      const normalizedName = this.readStringField(candidate.normalizedName);
+      const icon = this.normalizeIconValue(candidate.icon);
+      const color = this.normalizeHexColor(candidate.color);
+
+      if (!normalizedName || !icon || !color) {
+        warnings.push(
+          'Skipped category visual row due to missing normalizedName, icon or color.',
+        );
+        continue;
+      }
+
+      if (!allowedCategoryNames.has(normalizedName)) {
+        warnings.push(
+          `Model returned visual for unknown category "${normalizedName}".`,
+        );
+        continue;
+      }
+
+      visualByNormalizedName.set(normalizedName, {
+        normalizedName,
+        icon,
+        color,
+      });
+    }
+
+    categories.forEach((category) => {
+      if (!visualByNormalizedName.has(category.normalizedName)) {
+        warnings.push(
+          `Model did not return visual for category "${category.normalizedName}".`,
+        );
+      }
+    });
+
+    return {
+      visuals: [...visualByNormalizedName.values()],
       warnings,
     };
   }
@@ -396,6 +546,24 @@ export class GoogleAiStudioClient implements AiClient {
 
   private readBooleanField(value: unknown): boolean {
     return value === true;
+  }
+
+  private normalizeIconValue(value: unknown): string {
+    const icon = this.readStringField(value);
+    if (!icon || icon.length > 16) {
+      return '';
+    }
+
+    return icon;
+  }
+
+  private normalizeHexColor(value: unknown): string {
+    const color = this.readStringField(value);
+    if (!/^#[0-9a-fA-F]{6}$/.test(color)) {
+      return '';
+    }
+
+    return color.toUpperCase();
   }
 
   private normalizeConfidence(value: number | null): number {

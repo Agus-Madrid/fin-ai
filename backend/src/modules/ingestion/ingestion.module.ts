@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { UploadsModule } from '../uploads/uploads.module';
 import { CategoryModule } from '../categories/category.module';
 import { IngestionController } from './ingestion.controller';
@@ -18,6 +19,9 @@ import { OcrFallbackStage } from './pipeline/stages/ocr-fallback.stage';
 import { ResolveCategoriesStage } from './pipeline/stages/resolve-categories.stage';
 import { AiModule } from '../../core/ai/ai.module';
 import { ValidationNormalizationStage } from './pipeline/stages/validation-normalization.stage';
+import { PersistPendingTransactionsStage } from './pipeline/stages/persist-pending-transactions.stage';
+import { Transaction } from '../transactions/transaction.entity';
+import { Category } from '../categories/category.entity';
 
 function parsePositiveInt(
   value: string | undefined,
@@ -55,7 +59,12 @@ function createDocumentOcrService(): DocumentOcrService {
 }
 
 @Module({
-  imports: [AiModule, UploadsModule, CategoryModule],
+  imports: [
+    AiModule,
+    UploadsModule,
+    CategoryModule,
+    TypeOrmModule.forFeature([Transaction, Category]),
+  ],
   controllers: [IngestionController],
   providers: [
     IngestionService,
@@ -69,6 +78,7 @@ function createDocumentOcrService(): DocumentOcrService {
     CreateCategoriesStage,
     CurrencyExchangeStage,
     IssueDescriptionStage,
+    PersistPendingTransactionsStage,
     {
       provide: DOCUMENT_OCR_SERVICE,
       useFactory: createDocumentOcrService,
