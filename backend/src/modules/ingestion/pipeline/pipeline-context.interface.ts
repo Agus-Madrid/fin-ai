@@ -17,8 +17,10 @@ export interface PipelineContextMeta {
 export interface PipelineContext {
   userId: string;
   uploadId: string;
+  pipelineStartedAtMs?: number;
   warnings: string[];
   executedStages: string[];
+  stageLatenciesMs: Record<string, number>;
   meta: PipelineContextMeta;
   upload?: PipelineUploadMetadata;
   fileBuffer?: Buffer;

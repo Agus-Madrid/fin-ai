@@ -93,8 +93,11 @@ Ubicacion sugerida: `backend/src/modules/ingestion/pipeline/`
 - Persiste transacciones en estado `PENDING`.
 - Mantener idempotencia por hash/clave estable.
 
-11. `BuildReviewSummaryStage`
-- Retorna resumen de corrida para UI/logs.
+11. `PipelineLoggingStage`
+- Emite un log estructurado por corrida con contexto, tiempos, cantidades y warnings.
+
+12. `BuildReviewSummaryStage`
+- Retorna resumen de corrida para UI.
 
 ## 7. Endpoint Objetivo
 `POST /ingestion/uploads/:uploadId/process`
@@ -118,4 +121,4 @@ Registrar por corrida:
 - Chat assistant de usuario.
 
 ## 10. Siguiente Paso
-Implementar `BuildReviewSummaryStage` (resumen final de corrida para UI/logs).
+Implementar `BuildReviewSummaryStage` (resumen final de corrida para UI).

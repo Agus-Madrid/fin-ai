@@ -20,6 +20,7 @@ export class IngestionService {
         uploadId,
         warnings: [],
         executedStages: [],
+        stageLatenciesMs: {},
         meta: {},
       });
 

@@ -22,6 +22,7 @@ import { ValidationNormalizationStage } from './pipeline/stages/validation-norma
 import { PersistPendingTransactionsStage } from './pipeline/stages/persist-pending-transactions.stage';
 import { Transaction } from '../transactions/transaction.entity';
 import { Category } from '../categories/category.entity';
+import { PipelineLoggingStage } from './pipeline/stages/pipeline-logging.stage';
 
 function parsePositiveInt(
   value: string | undefined,
@@ -79,6 +80,7 @@ function createDocumentOcrService(): DocumentOcrService {
     CurrencyExchangeStage,
     IssueDescriptionStage,
     PersistPendingTransactionsStage,
+    PipelineLoggingStage,
     {
       provide: DOCUMENT_OCR_SERVICE,
       useFactory: createDocumentOcrService,
