@@ -19,6 +19,7 @@ export class ReviewInboxViewComponent {
   formChange = output<Partial<ReviewInboxForm>>();
   confirmTransaction = output<void>();
   confirmMany = output<void>();
+  skipTransaction = output<void>();
 
   getConfidenceLabel(confidence: string) {
     if (confidence === 'low') {
@@ -34,11 +35,19 @@ export class ReviewInboxViewComponent {
     this.confirmTransaction.emit();
   }
 
+  onSkipTransaction() {
+    this.skipTransaction.emit();
+  }
+
   onSelectItem(item: InboxItem) {
     this.selectItem.emit(item);
   }
 
   onFieldChange(field: keyof ReviewInboxForm, value: string) {
     this.formChange.emit({ [field]: value });
+  }
+
+  hasSelectedItem(): boolean {
+    return this.inbox().selectedItem.id !== 'empty';
   }
 }

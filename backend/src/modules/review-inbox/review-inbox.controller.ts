@@ -1,5 +1,6 @@
 import {
   Controller,
+  Delete,
   Get,
   Param,
   ParseIntPipe,
@@ -39,5 +40,13 @@ export class ReviewInboxController {
     @Body() ids: number[],
   ) {
     return this.reviewInboxService.confirmMany(user.userId, ids);
+  }
+
+  @Delete(':id/skip')
+  async skipTransaction(
+    @CurrentUser() user: AuthenticatedUser,
+    @Param('id', ParseIntPipe) id: number,
+  ) {
+    return this.reviewInboxService.skipTransaction(user.userId, id);
   }
 }

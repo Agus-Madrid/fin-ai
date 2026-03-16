@@ -21,6 +21,7 @@ import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
       [form]="formState()"
       (selectItem)="onSelectItem($event)"
       (formChange)="onFormChange($event)"
+      (skipTransaction)="onSkipTransaction()"
       (confirmTransaction)="onConfirmTransaction()"
       (confirmMany)="onConfirmMany()"
     />
@@ -86,6 +87,20 @@ export class ReviewInboxPageComponent {
       description: form.merchant,
       categoryId: form.categoryId
     }).subscribe({
+      next: () => {
+        this.pendingResource.reload();
+        this.selectedItemId.set(null);
+      }
+    });
+  }
+
+  onSkipTransaction() {
+    const form = this.formState();
+    if (!form.id || form.id === 'empty') {
+      return;
+    }
+
+    this.reviewInboxService.skipTransaction(form.id).subscribe({
       next: () => {
         this.pendingResource.reload();
         this.selectedItemId.set(null);

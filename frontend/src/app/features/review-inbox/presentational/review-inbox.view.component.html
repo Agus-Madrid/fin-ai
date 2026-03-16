@@ -123,12 +123,14 @@
     </div>
 
     <div class="d-flex justify-content-end gap-2 mt-4">
-      <button class="app-btn-ghost">Saltar</button>
-      <button class="app-btn-primary" (click)="onConfirmTransaction()">Aprobar transacción</button>
+      <button class="app-btn-ghost" [disabled]="!hasSelectedItem()" (click)="onSkipTransaction()">Saltar</button>
+      <button class="app-btn-primary" [disabled]="!hasSelectedItem()" (click)="onConfirmTransaction()">Aprobar transacción</button>
     </div>
       </div>
     </section>
   </div>
 </div>
+
+
 
 

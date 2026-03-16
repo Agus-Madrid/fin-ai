@@ -28,4 +28,11 @@ export class ReviewInboxService {
       .put(`${apiBaseUrl}/review-inbox/confirm-many`, ids)
       .pipe(tap(() => this.transactionService.reloadTransactions()));
   }
+
+  skipTransaction(id: number | string) {
+    const apiBaseUrl = this.config.apiBaseUrl();
+    return this.http
+      .delete(`${apiBaseUrl}/review-inbox/${id}/skip`)
+      .pipe(tap(() => this.transactionService.reloadTransactions()));
+  }
 }

@@ -113,6 +113,17 @@ export class TransactionsService {
     await this.transactionRepository.remove(transaction);
   }
 
+  async deletePending(userId: string, id: number): Promise<void> {
+    const transaction = await this.findByIdForUser(id, userId);
+    if (transaction.status !== TransactionStatus.PENDING) {
+      throw new BadRequestException(
+        'Only pending transactions can be skipped from review inbox',
+      );
+    }
+
+    await this.transactionRepository.remove(transaction);
+  }
+
   async confirm(userId: string, id: number): Promise<Transaction> {
     return this.confirmWithUpdates(userId, id, {});
   }

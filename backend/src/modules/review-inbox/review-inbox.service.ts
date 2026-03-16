@@ -21,4 +21,8 @@ export class ReviewInboxService {
   confirmMany(userId: string, ids: number[]) {
     return this.transactionsService.confirmMany(userId, ids);
   }
+
+  skipTransaction(userId: string, id: number) {
+    return this.transactionsService.deletePending(userId, id);
+  }
 }
