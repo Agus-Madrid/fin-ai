@@ -1,8 +1,9 @@
-import { AsyncPipe, NgIf } from '@angular/common';
+import { NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { Observable, finalize, startWith } from 'rxjs';
+import { finalize } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
 import { BudgetOverviewService } from '../services/budget-overview.service';
 import { CategoryService } from '../services/category.service';
@@ -46,30 +47,28 @@ const DEFAULT_UPLOAD_VIEW_MODEL: UploadViewModel = {
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [AsyncPipe, NgIf, DashboardViewComponent],
+  imports: [NgIf, DashboardViewComponent],
   template: `
     <ng-container *ngIf="transactions">
-      <ng-container *ngIf="uploadViewModel$ | async as uploadViewModel">
-        <app-dashboard-view
-          [transactions]="transactions"
-          [user]="dashboardUser()"
-          [totalIncome]="totalIncome()"
-          [totalFixedExpenses]="totalFixedExpenses()"
-          [fixedExpensePercent]="fixedExpensePercent()"
-          [spendableBalance]="spendableBalance()"
-          [spendablePercent]="spendablePercent()"
-          [manualTransactionFormGroup]="manualTransactionFormGroup"
-          [transactionCategories]="transactionCategories()"
-          [categories]="categories()"
-          [smartUpload]="uploadViewModel.uploads.length > 0 ? uploadViewModel.uploads[0] : null"
-          [smartUploading]="smartUploading()"
-          [smartProcessingUploadId]="smartProcessingUploadId()"
-          [smartErrorMessage]="smartErrorMessage()"
-          (submitTransaction)="createTransaction()"
-          (smartUploadRequested)="onSmartUploadRequested($event)"
-          (smartProcessRequested)="onSmartProcessRequested($event)"
-        ></app-dashboard-view>
-      </ng-container>
+      <app-dashboard-view
+        [transactions]="transactions"
+        [user]="dashboardUser()"
+        [totalIncome]="totalIncome()"
+        [totalFixedExpenses]="totalFixedExpenses()"
+        [fixedExpensePercent]="fixedExpensePercent()"
+        [spendableBalance]="spendableBalance()"
+        [spendablePercent]="spendablePercent()"
+        [manualTransactionFormGroup]="manualTransactionFormGroup"
+        [transactionCategories]="transactionCategories()"
+        [categories]="categories()"
+        [smartUpload]="latestSmartUpload()"
+        [smartUploading]="smartUploading()"
+        [smartProcessingUploadId]="smartProcessingUploadId()"
+        [smartErrorMessage]="smartErrorMessage()"
+        (submitTransaction)="createTransaction()"
+        (smartUploadRequested)="onSmartUploadRequested($event)"
+        (smartProcessRequested)="onSmartProcessRequested($event)"
+      ></app-dashboard-view>
     </ng-container>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -93,9 +92,9 @@ export class DashboardPageComponent {
   readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
   readonly userResource = this.budgetPlannerService.getUser();
   readonly budgetOverviewResource = this.budgetOverviewService.getOverview();
-  readonly uploadViewModel$: Observable<UploadViewModel> = this.uploadsDataService
-    .getUploadsViewModel()
-    .pipe(startWith(DEFAULT_UPLOAD_VIEW_MODEL));
+  readonly uploadViewModel = toSignal(this.uploadsDataService.getUploadsViewModel(), {
+    initialValue: DEFAULT_UPLOAD_VIEW_MODEL
+  });
 
   readonly totalIncome = this.createTotalIncomeComputed();
   readonly totalFixedExpenses = this.createTotalFixedExpensesComputed();
@@ -104,6 +103,10 @@ export class DashboardPageComponent {
   readonly spendablePercent = this.createSpendablePercentComputed();
   readonly dashboardUser = this.createDashboardUserComputed();
   readonly transactionCategories = this.createTransactionCategoriesComputed();
+  readonly latestSmartUpload = computed(() => {
+    const uploads = this.uploadViewModel().uploads;
+    return uploads.length > 0 ? uploads[0] : null;
+  });
 
   onSmartUploadRequested(file: File): void {
     this.smartErrorMessage.set(null);

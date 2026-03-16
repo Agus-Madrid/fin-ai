@@ -1,12 +1,21 @@
 import { computed, Component, inject, signal } from '@angular/core';
 import { NgClass, NgFor, NgIf } from '@angular/common';
-import { RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationExtras, Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { NotificationCenterService, NotificationTone } from '../notifications/notification-center.service';
+import {
+  AppNotification,
+  NotificationCenterService,
+  NotificationTone
+} from '../notifications/notification-center.service';
 
 interface NavItem {
   label: string;
   route: string;
+}
+
+interface NotificationNavigation {
+  commands: string[];
+  extras?: NavigationExtras;
 }
 
 @Component({
@@ -18,6 +27,7 @@ interface NavItem {
 })
 export class TopNavComponent {
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
   private readonly notificationCenter = inject(NotificationCenterService);
 
   readonly navItems: NavItem[] = [
@@ -39,6 +49,22 @@ export class TopNavComponent {
     this.notificationsOpen.update((current) => !current);
   }
 
+  onNotificationSelected(notification: AppNotification): void {
+    this.notificationsOpen.set(false);
+
+    const navigation = this.resolveNotificationNavigation(notification);
+    if (!navigation) {
+      return;
+    }
+
+    if (navigation.extras) {
+      void this.router.navigate(navigation.commands, navigation.extras);
+      return;
+    }
+
+    void this.router.navigate(navigation.commands);
+  }
+
   getNotificationToneClass(tone: NotificationTone): string {
     if (tone === 'WARNING') {
       return 'app-top-nav__notification--warning';
@@ -52,6 +78,41 @@ export class TopNavComponent {
   onSignOut(): void {
     this.notificationsOpen.set(false);
     this.authService.signOut();
+  }
+
+  private resolveNotificationNavigation(notification: AppNotification): NotificationNavigation | null {
+    if (notification.source === 'review-inbox-pending') {
+      return {
+        commands: ['/review-inbox']
+      };
+    }
+
+    if (notification.source !== 'budget-savings') {
+      return null;
+    }
+
+    const prefix = `${notification.source}:`;
+    const alertId = notification.id.startsWith(prefix)
+      ? notification.id.slice(prefix.length)
+      : notification.id;
+
+    if (alertId === 'goal-overdue' || alertId === 'no-recent-run-rate' || alertId === 'deadline-risk') {
+      return {
+        commands: ['/budget-planner'],
+        extras: {
+          queryParams: { tab: 'goals' },
+          fragment: 'saving-goals-section'
+        }
+      };
+    }
+
+    return {
+      commands: ['/budget-planner'],
+      extras: {
+        queryParams: { tab: 'monthly' },
+        fragment: 'monthly-savings-section'
+      }
+    };
   }
 
   private buildAvatarLabel(name: string | undefined): string {

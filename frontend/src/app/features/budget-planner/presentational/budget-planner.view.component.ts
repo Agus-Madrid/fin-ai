@@ -46,6 +46,7 @@ export class BudgetPlannerViewComponent {
   private savingsLogsChart?: Chart<'bar'>;
 
   readonly budgetViewModel = input.required<BudgetViewModel>();
+  readonly initialTab = input<BudgetPlannerTab>('monthly');
 
   readonly addIncomeRequested = output<void>();
   readonly editIncomeRequested = output<IncomeSource>();
@@ -64,6 +65,13 @@ export class BudgetPlannerViewComponent {
   }
 
   private initializeReactiveViewState() {
+    effect(() => {
+      const tab = this.initialTab();
+      if (tab !== this.activeTab) {
+        this.activeTab = tab;
+      }
+    });
+
     effect(() => {
       this.syncSavingsLogsChartToView();
     });

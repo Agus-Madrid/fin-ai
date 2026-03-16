@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, inject, signal } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute } from '@angular/router';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { NotificationCenterService } from '../../../core/notifications/notification-center.service';
 import { BudgetPlannerViewComponent } from '../presentational/budget-planner.view.component';
 import { BudgetPlannerService } from '../services/budget-planner.service';
 import { IncomeFormModalContainerComponent } from '../modals/containers/income-form-modal.container.component';
@@ -25,6 +26,7 @@ import {
   template: `
     <app-budget-planner-view
       [budgetViewModel]="budgetViewModel()"
+      [initialTab]="requestedTab()"
       (addIncomeRequested)="openIncomeFormModal()"
       (editIncomeRequested)="editIncome($event)"
       (deleteIncomeRequested)="deleteIncome($event)"
@@ -41,13 +43,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BudgetPlannerPageComponent {
-  private static readonly SAVINGS_ALERTS_SOURCE = 'budget-savings';
-
   private readonly destroyRef = inject(DestroyRef);
+  private readonly route = inject(ActivatedRoute);
   private readonly budgetPlannerService = inject(BudgetPlannerService);
-  private readonly notificationCenter = inject(NotificationCenterService);
   private readonly modalService = inject(NgbModal);
   private readonly formBuilder = inject(FormBuilder);
+  readonly requestedTab = signal<'monthly' | 'goals'>('monthly');
 
   readonly incomesResource = this.budgetPlannerService.getIncomes();
   readonly fixedCommitmentsResource = this.budgetPlannerService.getFixedCommitments();
@@ -58,22 +59,22 @@ export class BudgetPlannerPageComponent {
   );
 
   constructor() {
-    effect(() => {
-      const alerts = this.budgetViewModel().savings.alerts;
-      this.notificationCenter.setSourceNotifications(
-        BudgetPlannerPageComponent.SAVINGS_ALERTS_SOURCE,
-        alerts.map((alert) => ({
-          id: alert.id,
-          tone: alert.tone,
-          title: 'Ahorro mensual',
-          message: alert.message
-        }))
-      );
-    });
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (queryParamMap) => {
+          const requestedTab = queryParamMap.get('tab');
+          this.requestedTab.set(requestedTab === 'goals' ? 'goals' : 'monthly');
+        }
+      });
 
-    this.destroyRef.onDestroy(() => {
-      this.notificationCenter.clearSource(BudgetPlannerPageComponent.SAVINGS_ALERTS_SOURCE);
-    });
+    this.route.fragment
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (fragment) => {
+          this.scrollToFragment(fragment);
+        }
+      });
   }
 
   openIncomeFormModal(income?: Income): void {
@@ -334,7 +335,7 @@ export class BudgetPlannerPageComponent {
   }
 
   private reloadPlannerViewModel() {
-    this.budgetViewModelResource.reload();
+    this.budgetPlannerService.reloadBudgetViewModel();
   }
 
   private getCurrentPeriod(): string {
@@ -389,5 +390,23 @@ export class BudgetPlannerPageComponent {
       totalIncome: 0,
       totalFixed: 0
     };
+  }
+
+  private scrollToFragment(fragment: string | null): void {
+    if (!fragment || typeof document === 'undefined') {
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const target = document.getElementById(fragment);
+      if (!target) {
+        return;
+      }
+
+      target.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start'
+      });
+    });
   }
 }

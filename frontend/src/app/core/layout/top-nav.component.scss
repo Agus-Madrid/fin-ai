@@ -161,6 +161,21 @@
   margin-top: 0.45rem;
 }
 
+.app-top-nav__notification-action {
+  width: 100%;
+  display: block;
+  text-align: left;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transition: transform 0.16s ease, border-color 0.16s ease, filter 0.16s ease;
+}
+
+.app-top-nav__notification-action:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.04);
+}
+
 .app-top-nav__notification-title {
   font-size: 0.73rem;
   font-weight: 700;

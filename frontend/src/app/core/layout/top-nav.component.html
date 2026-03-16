@@ -32,13 +32,15 @@
           <div class="app-top-nav__notifications-empty" *ngIf="notifications().length === 0">
             No hay alertas por ahora.
           </div>
-          <div
-            class="app-top-nav__notification"
+          <button
+            type="button"
+            class="app-top-nav__notification app-top-nav__notification-action"
             *ngFor="let notification of notifications()"
-            [ngClass]="getNotificationToneClass(notification.tone)">
+            [ngClass]="getNotificationToneClass(notification.tone)"
+            (click)="onNotificationSelected(notification)">
             <div class="app-top-nav__notification-title">{{ notification.title }}</div>
             <div class="app-top-nav__notification-message">{{ notification.message }}</div>
-          </div>
+          </button>
         </div>
       </div>
       <div class="app-top-nav__divider"></div>

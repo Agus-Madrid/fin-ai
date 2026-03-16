@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable } from '@angular/core';
+import { inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { joinUrl } from '../../../core/http/url.util';
@@ -38,6 +38,7 @@ interface ConfirmSavingsLogDto {
 export class BudgetPlannerService {
   private readonly http = inject(HttpClient);
   private readonly config = inject(AppConfigService);
+  private readonly budgetViewModelReloadVersion = signal(0);
 
   getIncomes() {
     return rxResource<Income[], { apiBaseUrl: string }>({
@@ -51,9 +52,10 @@ export class BudgetPlannerService {
   }
 
   getBudgetViewModel() {
-    return rxResource<BudgetViewModel | null, { apiBaseUrl: string }>({
+    return rxResource<BudgetViewModel | null, { apiBaseUrl: string; refreshVersion: number }>({
       request: () => ({
         apiBaseUrl: this.config.apiBaseUrl(),
+        refreshVersion: this.budgetViewModelReloadVersion()
       }),
       loader: ({ request }) =>
         this.http.get<BudgetViewModel>(
@@ -61,6 +63,10 @@ export class BudgetPlannerService {
         ),
       defaultValue: null,
     });
+  }
+
+  reloadBudgetViewModel(): void {
+    this.budgetViewModelReloadVersion.update((current) => current + 1);
   }
 
   createIncome(request: CreateIncomeRequest) {
