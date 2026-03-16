@@ -1,7 +1,6 @@
 import { NgIf } from '@angular/common';
 import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
-import { firstValueFrom } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
 import { BudgetOverviewService } from '../services/budget-overview.service';
 import { CategoryService } from '../services/category.service';
@@ -81,7 +80,9 @@ export class DashboardPageComponent {
   readonly dashboardUser = this.createDashboardUserComputed();
   readonly transactionCategories = this.createTransactionCategoriesComputed();
 
-  async createTransaction(): Promise<void> {
+  createTransaction(): void {
+    this.manualTransactionFormGroup.setErrors(null);
+
     if (this.manualTransactionFormGroup.invalid) {
       this.manualTransactionFormGroup.markAllAsTouched();
       return;
@@ -96,24 +97,29 @@ export class DashboardPageComponent {
 
     this.manualTransactionFormGroup.controls['amount'].setErrors(null);
 
-    await firstValueFrom(
-      this.transactionService.create({
+    this.transactionService
+      .create({
         amount,
         date: formValue.date,
         description: formValue.description,
         categoryId: formValue.categoryId
       })
-    );
+      .subscribe({
+        next: () => {
+          this.transactions.reload();
+          this.budgetOverviewResource.reload();
 
-    this.transactions.reload();
-    this.budgetOverviewResource.reload();
-
-    this.manualTransactionFormGroup.reset({
-      amount: '',
-      date: '',
-      description: '',
-      categoryId: ''
-    });
+          this.manualTransactionFormGroup.reset({
+            amount: '',
+            date: '',
+            description: '',
+            categoryId: ''
+          });
+        },
+        error: () => {
+          this.manualTransactionFormGroup.setErrors({ submitFailed: true });
+        }
+      });
   }
 
   private createManualTransactionFormGroup(): FormGroup {
@@ -176,7 +182,7 @@ export class DashboardPageComponent {
       }
 
       const transactionCategory = transaction.category as Category | null | undefined;
-      const categoryId = transactionCategory?.id != null ? String(transactionCategory.id) : 'uncategorized';
+      const categoryId = transactionCategory?.id == null ? 'uncategorized' : String(transactionCategory.id);
       const existingCategory = groupedCategories.get(categoryId);
       if (existingCategory) {
         existingCategory.amount += spendAmount;

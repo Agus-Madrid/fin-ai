@@ -1,7 +1,7 @@
 import { AsyncPipe, NgIf } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
-import { firstValueFrom } from 'rxjs';
+import { finalize } from 'rxjs';
 import { UploadsDataService } from '../../../core/data/uploads-data.service';
 import { IngestionService } from '../services/ingestion.service';
 import { UploadsViewComponent } from '../presentational/uploads.view.component';
@@ -33,42 +33,53 @@ export class UploadsPageComponent {
   readonly errorMessage = signal<string | null>(null);
   readonly uploadViewModel$ = this.data.getUploadsViewModel();
 
-  async onUploadRequested(file: File) {
+  onUploadRequested(file: File): void {
     this.errorMessage.set(null);
     this.uploading.set(true);
 
-    try {
-      await firstValueFrom(this.data.uploadPdf(file));
-    } catch (error: unknown) {
-      this.errorMessage.set(this.resolveErrorMessage(error));
-    } finally {
-      this.uploading.set(false);
-    }
+    this.data
+      .uploadPdf(file)
+      .pipe(finalize(() => this.uploading.set(false)))
+      .subscribe({
+        next: () => {},
+        error: (error: unknown) => {
+          this.errorMessage.set(this.resolveErrorMessage(error));
+        }
+      });
   }
 
-  async onOpenRequested(uploadId: string) {
+  onOpenRequested(uploadId: string): void {
     this.errorMessage.set(null);
 
-    try {
-      const blob = await firstValueFrom(this.data.getUploadFileBlob(uploadId));
-      this.openBlobInNewTab(blob);
-    } catch (error: unknown) {
-      this.errorMessage.set(this.resolveErrorMessage(error));
-    }
+    this.data.getUploadFileBlob(uploadId).subscribe({
+      next: (blob: Blob) => {
+        try {
+          this.openBlobInNewTab(blob);
+        } catch (error: unknown) {
+          this.errorMessage.set(this.resolveErrorMessage(error));
+        }
+      },
+      error: (error: unknown) => {
+        this.errorMessage.set(this.resolveErrorMessage(error));
+      }
+    });
   }
 
-  async onProcessRequested(uploadId: string) {
+  onProcessRequested(uploadId: string): void {
     this.errorMessage.set(null);
     this.processingUploadId.set(uploadId);
 
-    try {
-      await firstValueFrom(this.ingestionService.processUpload(uploadId));
-      this.data.reloadUploads();
-    } catch (error: unknown) {
-      this.errorMessage.set(this.resolveErrorMessage(error));
-    } finally {
-      this.processingUploadId.set(null);
-    }
+    this.ingestionService
+      .processUpload(uploadId)
+      .pipe(finalize(() => this.processingUploadId.set(null)))
+      .subscribe({
+        next: () => {
+          this.data.reloadUploads();
+        },
+        error: (error: unknown) => {
+          this.errorMessage.set(this.resolveErrorMessage(error));
+        }
+      });
   }
 
   private resolveErrorMessage(error: unknown): string {
