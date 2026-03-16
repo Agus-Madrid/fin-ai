@@ -19,10 +19,28 @@
     </nav>
 
     <div class="app-top-nav__actions">
-      <button class="app-top-nav__icon">
-        <i class="bi bi-bell"></i>
-        <span class="app-top-nav__dot"></span>
-      </button>
+      <div class="app-top-nav__notifications">
+        <button type="button" class="app-top-nav__icon" (click)="onToggleNotifications()">
+          <i class="bi bi-bell"></i>
+          <span class="app-top-nav__dot" *ngIf="hasNotifications()"></span>
+        </button>
+        <div class="app-top-nav__notifications-panel" *ngIf="notificationsOpen()">
+          <div class="app-top-nav__notifications-header">
+            <span>Notificaciones</span>
+            <span class="app-top-nav__notifications-count">{{ notifications().length }}</span>
+          </div>
+          <div class="app-top-nav__notifications-empty" *ngIf="notifications().length === 0">
+            No hay alertas por ahora.
+          </div>
+          <div
+            class="app-top-nav__notification"
+            *ngFor="let notification of notifications()"
+            [ngClass]="getNotificationToneClass(notification.tone)">
+            <div class="app-top-nav__notification-title">{{ notification.title }}</div>
+            <div class="app-top-nav__notification-message">{{ notification.message }}</div>
+          </div>
+        </div>
+      </div>
       <div class="app-top-nav__divider"></div>
       <div class="app-top-nav__user">
         <span class="app-top-nav__user-name">{{ currentUser()?.name || 'Usuario' }}</span>

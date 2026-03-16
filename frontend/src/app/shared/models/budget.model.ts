@@ -31,10 +31,31 @@ export interface SavingsTarget {
   currentYear: number;
   currentPeriodLabel: string;
   currentPeriodStatus: 'PENDING' | 'CONFIRMED' | 'SKIPPED';
+  currentPeriodPlannedAmount: number;
   currentPeriodConfirmedAmount: number;
+  currentPeriodShortfallAmount: number;
   currentPeriodSuggestedAmount: number;
+  discipline: SavingsDiscipline;
+  alerts: SavingsAlert[];
   annualConfirmedTotal: number;
   annualLogs: SavingsLogPoint[];
+}
+
+export type SavingsAlertTone = 'INFO' | 'WARNING' | 'CRITICAL';
+
+export interface SavingsAlert {
+  id: string;
+  tone: SavingsAlertTone;
+  message: string;
+}
+
+export interface SavingsDiscipline {
+  score: number;
+  evaluatedMonths: number;
+  metMonths: number;
+  partialMonths: number;
+  skippedMonths: number;
+  targetHitStreak: number;
 }
 
 export interface CommitmentSummary {
@@ -42,6 +63,8 @@ export interface CommitmentSummary {
   discretionary: number;
   preCommittedPercent: number;
   remainderPercent: number;
+  savingsCommittedAmount: number;
+  savingsCommittedType: 'PENDING' | 'CONFIRMED' | 'SKIPPED';
 }
 
 export interface SavingsLogPoint {

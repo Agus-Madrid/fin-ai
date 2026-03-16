@@ -1,7 +1,8 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { BudgetDataService } from '../../../core/data/budget-data.service';
+import { NotificationCenterService } from '../../../core/notifications/notification-center.service';
 import { BudgetPlannerViewComponent } from '../presentational/budget-planner.view.component';
 import { BudgetPlannerService } from '../services/budget-planner.service';
 import { IncomeFormModalContainerComponent } from '../modals/containers/income-form-modal.container.component';
@@ -41,8 +42,12 @@ import {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BudgetPlannerPageComponent {
+  private static readonly SAVINGS_ALERTS_SOURCE = 'budget-savings';
+
   private readonly data = inject(BudgetDataService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly budgetPlannerService = inject(BudgetPlannerService);
+  private readonly notificationCenter = inject(NotificationCenterService);
   private readonly modalService = inject(NgbModal);
   private readonly formBuilder = inject(FormBuilder);
 
@@ -53,6 +58,25 @@ export class BudgetPlannerPageComponent {
   readonly userResource = this.budgetPlannerService.getUser();
   readonly savingsLogsResource = this.budgetPlannerService.getSavingsLogs();
   readonly budgetViewModel = computed(() => this.buildBudgetViewModel());
+
+  constructor() {
+    effect(() => {
+      const alerts = this.budgetViewModel().savings.alerts;
+      this.notificationCenter.setSourceNotifications(
+        BudgetPlannerPageComponent.SAVINGS_ALERTS_SOURCE,
+        alerts.map((alert) => ({
+          id: alert.id,
+          tone: alert.tone,
+          title: 'Ahorro mensual',
+          message: alert.message
+        }))
+      );
+    });
+
+    this.destroyRef.onDestroy(() => {
+      this.notificationCenter.clearSource(BudgetPlannerPageComponent.SAVINGS_ALERTS_SOURCE);
+    });
+  }
 
   openIncomeFormModal(income?: Income): void {
     const modalRef = this.modalService.open(IncomeFormModalContainerComponent, {

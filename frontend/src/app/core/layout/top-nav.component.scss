@@ -75,6 +75,11 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  position: relative;
+}
+
+.app-top-nav__notifications {
+  position: relative;
 }
 
 .app-top-nav__icon {
@@ -107,6 +112,84 @@
   border-radius: 999px;
   background: #ef4444;
   border: 2px solid #191919;
+}
+
+.app-top-nav__notifications-panel {
+  position: absolute;
+  top: calc(100% + 0.55rem);
+  right: 0;
+  width: min(360px, 82vw);
+  max-height: 420px;
+  overflow: auto;
+  border: 1px solid rgba(88, 88, 102, 0.48);
+  border-radius: 12px;
+  background: rgba(12, 16, 24, 0.97);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+  padding: 0.55rem;
+  z-index: 30;
+}
+
+.app-top-nav__notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.45rem 0.45rem 0.6rem;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.app-top-nav__notifications-count {
+  border-radius: 999px;
+  border: 1px solid rgba(110, 110, 122, 0.48);
+  padding: 0.1rem 0.5rem;
+  font-size: 0.72rem;
+  color: var(--app-muted);
+}
+
+.app-top-nav__notifications-empty {
+  padding: 0.6rem;
+  font-size: 0.8rem;
+  color: var(--app-muted);
+}
+
+.app-top-nav__notification {
+  border-radius: 10px;
+  border: 1px solid transparent;
+  padding: 0.55rem 0.6rem;
+  margin-top: 0.45rem;
+}
+
+.app-top-nav__notification-title {
+  font-size: 0.73rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.app-top-nav__notification-message {
+  margin-top: 0.25rem;
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.app-top-nav__notification--info {
+  background: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.35);
+  color: #dbeafe;
+}
+
+.app-top-nav__notification--warning {
+  background: rgba(245, 158, 11, 0.12);
+  border-color: rgba(245, 158, 11, 0.35);
+  color: #fef3c7;
+}
+
+.app-top-nav__notification--critical {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fecaca;
 }
 
 .app-top-nav__divider {

@@ -207,6 +207,12 @@
         Estado actual: {{ getCurrentPeriodStatusLabel() }} -
         {{ budgetViewModel().savings.currentPeriodConfirmedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
       </div>
+      <div class="text-muted-2">
+        Plan del mes: {{ budgetViewModel().savings.currentPeriodPlannedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+      </div>
+      <div class="text-warning-emphasis" *ngIf="budgetViewModel().savings.currentPeriodShortfallAmount > 0">
+        Faltante pendiente: {{ budgetViewModel().savings.currentPeriodShortfallAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
+      </div>
     </div>
   </div>
 
@@ -262,6 +268,51 @@
           <p class="text-muted-2 mb-0">{{ budgetViewModel().savings.projectedMessage }}</p>
         </div>
       </div>
+      <div class="app-card app-card--flat mt-3 bg-surface-2">
+        <div class="d-flex align-items-center justify-content-between mb-2">
+          <div class="fw-semibold">
+            <i class="bi bi-activity me-2 text-primary"></i>
+            Disciplina de ahorro
+          </div>
+          <span
+            class="app-chip"
+            [ngClass]="{
+              'app-chip--success': budgetViewModel().savings.discipline.evaluatedMonths > 0 && budgetViewModel().savings.discipline.score >= 80,
+              'app-chip--warning': budgetViewModel().savings.discipline.evaluatedMonths > 0 && budgetViewModel().savings.discipline.score >= 50 && budgetViewModel().savings.discipline.score < 80,
+              'app-chip--danger': budgetViewModel().savings.discipline.evaluatedMonths > 0 && budgetViewModel().savings.discipline.score < 50
+            }">
+            {{
+              budgetViewModel().savings.discipline.evaluatedMonths > 0
+                ? (budgetViewModel().savings.discipline.score | number:'1.0-0') + '%'
+                : 'N/A'
+            }}
+          </span>
+        </div>
+        <div class="text-muted-2 mb-2" *ngIf="budgetViewModel().savings.discipline.evaluatedMonths > 0">
+          Desde creacion de cuenta: {{ budgetViewModel().savings.discipline.evaluatedMonths }} meses cerrados.
+        </div>
+        <div class="text-muted-2 mb-2" *ngIf="budgetViewModel().savings.discipline.evaluatedMonths === 0">
+          Aun no hay meses cerrados para evaluar disciplina.
+        </div>
+        <div class="budget-discipline-grid">
+          <div>
+            <span class="text-muted-2">Cumplidos</span>
+            <div class="fw-semibold">{{ budgetViewModel().savings.discipline.metMonths }}</div>
+          </div>
+          <div>
+            <span class="text-muted-2">Parciales</span>
+            <div class="fw-semibold">{{ budgetViewModel().savings.discipline.partialMonths }}</div>
+          </div>
+          <div>
+            <span class="text-muted-2">Omitidos</span>
+            <div class="fw-semibold">{{ budgetViewModel().savings.discipline.skippedMonths }}</div>
+          </div>
+          <div>
+            <span class="text-muted-2">Racha objetivo</span>
+            <div class="fw-semibold">{{ budgetViewModel().savings.discipline.targetHitStreak }}</div>
+          </div>
+        </div>
+      </div>
     </ng-container>
     <ng-template #noCurrentPeriodGoals>
       <div class="text-muted-2">
@@ -286,7 +337,17 @@
         </span>
       </div>
       <div class="text-muted-2 mb-2 commitment-caption">
-        Gastos fijos + objetivo mensual de ahorro
+        Gastos fijos + ahorro confirmado del mes
+        ({{ budgetViewModel().commitments.savingsCommittedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }})
+      </div>
+      <div class="text-muted-2 mb-2 commitment-caption" *ngIf="budgetViewModel().commitments.savingsCommittedType === 'PENDING'">
+        Mes pendiente: solo se descuenta ahorro confirmado (actualmente 0).
+      </div>
+      <div class="text-muted-2 mb-2 commitment-caption" *ngIf="budgetViewModel().commitments.savingsCommittedType === 'CONFIRMED'">
+        Mes confirmado: se descuenta exactamente el ahorro confirmado.
+      </div>
+      <div class="text-muted-2 mb-2 commitment-caption" *ngIf="budgetViewModel().commitments.savingsCommittedType === 'SKIPPED'">
+        Mes omitido: no hay ahorro confirmado para descontar.
       </div>
       <div class="progress bg-surface-2" style="height: 8px;">
         <div class="progress-bar bg-danger" [style.width.%]="budgetViewModel().commitments.preCommittedPercent"></div>
@@ -301,7 +362,7 @@
         </span>
       </div>
       <div class="text-muted-2 mb-2 commitment-caption">
-        Ingreso total - (gastos fijos + objetivo mensual de ahorro)
+        Ingreso total - (gastos fijos + ahorro confirmado del mes)
       </div>
       <div class="progress bg-surface-2" style="height: 8px;">
         <div class="progress-bar bg-primary" [style.width.%]="budgetViewModel().commitments.remainderPercent"></div>

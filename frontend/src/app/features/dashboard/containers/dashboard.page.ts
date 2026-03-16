@@ -3,6 +3,7 @@ import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/c
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { firstValueFrom } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
+import { BudgetOverviewService } from '../services/budget-overview.service';
 import { CategoryService } from '../services/category.service';
 import { TransactionService } from '../services/transaction.service';
 import { Transaction } from '../../../shared/models/transaction.model';
@@ -11,6 +12,28 @@ import { User } from '../../../shared/models/user.model';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { BudgetPlannerService } from '../../budget-planner/services/budget-planner.service';
 import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
+import { BudgetOverview } from '../../../shared/models/budget-overview.model';
+
+const DEFAULT_USER: User = {
+  id: '',
+  name: 'Usuario',
+  email: '',
+  createdAt: new Date(),
+  currentTotalSavings: 0,
+  goalMonthlySavings: 0,
+  savingGoals: []
+};
+
+const DEFAULT_BUDGET_OVERVIEW: BudgetOverview = {
+  currency: 'UYU',
+  currentPeriod: '',
+  totalIncome: 0,
+  totalFixedExpenses: 0,
+  savingsConfirmedAmount: 0,
+  fixedExpensePercent: 0,
+  spendableBalance: 0,
+  spendablePercent: 0
+};
 
 @Component({
   selector: 'app-dashboard-page',
@@ -37,49 +60,28 @@ import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
 })
 export class DashboardPageComponent {
   private readonly transactionService = inject(TransactionService);
-  private readonly fb = inject(FormBuilder);
+  private readonly formBuilder = inject(FormBuilder);
   private readonly categoriesService = inject(CategoryService);
-  private readonly transactionsService = inject(TransactionService);
   private readonly budgetPlannerService = inject(BudgetPlannerService);
+  private readonly budgetOverviewService = inject(BudgetOverviewService);
 
-  readonly manualTransactionFormGroup: FormGroup = this.fb.group({
-    amount: [0, Validators.required],
-    date: ['', Validators.required],
-    description: ['', Validators.required],
-    categoryId: ['', Validators.required]
-  });
+  readonly manualTransactionFormGroup: FormGroup = this.createManualTransactionFormGroup();
 
   readonly categoriesResource = this.categoriesService.getCategories();
   readonly categories = this.categoriesResource.value;
-
   readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
-  readonly incomesResource = this.budgetPlannerService.getIncomes();
-  readonly fixedCommitmentsResource = this.budgetPlannerService.getFixedCommitments();
   readonly userResource = this.budgetPlannerService.getUser();
+  readonly budgetOverviewResource = this.budgetOverviewService.getOverview();
 
-  readonly totalIncome = computed(() => this.sumAmounts(this.incomesResource.value() ?? []));
-  readonly totalMontlySavings = computed(() => this.userResource.value()?.goalMonthlySavings ?? 0);
-  readonly totalFixedExpenses = computed(() => this.sumAmounts(this.fixedCommitmentsResource.value() ?? []));
-  readonly fixedExpensePercent = computed(() => {
-    const income = this.totalIncome();
-    if (income <= 0) {
-      return 0;
-    }
-    return this.clampPercent((this.totalFixedExpenses() / income) * 100);
-  });
-  readonly spendableBalance = computed(() => this.totalIncome() - this.totalFixedExpenses() - this.totalMontlySavings());
-  readonly spendablePercent = computed(() => {
-    const income = this.totalIncome();
-    if (income <= 0) {
-      return 0;
-    }
-    return (this.spendableBalance() / income) * 100;
-  });
-  readonly dashboardUser = computed(() => this.buildDashboardUser());
+  readonly totalIncome = this.createTotalIncomeComputed();
+  readonly totalFixedExpenses = this.createTotalFixedExpensesComputed();
+  readonly fixedExpensePercent = this.createFixedExpensePercentComputed();
+  readonly spendableBalance = this.createSpendableBalanceComputed();
+  readonly spendablePercent = this.createSpendablePercentComputed();
+  readonly dashboardUser = this.createDashboardUserComputed();
+  readonly transactionCategories = this.createTransactionCategoriesComputed();
 
-  readonly transactionCategories = computed(() => this.getTransactionCategories());
-
-  async createTransaction() {
+  async createTransaction(): Promise<void> {
     if (this.manualTransactionFormGroup.invalid) {
       this.manualTransactionFormGroup.markAllAsTouched();
       return;
@@ -91,10 +93,11 @@ export class DashboardPageComponent {
       this.manualTransactionFormGroup.controls['amount'].setErrors({ invalidNumber: true });
       return;
     }
+
     this.manualTransactionFormGroup.controls['amount'].setErrors(null);
 
     await firstValueFrom(
-      this.transactionsService.create({
+      this.transactionService.create({
         amount,
         date: formValue.date,
         description: formValue.description,
@@ -103,6 +106,7 @@ export class DashboardPageComponent {
     );
 
     this.transactions.reload();
+    this.budgetOverviewResource.reload();
 
     this.manualTransactionFormGroup.reset({
       amount: '',
@@ -112,7 +116,44 @@ export class DashboardPageComponent {
     });
   }
 
-  getTransactionCategories(): { category: Category; amount: number }[] {
+  private createManualTransactionFormGroup(): FormGroup {
+    return this.formBuilder.group({
+      amount: [0, Validators.required],
+      date: ['', Validators.required],
+      description: ['', Validators.required],
+      categoryId: ['', Validators.required]
+    });
+  }
+
+  private createTotalIncomeComputed() {
+    return computed(() => this.getBudgetOverview().totalIncome);
+  }
+
+  private createTotalFixedExpensesComputed() {
+    return computed(() => this.getBudgetOverview().totalFixedExpenses);
+  }
+
+  private createFixedExpensePercentComputed() {
+    return computed(() => this.getBudgetOverview().fixedExpensePercent);
+  }
+
+  private createSpendableBalanceComputed() {
+    return computed(() => this.getBudgetOverview().spendableBalance);
+  }
+
+  private createSpendablePercentComputed() {
+    return computed(() => this.getBudgetOverview().spendablePercent);
+  }
+
+  private createDashboardUserComputed() {
+    return computed(() => this.resolveDashboardUser());
+  }
+
+  private createTransactionCategoriesComputed() {
+    return computed(() => this.buildTransactionCategories());
+  }
+
+  private buildTransactionCategories(): { category: Category; amount: number }[] {
     if (!this.transactions) {
       return [];
     }
@@ -125,21 +166,20 @@ export class DashboardPageComponent {
     const categoriesById = new Map(
       (this.categories() ?? []).map((category) => [String(category.id), category] as const)
     );
+    const groupedCategories = new Map<string, { category: Category; amount: number }>();
 
-    const categoriesMap = new Map<string, { category: Category; amount: number }>();
-    transactions.forEach((txn: Transaction) => {
-      const rawAmount = Number(txn.amount) || 0;
+    transactions.forEach((transaction: Transaction) => {
+      const rawAmount = Number(transaction.amount) || 0;
       const spendAmount = Math.abs(rawAmount);
       if (spendAmount <= 0) {
         return;
       }
 
-      const txCategory = txn.category as Category | null | undefined;
-      const categoryId = txCategory?.id != null ? String(txCategory.id) : 'uncategorized';
-      const existing = categoriesMap.get(categoryId);
-
-      if (existing) {
-        existing.amount += spendAmount;
+      const transactionCategory = transaction.category as Category | null | undefined;
+      const categoryId = transactionCategory?.id != null ? String(transactionCategory.id) : 'uncategorized';
+      const existingCategory = groupedCategories.get(categoryId);
+      if (existingCategory) {
+        existingCategory.amount += spendAmount;
         return;
       }
 
@@ -151,44 +191,26 @@ export class DashboardPageComponent {
         color: '#7d7d86'
       };
 
-      const normalizedCategory: Category = categoryFromCatalog ?? txCategory ?? fallbackCategory;
-      categoriesMap.set(categoryId, { category: normalizedCategory, amount: spendAmount });
+      const resolvedCategory = categoryFromCatalog ?? transactionCategory ?? fallbackCategory;
+      groupedCategories.set(categoryId, { category: resolvedCategory, amount: spendAmount });
     });
 
-    return Array.from(categoriesMap.values()).sort((a, b) => b.amount - a.amount);
+    return Array.from(groupedCategories.values()).sort((left, right) => right.amount - left.amount);
   }
 
-  private sumAmounts(items: Array<{ amount: number | string }>): number {
-    return items.reduce((sum, item) => {
-      const value = Number(item.amount);
-      return Number.isFinite(value) ? sum + value : sum;
-    }, 0);
-  }
-
-  private clampPercent(value: number): number {
-    if (!Number.isFinite(value)) {
-      return 0;
-    }
-    return Math.max(0, Math.min(100, value));
-  }
-
-  private buildDashboardUser(): User {
+  private resolveDashboardUser(): User {
     const user = this.userResource.value();
-    if (user) {
-      return {
-        ...user,
-        savingGoals: user.savingGoals ?? []
-      };
+    if (!user) {
+      return DEFAULT_USER;
     }
 
     return {
-      id: '',
-      name: 'Usuario',
-      email: '',
-      createdAt: new Date(),
-      currentTotalSavings: 0,
-      goalMonthlySavings: 0,
-      savingGoals: []
+      ...user,
+      savingGoals: user.savingGoals ?? []
     };
+  }
+
+  private getBudgetOverview(): BudgetOverview {
+    return this.budgetOverviewResource.value() ?? DEFAULT_BUDGET_OVERVIEW;
   }
 }

@@ -42,14 +42,6 @@ export class BudgetDataService {
     const monthlyGoalPercent = totalIncome > 0
       ? Math.max(0, Math.min(100, (monthlyGoal / totalIncome) * 100))
       : 0;
-    const preCommitted = this.normalizeAmount(totalFixed + monthlyGoal);
-    const discretionary = Math.max(this.normalizeAmount(totalIncome - preCommitted), 0);
-    const remainderPercent = totalIncome > 0
-      ? Math.round((discretionary / totalIncome) * 100)
-      : 0;
-    const preCommittedPercent = totalIncome > 0
-      ? Math.max(0, Math.min(100, 100 - remainderPercent))
-      : 0;
 
     const orderedGoals = this.buildSavingGoalsProgress(
       savingGoals,
@@ -75,11 +67,49 @@ export class BudgetDataService {
 
     const currentPeriodLog = savingsLogs.find((log) => log.period === currentPeriod);
     const currentPeriodStatus = currentPeriodLog?.status ?? 'PENDING';
+    const currentPeriodPlannedAmount = this.normalizeAmount(
+      currentPeriodLog?.monthlyGoalSnapshot ?? monthlyGoal
+    );
     const currentPeriodConfirmedAmount = this.normalizeAmount(currentPeriodLog?.confirmedAmount ?? 0);
+    const currentPeriodShortfallAmount = currentPeriodStatus === 'CONFIRMED'
+      ? Math.max(
+          this.normalizeAmount(currentPeriodPlannedAmount - currentPeriodConfirmedAmount),
+          0
+        )
+      : 0;
     const currentPeriodSuggestedAmount = currentPeriodStatus === 'PENDING'
       ? monthlyGoal
       : currentPeriodConfirmedAmount;
+    const savingsCommitted = this.resolveSavingsCommittedForPeriod(
+      currentPeriodStatus,
+      currentPeriodConfirmedAmount
+    );
+    const preCommitted = this.normalizeAmount(totalFixed + savingsCommitted.amount);
+    const discretionary = Math.max(this.normalizeAmount(totalIncome - preCommitted), 0);
+    const remainderPercent = totalIncome > 0
+      ? Math.round((discretionary / totalIncome) * 100)
+      : 0;
+    const preCommittedPercent = totalIncome > 0
+      ? Math.max(0, Math.min(100, 100 - remainderPercent))
+      : 0;
 
+    const discipline = this.buildDisciplineMetrics(
+      savingsLogs,
+      currentPeriod,
+      monthlyGoal,
+      user?.createdAt ?? null
+    );
+    const alerts = this.buildSavingsAlerts({
+      savingsLogs,
+      currentPeriod,
+      currentPeriodStatus,
+      currentPeriodPlannedAmount,
+      currentPeriodShortfallAmount,
+      currentTotal,
+      targetAmount,
+      activeGoalDeadline: activeGoal?.deadline ?? null,
+      userCreatedAt: user?.createdAt ?? null
+    });
     const projectedMessage = this.buildProjectedMessage(currentTotal, targetAmount, monthlyGoal);
 
     return {
@@ -100,8 +130,12 @@ export class BudgetDataService {
         currentYear,
         currentPeriodLabel: this.periodToLabel(currentPeriod),
         currentPeriodStatus,
+        currentPeriodPlannedAmount,
         currentPeriodConfirmedAmount,
+        currentPeriodShortfallAmount,
         currentPeriodSuggestedAmount,
+        discipline,
+        alerts,
         annualConfirmedTotal,
         annualLogs
       },
@@ -109,7 +143,9 @@ export class BudgetDataService {
         preCommitted,
         discretionary,
         preCommittedPercent,
-        remainderPercent
+        remainderPercent,
+        savingsCommittedAmount: savingsCommitted.amount,
+        savingsCommittedType: savingsCommitted.type
       },
       totalIncome,
       totalFixed
@@ -127,6 +163,30 @@ export class BudgetDataService {
       status: 'Confirmado',
       timing: `Actualizado · #${index + 1}`,
       progress: 100
+    };
+  }
+
+  private resolveSavingsCommittedForPeriod(
+    currentPeriodStatus: BudgetViewModel['savings']['currentPeriodStatus'],
+    currentPeriodConfirmedAmount: number
+  ): { amount: number; type: BudgetViewModel['commitments']['savingsCommittedType'] } {
+    if (currentPeriodStatus === 'CONFIRMED') {
+      return {
+        amount: this.normalizeAmount(currentPeriodConfirmedAmount),
+        type: 'CONFIRMED'
+      };
+    }
+
+    if (currentPeriodStatus === 'SKIPPED') {
+      return {
+        amount: this.normalizeAmount(currentPeriodConfirmedAmount),
+        type: 'SKIPPED'
+      };
+    }
+
+    return {
+      amount: this.normalizeAmount(currentPeriodConfirmedAmount),
+      type: 'PENDING'
     };
   }
 
@@ -215,6 +275,306 @@ export class BudgetDataService {
     const monthsToGoal = remaining / monthlyGoal;
     const roundedMonths = Math.ceil(monthsToGoal * 10) / 10;
     return `Manteniendo este ritmo completas la meta en aprox. ${roundedMonths} meses.`;
+  }
+
+  private buildDisciplineMetrics(
+    savingsLogs: SavingsLog[],
+    currentPeriod: string,
+    fallbackMonthlyGoal: number,
+    userCreatedAt: Date | string | null
+  ): BudgetViewModel['savings']['discipline'] {
+    const periodMap = this.buildSavingsLogMap(savingsLogs);
+    const closedPeriods = this.buildClosedPeriodsSinceDate(
+      currentPeriod,
+      userCreatedAt
+    );
+
+    if (!closedPeriods.length) {
+      return {
+        score: 0,
+        evaluatedMonths: 0,
+        metMonths: 0,
+        partialMonths: 0,
+        skippedMonths: 0,
+        targetHitStreak: 0
+      };
+    }
+
+    let ratioSum = 0;
+    let metMonths = 0;
+    let partialMonths = 0;
+    let skippedMonths = 0;
+    let targetHitStreak = 0;
+    let streakActive = true;
+
+    for (const period of closedPeriods) {
+      const outcome = this.evaluateSavingsPeriodOutcome(
+        periodMap.get(period),
+        fallbackMonthlyGoal
+      );
+
+      ratioSum += outcome.ratio;
+
+      if (outcome.kind === 'MET') {
+        metMonths += 1;
+        if (streakActive) {
+          targetHitStreak += 1;
+        }
+      } else if (outcome.kind === 'PARTIAL') {
+        partialMonths += 1;
+        streakActive = false;
+      } else {
+        skippedMonths += 1;
+        streakActive = false;
+      }
+    }
+
+    const score = this.normalizeAmount((ratioSum / closedPeriods.length) * 100);
+
+    return {
+      score,
+      evaluatedMonths: closedPeriods.length,
+      metMonths,
+      partialMonths,
+      skippedMonths,
+      targetHitStreak
+    };
+  }
+
+  private buildSavingsAlerts(params: {
+    savingsLogs: SavingsLog[];
+    currentPeriod: string;
+    currentPeriodStatus: BudgetViewModel['savings']['currentPeriodStatus'];
+    currentPeriodPlannedAmount: number;
+    currentPeriodShortfallAmount: number;
+    currentTotal: number;
+    targetAmount: number;
+    activeGoalDeadline: Date | string | null;
+    userCreatedAt: Date | string | null;
+  }): BudgetViewModel['savings']['alerts'] {
+    const alerts: BudgetViewModel['savings']['alerts'] = [];
+
+    if (params.currentPeriodStatus === 'PENDING') {
+      alerts.push({
+        id: 'pending-month-confirmation',
+        tone: 'INFO',
+        message: 'Aun no confirmaste el ahorro del mes actual.'
+      });
+    } else if (params.currentPeriodStatus === 'SKIPPED') {
+      alerts.push({
+        id: 'month-skipped',
+        tone: 'WARNING',
+        message: 'Marcaste el mes actual como omitido. Esto afecta tu consistencia de ahorro.'
+      });
+    } else if (params.currentPeriodShortfallAmount > 0) {
+      alerts.push({
+        id: 'month-shortfall',
+        tone: 'WARNING',
+        message:
+          `Este mes faltaron ${this.formatCurrency(params.currentPeriodShortfallAmount)} ` +
+          `vs lo planificado (${this.formatCurrency(params.currentPeriodPlannedAmount)}).`
+      });
+    }
+
+    const periodMap = this.buildSavingsLogMap(params.savingsLogs);
+    const recentClosedPeriods = this.buildClosedPeriodsSinceDate(
+      params.currentPeriod,
+      params.userCreatedAt
+    ).slice(0, 3);
+    const recentOutcomes = recentClosedPeriods.map((period) =>
+      this.evaluateSavingsPeriodOutcome(periodMap.get(period), params.currentPeriodPlannedAmount)
+    );
+
+    let consecutiveMisses = 0;
+    for (const outcome of recentOutcomes) {
+      if (outcome.kind === 'MET') {
+        break;
+      }
+      consecutiveMisses += 1;
+    }
+
+    if (consecutiveMisses >= 2) {
+      alerts.push({
+        id: 'consecutive-misses',
+        tone: 'WARNING',
+        message: 'Llevas al menos 2 meses sin cumplir el objetivo mensual. Ajusta el plan para recuperar ritmo.'
+      });
+    }
+
+    let consecutiveSkips = 0;
+    for (const outcome of recentOutcomes) {
+      if (outcome.kind !== 'SKIPPED') {
+        break;
+      }
+      consecutiveSkips += 1;
+    }
+
+    if (consecutiveSkips >= 2) {
+      alerts.push({
+        id: 'consecutive-skips',
+        tone: 'CRITICAL',
+        message: 'Llevas meses consecutivos sin ahorro confirmado. Prioriza un monto minimo para retomar disciplina.'
+      });
+    }
+
+    if (params.targetAmount > 0 && params.currentTotal < params.targetAmount && params.activeGoalDeadline) {
+      const deadline = new Date(params.activeGoalDeadline);
+      if (Number.isFinite(deadline.getTime())) {
+        const monthsAvailable = this.calculateMonthsUntil(deadline);
+        const remaining = Math.max(params.targetAmount - params.currentTotal, 0);
+
+        if (monthsAvailable <= 0 && remaining > 0) {
+          alerts.push({
+            id: 'goal-overdue',
+            tone: 'CRITICAL',
+            message: 'La meta ya vencio y aun tiene saldo pendiente.'
+          });
+        } else if (monthsAvailable > 0) {
+          const runRate = this.calculateRollingRunRate(
+            params.savingsLogs,
+            params.currentPeriod,
+            params.userCreatedAt,
+            3
+          );
+          if (runRate <= 0) {
+            alerts.push({
+              id: 'no-recent-run-rate',
+              tone: 'CRITICAL',
+              message: 'Sin ahorro confirmado reciente no llegas a la fecha objetivo.'
+            });
+          } else {
+            const monthsNeeded = remaining / runRate;
+            if (monthsNeeded > monthsAvailable) {
+              alerts.push({
+                id: 'deadline-risk',
+                tone: 'WARNING',
+                message:
+                  `Al ritmo reciente (${this.formatCurrency(runRate)}/mes), ` +
+                  'la meta no llegaria a tiempo.'
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return alerts.slice(0, 3);
+  }
+
+  private buildSavingsLogMap(savingsLogs: SavingsLog[]): Map<string, SavingsLog> {
+    const map = new Map<string, SavingsLog>();
+    for (const log of savingsLogs) {
+      map.set(log.period, log);
+    }
+    return map;
+  }
+
+  private buildClosedPeriodsSinceDate(
+    currentPeriod: string,
+    startDate: Date | string | null
+  ): string[] {
+    const parsedCurrentPeriod = this.parsePeriod(currentPeriod);
+    const createdAt = startDate ? new Date(startDate) : null;
+
+    if (!parsedCurrentPeriod || !createdAt || !Number.isFinite(createdAt.getTime())) {
+      return [];
+    }
+
+    const startPeriod = this.toPeriod(createdAt);
+    const parsedStartPeriod = this.parsePeriod(startPeriod);
+    if (!parsedStartPeriod) {
+      return [];
+    }
+
+    const startIndex = this.toMonthIndex(parsedStartPeriod.year, parsedStartPeriod.month);
+    const endIndex = this.toMonthIndex(parsedCurrentPeriod.year, parsedCurrentPeriod.month) - 1;
+
+    if (endIndex < startIndex) {
+      return [];
+    }
+
+    const periods: string[] = [];
+    for (let currentIndex = endIndex; currentIndex >= startIndex; currentIndex -= 1) {
+      const { year, month } = this.fromMonthIndex(currentIndex);
+      periods.push(`${year}-${String(month).padStart(2, '0')}`);
+    }
+
+    return periods;
+  }
+
+  private evaluateSavingsPeriodOutcome(
+    log: SavingsLog | undefined,
+    fallbackPlannedAmount: number
+  ): { kind: 'MET' | 'PARTIAL' | 'SKIPPED'; ratio: number } {
+    if (!log || log.status === 'SKIPPED') {
+      return { kind: 'SKIPPED', ratio: 0 };
+    }
+
+    const confirmedAmount = this.normalizeAmount(log.confirmedAmount);
+    if (confirmedAmount <= 0) {
+      return { kind: 'SKIPPED', ratio: 0 };
+    }
+
+    const plannedAmount = this.normalizeAmount(
+      log.monthlyGoalSnapshot ?? fallbackPlannedAmount
+    );
+
+    if (plannedAmount <= 0) {
+      return { kind: 'MET', ratio: 1 };
+    }
+
+    const ratio = Math.max(0, Math.min(1, confirmedAmount / plannedAmount));
+    if (ratio >= 1) {
+      return { kind: 'MET', ratio: 1 };
+    }
+
+    return {
+      kind: 'PARTIAL',
+      ratio: this.normalizeAmount(ratio)
+    };
+  }
+
+  private calculateRollingRunRate(
+    savingsLogs: SavingsLog[],
+    currentPeriod: string,
+    userCreatedAt: Date | string | null,
+    windowMonths: number
+  ): number {
+    const periodMap = this.buildSavingsLogMap(savingsLogs);
+    const closedPeriods = this.buildClosedPeriodsSinceDate(
+      currentPeriod,
+      userCreatedAt
+    ).slice(0, windowMonths);
+    if (!closedPeriods.length) {
+      return 0;
+    }
+
+    const total = closedPeriods.reduce((sum, period) => {
+      const log = periodMap.get(period);
+      if (!log || log.status === 'SKIPPED') {
+        return sum;
+      }
+      return sum + this.normalizeAmount(log.confirmedAmount);
+    }, 0);
+
+    return this.normalizeAmount(total / closedPeriods.length);
+  }
+
+  private toMonthIndex(year: number, month: number): number {
+    return year * 12 + (month - 1);
+  }
+
+  private fromMonthIndex(index: number): { year: number; month: number } {
+    const year = Math.floor(index / 12);
+    const month = (index % 12) + 1;
+    return { year, month };
+  }
+
+  private calculateMonthsUntil(deadline: Date): number {
+    const today = new Date();
+    const yearDiff = deadline.getFullYear() - today.getFullYear();
+    const monthDiff = deadline.getMonth() - today.getMonth();
+    return Math.max(yearDiff * 12 + monthDiff + 1, 0);
   }
 
   private periodToLabel(period: string): string {
