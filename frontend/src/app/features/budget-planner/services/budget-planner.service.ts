@@ -3,6 +3,7 @@ import { inject, Injectable } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { joinUrl } from '../../../core/http/url.util';
+import { BudgetViewModel } from '../../../shared/models/budget.model';
 import {
   CreateIncomeRequest,
   UpdateIncomeRequest,
@@ -46,6 +47,19 @@ export class BudgetPlannerService {
       loader: ({ request }) =>
         this.http.get<Income[]>(joinUrl(request.apiBaseUrl, '/incomes')),
       defaultValue: [],
+    });
+  }
+
+  getBudgetViewModel() {
+    return rxResource<BudgetViewModel | null, { apiBaseUrl: string }>({
+      request: () => ({
+        apiBaseUrl: this.config.apiBaseUrl(),
+      }),
+      loader: ({ request }) =>
+        this.http.get<BudgetViewModel>(
+          joinUrl(request.apiBaseUrl, '/budgets/planner'),
+        ),
+      defaultValue: null,
     });
   }
 

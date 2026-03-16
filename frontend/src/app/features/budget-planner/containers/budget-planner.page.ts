@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, DestroyRef, computed, effect, inject } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
-import { BudgetDataService } from '../../../core/data/budget-data.service';
 import { NotificationCenterService } from '../../../core/notifications/notification-center.service';
 import { BudgetPlannerViewComponent } from '../presentational/budget-planner.view.component';
 import { BudgetPlannerService } from '../services/budget-planner.service';
@@ -10,7 +9,7 @@ import { INCOME_FORM_CONTROL_NAMES, IncomeFormGroup, IncomeFormSavePayload } fro
 import { ConfirmModalComponent } from '../../../shared/components/confirm-modal/confirm-modal.component';
 import { Income } from '../../../shared/models/income.model';
 import { FixedCommitment } from '../../../shared/models/fixed-commitment.model';
-import { FixedExpense, IncomeSource } from '../../../shared/models/budget.model';
+import { BudgetViewModel, FixedExpense, IncomeSource } from '../../../shared/models/budget.model';
 import { CreateSavingGoalRequest } from '../../../shared/models/saving-goal-create.model';
 import { FixedCommitmentFormModalContainerComponent } from '../modals/containers/fixed-commitment-form-modal.container.component';
 import {
@@ -44,7 +43,6 @@ import {
 export class BudgetPlannerPageComponent {
   private static readonly SAVINGS_ALERTS_SOURCE = 'budget-savings';
 
-  private readonly data = inject(BudgetDataService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly budgetPlannerService = inject(BudgetPlannerService);
   private readonly notificationCenter = inject(NotificationCenterService);
@@ -54,10 +52,10 @@ export class BudgetPlannerPageComponent {
   readonly incomesResource = this.budgetPlannerService.getIncomes();
   readonly fixedCommitmentsResource = this.budgetPlannerService.getFixedCommitments();
   readonly savingGoalsResource = this.budgetPlannerService.getSavingGoals();
-  readonly currentPeriodSavingGoalsResource = this.budgetPlannerService.getActiveSavingGoals();
-  readonly userResource = this.budgetPlannerService.getUser();
-  readonly savingsLogsResource = this.budgetPlannerService.getSavingsLogs();
-  readonly budgetViewModel = computed(() => this.buildBudgetViewModel());
+  readonly budgetViewModelResource = this.budgetPlannerService.getBudgetViewModel();
+  readonly budgetViewModel = computed(
+    () => this.budgetViewModelResource.value() ?? this.buildEmptyBudgetViewModel()
+  );
 
   constructor() {
     effect(() => {
@@ -113,7 +111,10 @@ export class BudgetPlannerPageComponent {
       title: 'Eliminar ingreso',
       message: `Estas seguro de que deseas eliminar "${incomeEntity.name}"? Esta accion no se puede deshacer.`,
       onConfirm: () => this.budgetPlannerService.deleteIncome(incomeEntity.id),
-      onCompleted: () => this.incomesResource.reload()
+      onCompleted: () => {
+        this.incomesResource.reload();
+        this.reloadPlannerViewModel();
+      }
     });
   }
 
@@ -152,13 +153,16 @@ export class BudgetPlannerPageComponent {
       title: 'Eliminar gasto fijo',
       message: `Estas seguro de que deseas eliminar "${commitment.name}"? Esta accion no se puede deshacer.`,
       onConfirm: () => this.budgetPlannerService.deleteFixedCommitment(commitment.id),
-      onCompleted: () => this.fixedCommitmentsResource.reload()
+      onCompleted: () => {
+        this.fixedCommitmentsResource.reload();
+        this.reloadPlannerViewModel();
+      }
     });
   }
 
   updateMonthlyGoalSavings(goalMonthlySavings: number) {
     this.budgetPlannerService.updateMonthlyGoalSavings(goalMonthlySavings).subscribe({
-      next: () => this.userResource.reload()
+      next: () => this.reloadPlannerViewModel()
     });
   }
 
@@ -168,7 +172,7 @@ export class BudgetPlannerPageComponent {
       confirmedAmount,
       'CONFIRMED'
     ).subscribe({
-      next: () => this.reloadSavingsState()
+      next: () => this.reloadPlannerViewModel()
     });
   }
 
@@ -178,7 +182,7 @@ export class BudgetPlannerPageComponent {
       undefined,
       'SKIPPED'
     ).subscribe({
-      next: () => this.reloadSavingsState()
+      next: () => this.reloadPlannerViewModel()
     });
   }
 
@@ -240,6 +244,7 @@ export class BudgetPlannerPageComponent {
         next: () => {
           modalRef.close(payload);
           this.incomesResource.reload();
+          this.reloadPlannerViewModel();
         },
         error: () => modalRef.dismiss('create_error')
       });
@@ -250,6 +255,7 @@ export class BudgetPlannerPageComponent {
       next: () => {
         modalRef.close(payload);
         this.incomesResource.reload();
+        this.reloadPlannerViewModel();
       },
       error: () => modalRef.dismiss('update_error')
     });
@@ -264,6 +270,7 @@ export class BudgetPlannerPageComponent {
         next: () => {
           modalRef.close(payload);
           this.fixedCommitmentsResource.reload();
+          this.reloadPlannerViewModel();
         },
         error: () => modalRef.dismiss('create_error')
       });
@@ -274,6 +281,7 @@ export class BudgetPlannerPageComponent {
       next: () => {
         modalRef.close(payload);
         this.fixedCommitmentsResource.reload();
+        this.reloadPlannerViewModel();
       },
       error: () => modalRef.dismiss('update_error')
     });
@@ -320,15 +328,13 @@ export class BudgetPlannerPageComponent {
     return commitments.find((commitment) => commitment.id === id) ?? null;
   }
 
-  private reloadSavingsState() {
-    this.savingsLogsResource.reload();
-    this.userResource.reload();
-  }
-
   private reloadGoalsState() {
     this.savingGoalsResource.reload();
-    this.currentPeriodSavingGoalsResource.reload();
-    this.userResource.reload();
+    this.reloadPlannerViewModel();
+  }
+
+  private reloadPlannerViewModel() {
+    this.budgetViewModelResource.reload();
   }
 
   private getCurrentPeriod(): string {
@@ -337,14 +343,51 @@ export class BudgetPlannerPageComponent {
     return `${now.getFullYear()}-${month}`;
   }
 
-  private buildBudgetViewModel() {
-    return this.data.buildBudgetViewModel(
-      this.incomesResource.value() ?? [],
-      this.fixedCommitmentsResource.value() ?? [],
-      this.userResource.value(),
-      this.savingsLogsResource.value() ?? [],
-      this.savingGoalsResource.value() ?? [],
-      this.currentPeriodSavingGoalsResource.value() ?? []
-    );
+  private buildEmptyBudgetViewModel(): BudgetViewModel {
+    return {
+      currency: 'UYU',
+      incomeSources: [],
+      fixedExpenses: [],
+      savingGoals: [],
+      currentPeriodSavingGoals: [],
+      savings: {
+        goalName: 'Meta de ahorro',
+        goalId: null,
+        monthlyGoal: 0,
+        monthlyGoalPercent: 0,
+        progress: 0,
+        projectedMessage: '',
+        currentTotal: 0,
+        targetAmount: 0,
+        currentYear: new Date().getFullYear(),
+        currentPeriodLabel: '',
+        currentPeriodStatus: 'PENDING',
+        currentPeriodPlannedAmount: 0,
+        currentPeriodConfirmedAmount: 0,
+        currentPeriodShortfallAmount: 0,
+        currentPeriodSuggestedAmount: 0,
+        discipline: {
+          score: 0,
+          evaluatedMonths: 0,
+          metMonths: 0,
+          partialMonths: 0,
+          skippedMonths: 0,
+          targetHitStreak: 0
+        },
+        alerts: [],
+        annualConfirmedTotal: 0,
+        annualLogs: []
+      },
+      commitments: {
+        preCommitted: 0,
+        discretionary: 0,
+        preCommittedPercent: 0,
+        remainderPercent: 0,
+        savingsCommittedAmount: 0,
+        savingsCommittedType: 'PENDING'
+      },
+      totalIncome: 0,
+      totalFixed: 0
+    };
   }
 }

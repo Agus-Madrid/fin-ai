@@ -11,4 +11,9 @@ export class BudgetsController {
   getOverview(@CurrentUser() user: AuthenticatedUser) {
     return this.budgetsService.getOverview(user.userId);
   }
+
+  @Get('planner')
+  getPlanner(@CurrentUser() user: AuthenticatedUser) {
+    return this.budgetsService.getPlannerViewModel(user.userId);
+  }
 }
