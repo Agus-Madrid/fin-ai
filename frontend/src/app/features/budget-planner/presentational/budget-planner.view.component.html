@@ -73,9 +73,6 @@
             {{ income.amount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
           </div>
         </div>
-        <div class="progress bg-surface-2 mt-3" style="height: 6px;">
-          <div class="progress-bar bg-success" [style.width]="income.progress + '%'"></div>
-        </div>
       </div>
     </div>
     <div class="app-divider my-3"></div>
@@ -112,9 +109,6 @@
         <div class="text-end">
           <div class="fw-semibold">
             {{ expense.amount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}
-          </div>
-          <div class="progress bg-surface-2 mt-2" style="height: 5px; width: 90px;">
-            <div class="progress-bar bg-danger" [style.width]="expense.progress + '%'"></div>
           </div>
         </div>
         <div class="budget-actions">
