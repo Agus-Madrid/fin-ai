@@ -1,6 +1,8 @@
-import { NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { AsyncPipe, NgIf } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Observable, finalize, startWith } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
 import { BudgetOverviewService } from '../services/budget-overview.service';
 import { CategoryService } from '../services/category.service';
@@ -12,6 +14,9 @@ import { TransactionStatus } from '../../../shared/enum/transaction-status.enum'
 import { BudgetPlannerService } from '../../budget-planner/services/budget-planner.service';
 import { parseUruguayNumber } from '../../../shared/utils/number-format.util';
 import { BudgetOverview } from '../../../shared/models/budget-overview.model';
+import { UploadViewModel } from '../../../shared/models/upload.model';
+import { UploadsDataService } from '../../../core/data/uploads-data.service';
+import { IngestionService } from '../../uploads/services/ingestion.service';
 
 const DEFAULT_USER: User = {
   id: '',
@@ -34,25 +39,37 @@ const DEFAULT_BUDGET_OVERVIEW: BudgetOverview = {
   spendablePercent: 0
 };
 
+const DEFAULT_UPLOAD_VIEW_MODEL: UploadViewModel = {
+  uploads: []
+};
+
 @Component({
   selector: 'app-dashboard-page',
   standalone: true,
-  imports: [NgIf, DashboardViewComponent],
+  imports: [AsyncPipe, NgIf, DashboardViewComponent],
   template: `
     <ng-container *ngIf="transactions">
-      <app-dashboard-view
-        [transactions]="transactions"
-        [user]="dashboardUser()"
-        [totalIncome]="totalIncome()"
-        [totalFixedExpenses]="totalFixedExpenses()"
-        [fixedExpensePercent]="fixedExpensePercent()"
-        [spendableBalance]="spendableBalance()"
-        [spendablePercent]="spendablePercent()"
-        [manualTransactionFormGroup]="manualTransactionFormGroup"
-        [transactionCategories]="transactionCategories()"
-        [categories]="categories()"
-        (submitTransaction)="createTransaction()"
-      ></app-dashboard-view>
+      <ng-container *ngIf="uploadViewModel$ | async as uploadViewModel">
+        <app-dashboard-view
+          [transactions]="transactions"
+          [user]="dashboardUser()"
+          [totalIncome]="totalIncome()"
+          [totalFixedExpenses]="totalFixedExpenses()"
+          [fixedExpensePercent]="fixedExpensePercent()"
+          [spendableBalance]="spendableBalance()"
+          [spendablePercent]="spendablePercent()"
+          [manualTransactionFormGroup]="manualTransactionFormGroup"
+          [transactionCategories]="transactionCategories()"
+          [categories]="categories()"
+          [smartUpload]="uploadViewModel.uploads.length > 0 ? uploadViewModel.uploads[0] : null"
+          [smartUploading]="smartUploading()"
+          [smartProcessingUploadId]="smartProcessingUploadId()"
+          [smartErrorMessage]="smartErrorMessage()"
+          (submitTransaction)="createTransaction()"
+          (smartUploadRequested)="onSmartUploadRequested($event)"
+          (smartProcessRequested)="onSmartProcessRequested($event)"
+        ></app-dashboard-view>
+      </ng-container>
     </ng-container>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -63,14 +80,22 @@ export class DashboardPageComponent {
   private readonly categoriesService = inject(CategoryService);
   private readonly budgetPlannerService = inject(BudgetPlannerService);
   private readonly budgetOverviewService = inject(BudgetOverviewService);
+  private readonly uploadsDataService = inject(UploadsDataService);
+  private readonly ingestionService = inject(IngestionService);
 
   readonly manualTransactionFormGroup: FormGroup = this.createManualTransactionFormGroup();
+  readonly smartUploading = signal(false);
+  readonly smartProcessingUploadId = signal<string | null>(null);
+  readonly smartErrorMessage = signal<string | null>(null);
 
   readonly categoriesResource = this.categoriesService.getCategories();
   readonly categories = this.categoriesResource.value;
   readonly transactions = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
   readonly userResource = this.budgetPlannerService.getUser();
   readonly budgetOverviewResource = this.budgetOverviewService.getOverview();
+  readonly uploadViewModel$: Observable<UploadViewModel> = this.uploadsDataService
+    .getUploadsViewModel()
+    .pipe(startWith(DEFAULT_UPLOAD_VIEW_MODEL));
 
   readonly totalIncome = this.createTotalIncomeComputed();
   readonly totalFixedExpenses = this.createTotalFixedExpensesComputed();
@@ -79,6 +104,38 @@ export class DashboardPageComponent {
   readonly spendablePercent = this.createSpendablePercentComputed();
   readonly dashboardUser = this.createDashboardUserComputed();
   readonly transactionCategories = this.createTransactionCategoriesComputed();
+
+  onSmartUploadRequested(file: File): void {
+    this.smartErrorMessage.set(null);
+
+    this.smartUploading.set(true);
+    this.uploadsDataService
+      .uploadPdf(file)
+      .pipe(finalize(() => this.smartUploading.set(false)))
+      .subscribe({
+        next: () => {},
+        error: (error: unknown) => {
+          this.smartErrorMessage.set(this.resolveUploadErrorMessage(error));
+        }
+      });
+  }
+
+  onSmartProcessRequested(uploadId: string): void {
+    this.smartErrorMessage.set(null);
+    this.smartProcessingUploadId.set(uploadId);
+
+    this.ingestionService
+      .processUpload(uploadId)
+      .pipe(finalize(() => this.smartProcessingUploadId.set(null)))
+      .subscribe({
+        next: () => {
+          this.uploadsDataService.reloadUploads();
+        },
+        error: (error: unknown) => {
+          this.smartErrorMessage.set(this.resolveUploadErrorMessage(error));
+        }
+      });
+  }
 
   createTransaction(): void {
     this.manualTransactionFormGroup.setErrors(null);
@@ -218,5 +275,37 @@ export class DashboardPageComponent {
 
   private getBudgetOverview(): BudgetOverview {
     return this.budgetOverviewResource.value() ?? DEFAULT_BUDGET_OVERVIEW;
+  }
+
+  private resolveUploadErrorMessage(error: unknown): string {
+    if (error instanceof HttpErrorResponse) {
+      const message = this.readBackendMessage(error.error);
+      if (message) {
+        return message;
+      }
+      return 'No fue posible completar la operacion con el archivo PDF.';
+    }
+
+    return 'No fue posible completar la operacion con el archivo PDF.';
+  }
+
+  private readBackendMessage(errorBody: unknown): string | null {
+    if (!errorBody || typeof errorBody !== 'object') {
+      return null;
+    }
+
+    const body = errorBody as {
+      message?: string | string[];
+    };
+
+    if (Array.isArray(body.message)) {
+      return body.message.join(', ');
+    }
+
+    if (typeof body.message === 'string') {
+      return body.message;
+    }
+
+    return null;
   }
 }

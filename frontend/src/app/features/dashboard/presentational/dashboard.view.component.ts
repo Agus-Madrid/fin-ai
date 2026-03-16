@@ -8,6 +8,7 @@ import {
   input,
   output,
   ResourceRef,
+  signal,
   viewChild
 } from '@angular/core';
 import { CurrencyPipe, DecimalPipe, NgClass, NgFor, NgIf, SlicePipe } from '@angular/common';
@@ -18,6 +19,7 @@ import { TransactionStatus } from '../../../shared/enum/transaction-status.enum'
 import { Transaction } from '../../../shared/models/transaction.model';
 import { SavingGoal } from '../../../shared/models/saving-goal.model';
 import { User } from '../../../shared/models/user.model';
+import { UploadItem } from '../../../shared/models/upload.model';
 
 Chart.register(...registerables);
 
@@ -83,7 +85,14 @@ export class DashboardViewComponent {
   readonly spendablePercent = input(0);
   readonly manualTransactionFormGroup = input<FormGroup>();
   readonly categories = input<Category[]>([]);
+  readonly smartUpload = input<UploadItem | null>(null);
+  readonly smartUploading = input(false);
+  readonly smartProcessingUploadId = input<string | null>(null);
+  readonly smartErrorMessage = input<string | null>(null);
   readonly submitTransaction = output<void>();
+  readonly smartUploadRequested = output<File>();
+  readonly smartProcessRequested = output<string>();
+  readonly isSmartDropDragging = signal(false);
 
   constructor() {
     effect(() => {
@@ -463,5 +472,49 @@ export class DashboardViewComponent {
 
   onSubmit() {
     this.submitTransaction.emit();
+  }
+
+  getSmartUploadStatusLabel(upload: UploadItem): string {
+    if (upload.status === 'processed') {
+      return 'Procesado';
+    }
+    if (upload.status === 'error') {
+      return 'Error';
+    }
+    return 'Pendiente';
+  }
+
+  onSmartDragOver(event: DragEvent): void {
+    event.preventDefault();
+    if (this.smartUploading() || this.smartProcessingUploadId()) {
+      return;
+    }
+    this.isSmartDropDragging.set(true);
+  }
+
+  onSmartDragLeave(event: DragEvent): void {
+    event.preventDefault();
+    this.isSmartDropDragging.set(false);
+  }
+
+  onSmartDrop(event: DragEvent): void {
+    event.preventDefault();
+    this.isSmartDropDragging.set(false);
+    if (this.smartUploading() || this.smartProcessingUploadId()) {
+      return;
+    }
+
+    const file = event.dataTransfer?.files?.item(0);
+    if (file) {
+      this.smartUploadRequested.emit(file);
+    }
+  }
+
+  onSmartProcessRequested(uploadId: string): void {
+    this.smartProcessRequested.emit(uploadId);
+  }
+
+  isSmartProcessing(uploadId: string): boolean {
+    return this.smartProcessingUploadId() === uploadId;
   }
 }
