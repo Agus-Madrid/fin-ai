@@ -10,13 +10,23 @@
   transform: translateY(-1px);
 }
 
-.dashboard-card--clickable {
-  cursor: pointer;
+.dashboard-section-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  display: inline-flex;
+  align-items: center;
 }
 
-.dashboard-card--clickable:focus-visible {
+.dashboard-section-link:hover {
+  color: #cddcff;
+}
+
+.dashboard-section-link:focus-visible {
   outline: 2px solid rgba(43, 108, 238, 0.5);
   outline-offset: 2px;
+  border-radius: 6px;
 }
 
 .dashboard-mode-btn {
@@ -58,6 +68,16 @@
 
 .dashboard-mode-caption {
   font-size: 0.78rem;
+}
+
+.dashboard-donut-link {
+  border: 0;
+  text-align: left;
+}
+
+.dashboard-donut-link:focus-visible {
+  outline: 2px solid rgba(43, 108, 238, 0.5);
+  outline-offset: 2px;
 }
 
 .dashboard-card--span-two {
