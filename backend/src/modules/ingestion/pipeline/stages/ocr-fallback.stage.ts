@@ -1,4 +1,8 @@
-import { Inject, Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { DOCUMENT_OCR_SERVICE } from '../../ocr/ocr.constants';
 import type { DocumentOcrService } from '../../ocr/interfaces/document-ocr-service.interface';
 import { PipelineContext } from '../pipeline-context.interface';

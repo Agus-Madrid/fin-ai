@@ -1,8 +1,13 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
+import { IncomeRuleType } from '../incomes/income-rule-type.enum';
 import { Income } from '../incomes/incomes.entity';
+import { IncomeMonthEntry } from '../monthly-financials/income-month-entry.entity';
+import { MonthlyFinancialsService } from '../monthly-financials/monthly-financials.service';
+import { MonthlySummary } from '../monthly-financials/monthly-summary.entity';
+import { MonthlySummaryStatus } from '../monthly-financials/monthly-summary-status.enum';
 import { SavingGoal } from '../savings-goals/saving-goal.entity';
 import { SavingsLogStatus } from '../savings-logs/savings-log-status.enum';
 import { SavingsLog } from '../savings-logs/savings-log.entity';
@@ -98,6 +103,16 @@ interface PlannerCommitmentSummary {
   savingsCommittedType: PlannerSavingsCommittedType;
 }
 
+interface PlannerMonthlySummary {
+  period: string;
+  status: MonthlySummaryStatus;
+  closedAt: Date | null;
+  totalIncome: number;
+  totalFixedExpenses: number;
+  totalSavingsConfirmed: number;
+  netBalance: number;
+}
+
 export interface BudgetOverview {
   currency: 'UYU';
   currentPeriod: string;
@@ -117,6 +132,7 @@ export interface BudgetPlannerViewModel {
   currentPeriodSavingGoals: PlannerSavingGoalProgress[];
   savings: PlannerSavingsTarget;
   commitments: PlannerCommitmentSummary;
+  monthlySummary: PlannerMonthlySummary;
   totalIncome: number;
   totalFixed: number;
 }
@@ -142,18 +158,24 @@ export class BudgetsService {
     private readonly savingGoalRepository: Repository<SavingGoal>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly monthlyFinancialsService: MonthlyFinancialsService,
   ) {}
 
   async getOverview(userId: string): Promise<BudgetOverview> {
-    await this.ensureUserExists(userId);
-
     const currentPeriod = this.toPeriod(new Date());
-    const [totalIncome, totalFixedExpenses, savingsConfirmedAmount] =
-      await Promise.all([
-        this.getTotalIncome(userId),
-        this.getTotalFixedExpenses(userId),
-        this.getConfirmedSavingsForPeriod(userId, currentPeriod),
-      ]);
+    const currentPeriodSummary =
+      await this.monthlyFinancialsService.calculateAndPersistMonthlySummary(
+        userId,
+        currentPeriod,
+      );
+
+    const totalIncome = this.normalizeAmount(currentPeriodSummary.totalIncome);
+    const totalFixedExpenses = this.normalizeAmount(
+      currentPeriodSummary.totalFixedExpenses,
+    );
+    const savingsConfirmedAmount = this.normalizeAmount(
+      currentPeriodSummary.totalSavingsConfirmed,
+    );
 
     const spendableBalance = this.normalizeAmount(
       totalIncome - totalFixedExpenses - savingsConfirmedAmount,
@@ -185,20 +207,42 @@ export class BudgetsService {
       throw new NotFoundException(`User with id ${userId} not found`);
     }
 
-    const [incomes, fixedCommitments, savingsLogs, savingGoals, activeSavingGoals] =
-      await Promise.all([
-        this.incomeRepository.find({ where: { user: { id: userId } } }),
-        this.fixedCommitmentRepository.find({ where: { user: { id: userId } } }),
-        this.savingsLogRepository.find({
-          where: { user: { id: userId } },
-          order: { period: 'DESC' },
-        }),
-        this.findSavingGoalsByUser(userId, false),
-        this.findSavingGoalsByUser(userId, true),
-      ]);
+    const currentPeriod = this.toPeriod(new Date());
+    const [
+      incomes,
+      fixedCommitments,
+      savingsLogs,
+      savingGoals,
+      activeSavingGoals,
+      currentPeriodSummary,
+      currentPeriodIncomeEntries,
+    ] = await Promise.all([
+      this.incomeRepository.find({
+        where: { user: { id: userId } },
+        order: { createdAt: 'ASC' },
+      }),
+      this.fixedCommitmentRepository.find({ where: { user: { id: userId } } }),
+      this.savingsLogRepository.find({
+        where: { user: { id: userId } },
+        order: { period: 'DESC' },
+      }),
+      this.findSavingGoalsByUser(userId, false),
+      this.findSavingGoalsByUser(userId, true),
+      this.monthlyFinancialsService.calculateAndPersistMonthlySummary(
+        userId,
+        currentPeriod,
+      ),
+      this.monthlyFinancialsService.findIncomeEntriesForPeriod(
+        userId,
+        currentPeriod,
+      ),
+    ]);
 
     return this.buildPlannerViewModel(
       incomes,
+      currentPeriodIncomeEntries,
+      currentPeriodSummary,
+      currentPeriod,
       fixedCommitments,
       user,
       savingsLogs,
@@ -207,23 +251,45 @@ export class BudgetsService {
     );
   }
 
+  async listMonthlySummaries(userId: string, limit?: number) {
+    return this.monthlyFinancialsService.listMonthlySummaries(userId, limit);
+  }
+
+  async getMonthlySummaryForPeriod(userId: string, period: string) {
+    return this.monthlyFinancialsService.getMonthlySummaryForPeriod(
+      userId,
+      period,
+    );
+  }
+
+  async closeMonthlySummary(userId: string, period: string) {
+    return this.monthlyFinancialsService.closeMonthlySummary(userId, period);
+  }
+
   private buildPlannerViewModel(
     incomes: Income[],
+    currentPeriodIncomeEntries: IncomeMonthEntry[],
+    currentPeriodSummary: MonthlySummary,
+    currentPeriod: string,
     fixedCommitments: FixedCommitment[],
     user: User,
     savingsLogs: SavingsLog[],
     savingGoals: SavingGoal[],
     currentPeriodSavingGoals: SavingGoal[],
   ): BudgetPlannerViewModel {
-    const incomeSources = incomes.map((income, index) =>
-      this.toIncomeSource(income, index),
+    const incomeSources = this.buildIncomeSourcesForPeriod(
+      incomes,
+      currentPeriodIncomeEntries,
+      currentPeriod,
     );
     const fixedExpenses = fixedCommitments.map((commitment) =>
       this.toFixedExpense(commitment),
     );
 
-    const totalIncome = incomeSources.reduce((sum, income) => sum + income.amount, 0);
-    const totalFixed = fixedExpenses.reduce((sum, fixed) => sum + fixed.amount, 0);
+    const totalIncome = this.normalizeAmount(currentPeriodSummary.totalIncome);
+    const totalFixed = this.normalizeAmount(
+      currentPeriodSummary.totalFixedExpenses,
+    );
 
     const monthlyGoal = this.normalizeAmount(user.goalMonthlySavings ?? 0);
     const monthlyGoalPercent =
@@ -232,7 +298,10 @@ export class BudgetsService {
         : 0;
 
     const currentTotal = this.normalizeAmount(user.currentTotalSavings ?? 0);
-    const orderedGoals = this.buildSavingGoalsProgress(savingGoals, currentTotal);
+    const orderedGoals = this.buildSavingGoalsProgress(
+      savingGoals,
+      currentTotal,
+    );
     const orderedCurrentPeriodGoals = this.buildSavingGoalsProgress(
       currentPeriodSavingGoals,
       currentTotal,
@@ -248,16 +317,18 @@ export class BudgetsService {
 
     const now = new Date();
     const currentYear = now.getFullYear();
-    const currentPeriod = this.toPeriod(now);
     const annualLogs = this.buildAnnualLogs(savingsLogs, currentYear);
     const annualConfirmedTotal = annualLogs.reduce(
       (sum, item) => sum + item.confirmedAmount,
       0,
     );
 
-    const currentPeriodLog = savingsLogs.find((log) => log.period === currentPeriod);
+    const currentPeriodLog = savingsLogs.find(
+      (log) => log.period === currentPeriod,
+    );
     const currentPeriodStatus: PlannerSavingsStatus =
-      (currentPeriodLog?.status as PlannerSavingsStatus | undefined) ?? 'PENDING';
+      (currentPeriodLog?.status as PlannerSavingsStatus | undefined) ??
+      'PENDING';
     const currentPeriodPlannedAmount = this.normalizeAmount(
       currentPeriodLog?.monthlyGoalSnapshot ?? monthlyGoal,
     );
@@ -282,7 +353,9 @@ export class BudgetsService {
       currentPeriodStatus,
       currentPeriodConfirmedAmount,
     );
-    const preCommitted = this.normalizeAmount(totalFixed + savingsCommitted.amount);
+    const preCommitted = this.normalizeAmount(
+      totalFixed + savingsCommitted.amount,
+    );
     const discretionary = Math.max(
       this.normalizeAmount(totalIncome - preCommitted),
       0,
@@ -350,23 +423,83 @@ export class BudgetsService {
         savingsCommittedAmount: savingsCommitted.amount,
         savingsCommittedType: savingsCommitted.type,
       },
+      monthlySummary: {
+        period: currentPeriodSummary.period,
+        status: currentPeriodSummary.status,
+        closedAt: currentPeriodSummary.closedAt,
+        totalIncome: this.normalizeAmount(currentPeriodSummary.totalIncome),
+        totalFixedExpenses: this.normalizeAmount(
+          currentPeriodSummary.totalFixedExpenses,
+        ),
+        totalSavingsConfirmed: this.normalizeAmount(
+          currentPeriodSummary.totalSavingsConfirmed,
+        ),
+        netBalance: this.normalizeAmount(currentPeriodSummary.netBalance),
+      },
       totalIncome,
       totalFixed,
     };
   }
 
-  private toIncomeSource(income: Income, index: number): PlannerIncomeSource {
-    const parsedAmount = Number(income.amount);
+  private buildIncomeSourcesForPeriod(
+    incomes: Income[],
+    incomeMonthEntries: IncomeMonthEntry[],
+    period: string,
+  ): PlannerIncomeSource[] {
+    const entriesByIncomeRuleId = new Map<string, IncomeMonthEntry>();
+    for (const incomeMonthEntry of incomeMonthEntries) {
+      if (!incomeMonthEntry.incomeRule?.id) {
+        continue;
+      }
+      entriesByIncomeRuleId.set(
+        incomeMonthEntry.incomeRule.id,
+        incomeMonthEntry,
+      );
+    }
+
+    return incomes.map((income) =>
+      this.toIncomeSourceForPeriod(
+        income,
+        entriesByIncomeRuleId.get(income.id),
+        period,
+      ),
+    );
+  }
+
+  private toIncomeSourceForPeriod(
+    income: Income,
+    incomeMonthEntry: IncomeMonthEntry | undefined,
+    currentPeriod: string,
+  ): PlannerIncomeSource {
+    const parsedAmount = Number(incomeMonthEntry?.amount ?? 0);
+    const includedInCurrentPeriod = Boolean(incomeMonthEntry);
 
     return {
       id: income.id,
       label: income.name,
       source: income.description ?? DEFAULT_INCOME_SOURCE,
       amount: Number.isFinite(parsedAmount) ? parsedAmount : 0,
-      status: 'Confirmado',
-      timing: `Actualizado · #${index + 1}`,
-      progress: 100,
+      status: includedInCurrentPeriod ? 'Incluido' : 'No aplica',
+      timing: this.buildIncomeTimingLabel(income, currentPeriod),
+      progress: includedInCurrentPeriod ? 100 : 0,
     };
+  }
+
+  private buildIncomeTimingLabel(
+    income: Income,
+    currentPeriod: string,
+  ): string {
+    if (income.ruleType === IncomeRuleType.ONE_TIME) {
+      const targetPeriodLabel = income.targetPeriod ?? 'Sin mes';
+      return targetPeriodLabel === currentPeriod
+        ? `Puntual · ${targetPeriodLabel} (mes actual)`
+        : `Puntual · ${targetPeriodLabel}`;
+    }
+
+    const startPeriodLabel = income.startPeriod ?? 'Sin inicio';
+    return startPeriodLabel === currentPeriod
+      ? `Mensual · desde ${startPeriodLabel} (inicio actual)`
+      : `Mensual · desde ${startPeriodLabel}`;
   }
 
   private toFixedExpense(commitment: FixedCommitment): PlannerFixedExpense {
@@ -427,7 +560,10 @@ export class BudgetsService {
     return ordered.map((goal) => {
       const targetAmount = this.normalizeAmount(goal.targetAmount);
       const allocatedAmount = Math.max(0, Math.min(targetAmount, remaining));
-      remaining = Math.max(0, this.normalizeAmount(remaining - allocatedAmount));
+      remaining = Math.max(
+        0,
+        this.normalizeAmount(remaining - allocatedAmount),
+      );
 
       const progressPercent =
         targetAmount > 0
@@ -648,7 +784,10 @@ export class BudgetsService {
       const deadline = new Date(params.activeGoalDeadline);
       if (Number.isFinite(deadline.getTime())) {
         const monthsAvailable = this.calculateMonthsUntil(deadline);
-        const remaining = Math.max(params.targetAmount - params.currentTotal, 0);
+        const remaining = Math.max(
+          params.targetAmount - params.currentTotal,
+          0,
+        );
 
         if (monthsAvailable <= 0 && remaining > 0) {
           alerts.push({
@@ -667,7 +806,8 @@ export class BudgetsService {
             alerts.push({
               id: 'no-recent-run-rate',
               tone: 'CRITICAL',
-              message: 'Sin ahorro confirmado reciente no llegas a la fecha objetivo.',
+              message:
+                'Sin ahorro confirmado reciente no llegas a la fecha objetivo.',
             });
           } else {
             const monthsNeeded = remaining / runRate;
@@ -688,7 +828,9 @@ export class BudgetsService {
     return alerts.slice(0, 3);
   }
 
-  private buildSavingsLogMap(savingsLogs: SavingsLog[]): Map<string, SavingsLog> {
+  private buildSavingsLogMap(
+    savingsLogs: SavingsLog[],
+  ): Map<string, SavingsLog> {
     const map = new Map<string, SavingsLog>();
     for (const log of savingsLogs) {
       map.set(log.period, log);
@@ -703,7 +845,11 @@ export class BudgetsService {
     const parsedCurrentPeriod = this.parsePeriod(currentPeriod);
     const createdAt = startDate ? new Date(startDate) : null;
 
-    if (!parsedCurrentPeriod || !createdAt || !Number.isFinite(createdAt.getTime())) {
+    if (
+      !parsedCurrentPeriod ||
+      !createdAt ||
+      !Number.isFinite(createdAt.getTime())
+    ) {
       return [];
     }
 
@@ -718,7 +864,8 @@ export class BudgetsService {
       parsedStartPeriod.month,
     );
     const endIndex =
-      this.toMonthIndex(parsedCurrentPeriod.year, parsedCurrentPeriod.month) - 1;
+      this.toMonthIndex(parsedCurrentPeriod.year, parsedCurrentPeriod.month) -
+      1;
 
     if (endIndex < startIndex) {
       return [];
@@ -855,42 +1002,6 @@ export class BudgetsService {
     }).format(value);
   }
 
-  private async getTotalIncome(userId: string): Promise<number> {
-    const result = await this.incomeRepository
-      .createQueryBuilder('income')
-      .innerJoin('income.user', 'user')
-      .select('COALESCE(SUM(income.amount), 0)', 'total')
-      .where('user.id = :userId', { userId })
-      .getRawOne<{ total: string | number | null }>();
-
-    return this.normalizeAmount(result?.total ?? 0);
-  }
-
-  private async getTotalFixedExpenses(userId: string): Promise<number> {
-    const result = await this.fixedCommitmentRepository
-      .createQueryBuilder('fixedCommitment')
-      .innerJoin('fixedCommitment.user', 'user')
-      .select('COALESCE(SUM(fixedCommitment.amount), 0)', 'total')
-      .where('user.id = :userId', { userId })
-      .getRawOne<{ total: string | number | null }>();
-
-    return this.normalizeAmount(result?.total ?? 0);
-  }
-
-  private async getConfirmedSavingsForPeriod(
-    userId: string,
-    period: string,
-  ): Promise<number> {
-    const currentPeriodLog = await this.savingsLogRepository.findOne({
-      where: {
-        user: { id: userId },
-        period,
-      },
-    });
-
-    return this.normalizeAmount(currentPeriodLog?.confirmedAmount ?? 0);
-  }
-
   private async findSavingGoalsByUser(
     userId: string,
     activeOnly: boolean,
@@ -909,13 +1020,6 @@ export class BudgetsService {
     }
 
     return query.getMany();
-  }
-
-  private async ensureUserExists(userId: string): Promise<void> {
-    const user = await this.userRepository.findOne({ where: { id: userId } });
-    if (!user) {
-      throw new NotFoundException(`User with id ${userId} not found`);
-    }
   }
 
   private getTodayDateOnly(): string {

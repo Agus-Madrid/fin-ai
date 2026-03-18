@@ -27,7 +27,9 @@ export class GoogleAiStudioClient implements AiClient {
   constructor(options: GoogleAiStudioClientOptions) {
     this.apiKey = options.apiKey.trim();
     this.model = options.model.trim();
-    this.apiBaseUrl = (options.apiBaseUrl ?? 'https://generativelanguage.googleapis.com')
+    this.apiBaseUrl = (
+      options.apiBaseUrl ?? 'https://generativelanguage.googleapis.com'
+    )
       .trim()
       .replace(/\/+$/, '');
   }
@@ -143,7 +145,9 @@ export class GoogleAiStudioClient implements AiClient {
     };
   }
 
-  private buildTextExtractionRequestBody(input: ExtractTransactionsFromTextInput) {
+  private buildTextExtractionRequestBody(
+    input: ExtractTransactionsFromTextInput,
+  ) {
     const prompt = this.buildExtractionPrompt(input.filename);
     return {
       contents: [
@@ -208,7 +212,9 @@ export class GoogleAiStudioClient implements AiClient {
   private buildExtractionPrompt(filename?: string): string {
     return [
       'Extrae transacciones de gastos desde un estado de cuenta bancario.',
-      filename ? `Nombre de archivo: ${filename}` : 'Nombre de archivo: desconocido',
+      filename
+        ? `Nombre de archivo: ${filename}`
+        : 'Nombre de archivo: desconocido',
       'Responde solo JSON. Sin markdown.',
       'Formato JSON esperado:',
       '{',
@@ -264,7 +270,9 @@ export class GoogleAiStudioClient implements AiClient {
     ].join('\n');
   }
 
-  private buildCategoryVisualsPrompt(input: GenerateCategoryVisualsInput): string {
+  private buildCategoryVisualsPrompt(
+    input: GenerateCategoryVisualsInput,
+  ): string {
     return [
       'Genera visuales para categorias financieras en una app dark mode.',
       'Responde solo JSON. Sin markdown.',
@@ -336,7 +344,9 @@ export class GoogleAiStudioClient implements AiClient {
     }
   }
 
-  private parseCategoryVisualsPayload(text: string): ModelCategoryVisualsPayload {
+  private parseCategoryVisualsPayload(
+    text: string,
+  ): ModelCategoryVisualsPayload {
     try {
       const parsed = JSON.parse(text) as ModelCategoryVisualsPayload;
       if (!parsed || typeof parsed !== 'object') {
@@ -366,7 +376,9 @@ export class GoogleAiStudioClient implements AiClient {
     candidates: CategoryCandidate[],
   ): CheckCategoryMatchResult {
     const warnings = this.toWarnings(payload.warnings);
-    const allowedCandidateIds = new Set(candidates.map((candidate) => candidate.id));
+    const allowedCandidateIds = new Set(
+      candidates.map((candidate) => candidate.id),
+    );
     const selectedCategoryId = this.readStringField(payload.selectedCategoryId);
     const normalizedSelectedCategoryId =
       selectedCategoryId && allowedCandidateIds.has(selectedCategoryId)
@@ -462,7 +474,9 @@ export class GoogleAiStudioClient implements AiClient {
     if (!Array.isArray(rawTransactions)) {
       return {
         transactions: [],
-        warnings: ['Model response did not include a valid transactions array.'],
+        warnings: [
+          'Model response did not include a valid transactions array.',
+        ],
       };
     }
 

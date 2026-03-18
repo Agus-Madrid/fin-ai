@@ -41,7 +41,8 @@ export class IngestionService {
       sizeBytes: context.upload.sizeBytes,
       persistedPendingTransactionsCount:
         context.persistedPendingTransactionsCount ?? 0,
-      skippedPendingTransactionsCount: context.skippedPendingTransactionsCount ?? 0,
+      skippedPendingTransactionsCount:
+        context.skippedPendingTransactionsCount ?? 0,
       warnings: context.warnings,
       executedStages: context.executedStages,
     };

@@ -37,7 +37,8 @@ import {
       (deleteSavingGoalRequested)="deleteSavingGoal($event)"
       (updateMonthlyGoalRequested)="updateMonthlyGoalSavings($event)"
       (confirmMonthlySavingsRequested)="confirmMonthlySavings($event)"
-      (skipMonthlySavingsRequested)="skipMonthlySavings()">
+      (skipMonthlySavingsRequested)="skipMonthlySavings()"
+      (closeCurrentMonthRequested)="closeCurrentMonth()">
     </app-budget-planner-view>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -187,6 +188,12 @@ export class BudgetPlannerPageComponent {
     });
   }
 
+  closeCurrentMonth() {
+    this.budgetPlannerService.closeMonthlySummary(this.getCurrentPeriod()).subscribe({
+      next: () => this.reloadPlannerViewModel()
+    });
+  }
+
   createSavingGoal(request: CreateSavingGoalRequest) {
     this.budgetPlannerService.createSavingGoal(request).subscribe({
       next: () => this.reloadGoalsState()
@@ -219,6 +226,16 @@ export class BudgetPlannerPageComponent {
       [INCOME_FORM_CONTROL_NAMES.amount]: this.formBuilder.control(
         income?.amount ?? null,
         Validators.required
+      ),
+      [INCOME_FORM_CONTROL_NAMES.ruleType]: this.formBuilder.nonNullable.control(
+        income?.ruleType ?? 'MONTHLY_RECURRING',
+        Validators.required
+      ),
+      [INCOME_FORM_CONTROL_NAMES.startPeriod]: this.formBuilder.nonNullable.control(
+        income?.startPeriod ?? this.getCurrentPeriod(),
+      ),
+      [INCOME_FORM_CONTROL_NAMES.targetPeriod]: this.formBuilder.nonNullable.control(
+        income?.targetPeriod ?? this.getCurrentPeriod(),
       )
     }) as IncomeFormGroup;
   }
@@ -386,6 +403,15 @@ export class BudgetPlannerPageComponent {
         remainderPercent: 0,
         savingsCommittedAmount: 0,
         savingsCommittedType: 'PENDING'
+      },
+      monthlySummary: {
+        period: '',
+        status: 'OPEN',
+        closedAt: null,
+        totalIncome: 0,
+        totalFixedExpenses: 0,
+        totalSavingsConfirmed: 0,
+        netBalance: 0
       },
       totalIncome: 0,
       totalFixed: 0

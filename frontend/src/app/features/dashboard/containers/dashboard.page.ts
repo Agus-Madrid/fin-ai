@@ -3,6 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
 import { finalize } from 'rxjs';
 import { DashboardViewComponent } from '../presentational/dashboard.view.component';
 import { BudgetOverviewService } from '../services/budget-overview.service';
@@ -18,6 +19,8 @@ import { BudgetOverview } from '../../../shared/models/budget-overview.model';
 import { UploadViewModel } from '../../../shared/models/upload.model';
 import { UploadsDataService } from '../../../core/data/uploads-data.service';
 import { IngestionService } from '../../uploads/services/ingestion.service';
+
+type DashboardCategoryMode = 'REGISTERED' | 'CONSUMED';
 
 const DEFAULT_USER: User = {
   id: '',
@@ -60,6 +63,7 @@ const DEFAULT_UPLOAD_VIEW_MODEL: UploadViewModel = {
         [spendablePercent]="spendablePercent()"
         [manualTransactionFormGroup]="manualTransactionFormGroup"
         [transactionCategories]="transactionCategories()"
+        [categoryMode]="categoryMode()"
         [categories]="categories()"
         [smartUpload]="latestSmartUpload()"
         [smartUploading]="smartUploading()"
@@ -68,6 +72,8 @@ const DEFAULT_UPLOAD_VIEW_MODEL: UploadViewModel = {
         (submitTransaction)="createTransaction()"
         (smartUploadRequested)="onSmartUploadRequested($event)"
         (smartProcessRequested)="onSmartProcessRequested($event)"
+        (categoryModeChanged)="onCategoryModeChanged($event)"
+        (categoryHistoryRequested)="openTransactionsHistory()"
       ></app-dashboard-view>
     </ng-container>
   `,
@@ -81,11 +87,13 @@ export class DashboardPageComponent {
   private readonly budgetOverviewService = inject(BudgetOverviewService);
   private readonly uploadsDataService = inject(UploadsDataService);
   private readonly ingestionService = inject(IngestionService);
+  private readonly router = inject(Router);
 
   readonly manualTransactionFormGroup: FormGroup = this.createManualTransactionFormGroup();
   readonly smartUploading = signal(false);
   readonly smartProcessingUploadId = signal<string | null>(null);
   readonly smartErrorMessage = signal<string | null>(null);
+  readonly categoryMode = signal<DashboardCategoryMode>('REGISTERED');
 
   readonly categoriesResource = this.categoriesService.getCategories();
   readonly categories = this.categoriesResource.value;
@@ -138,6 +146,17 @@ export class DashboardPageComponent {
           this.smartErrorMessage.set(this.resolveUploadErrorMessage(error));
         }
       });
+  }
+
+  openTransactionsHistory(): void {
+    void this.router.navigate(['/transactions-history']);
+  }
+
+  onCategoryModeChanged(mode: DashboardCategoryMode): void {
+    if (this.categoryMode() === mode) {
+      return;
+    }
+    this.categoryMode.set(mode);
   }
 
   createTransaction(): void {
@@ -224,7 +243,9 @@ export class DashboardPageComponent {
       return [];
     }
 
-    const transactions = this.transactions.value() ?? [];
+    const transactions = this.filterCurrentMonthTransactionsBySelectedMode(
+      this.transactions.value() ?? []
+    );
     if (!transactions.length) {
       return [];
     }
@@ -262,6 +283,46 @@ export class DashboardPageComponent {
     });
 
     return Array.from(groupedCategories.values()).sort((left, right) => right.amount - left.amount);
+  }
+
+  private filterCurrentMonthTransactionsBySelectedMode(transactions: Transaction[]): Transaction[] {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+
+    return transactions.filter((transaction) => {
+      const referenceDate = this.resolveCategoryReferenceDate(transaction);
+      if (!referenceDate) {
+        return false;
+      }
+
+      return (
+        referenceDate.getFullYear() === currentYear &&
+        referenceDate.getMonth() === currentMonth
+      );
+    });
+  }
+
+  private resolveCategoryReferenceDate(transaction: Transaction): Date | null {
+    const rawDate =
+      this.categoryMode() === 'REGISTERED'
+        ? transaction.createdAt ?? transaction.date
+        : transaction.date;
+
+    return this.parseTransactionDate(rawDate);
+  }
+
+  private parseTransactionDate(rawValue: Date | string | undefined): Date | null {
+    if (!rawValue) {
+      return null;
+    }
+
+    const parsedDate = rawValue instanceof Date ? rawValue : new Date(rawValue);
+    if (Number.isNaN(parsedDate.getTime())) {
+      return null;
+    }
+
+    return parsedDate;
   }
 
   private resolveDashboardUser(): User {

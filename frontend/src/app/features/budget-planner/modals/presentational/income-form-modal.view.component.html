@@ -24,6 +24,34 @@
       <label class="app-section-title" for="income-form-amount">Monto</label>
       <input id="income-form-amount" class="app-input" type="text" inputmode="decimal" lang="es-UY" [formControlName]="formControlNames().amount" />
     </div>
+
+    <div class="form-group">
+      <label class="app-section-title" for="income-form-rule-type">Tipo</label>
+      <select id="income-form-rule-type" class="app-input" [formControlName]="formControlNames().ruleType">
+        <option value="MONTHLY_RECURRING">Mensual recurrente</option>
+        <option value="ONE_TIME">Solo este mes</option>
+      </select>
+    </div>
+
+    <div class="form-group" *ngIf="isRecurringRuleSelected(); else oneTimePeriodBlock">
+      <label class="app-section-title" for="income-form-start-period">Desde que mes aplica</label>
+      <input
+        id="income-form-start-period"
+        class="app-input"
+        type="month"
+        [formControlName]="formControlNames().startPeriod" />
+    </div>
+
+    <ng-template #oneTimePeriodBlock>
+      <div class="form-group">
+        <label class="app-section-title" for="income-form-target-period">Mes puntual</label>
+        <input
+          id="income-form-target-period"
+          class="app-input"
+          type="month"
+          [formControlName]="formControlNames().targetPeriod" />
+      </div>
+    </ng-template>
   </form>
 
   <footer class="modal-actions">

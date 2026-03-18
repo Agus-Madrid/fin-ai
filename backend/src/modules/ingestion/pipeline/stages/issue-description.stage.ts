@@ -58,6 +58,8 @@ export class IssueDescriptionStage implements PipelineStage {
       return baseDescription;
     }
 
-    return baseDescription.length > 0 ? `(Issue) ${baseDescription}` : '(Issue)';
+    return baseDescription.length > 0
+      ? `(Issue) ${baseDescription}`
+      : '(Issue)';
   }
 }

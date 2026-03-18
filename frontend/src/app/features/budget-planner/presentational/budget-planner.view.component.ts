@@ -59,6 +59,7 @@ export class BudgetPlannerViewComponent {
   readonly updateMonthlyGoalRequested = output<number>();
   readonly confirmMonthlySavingsRequested = output<number>();
   readonly skipMonthlySavingsRequested = output<void>();
+  readonly closeCurrentMonthRequested = output<void>();
 
   constructor() {
     this.initializeReactiveViewState();
@@ -159,6 +160,10 @@ export class BudgetPlannerViewComponent {
     this.skipMonthlySavingsRequested.emit();
   }
 
+  onCloseCurrentMonthRequested() {
+    this.closeCurrentMonthRequested.emit();
+  }
+
   onCreateSavingGoalRequested(
     name: string,
     targetAmount: string,
@@ -252,6 +257,14 @@ export class BudgetPlannerViewComponent {
 
     const percent = (this.budgetViewModel().totalFixed / income) * 100;
     return `${percent.toFixed(1)}%`;
+  }
+
+  isCurrentMonthClosed(): boolean {
+    return this.budgetViewModel().monthlySummary.status === 'CLOSED';
+  }
+
+  getCurrentMonthStatusLabel(): string {
+    return this.isCurrentMonthClosed() ? 'Cerrado' : 'Abierto';
   }
 
   private parseNonNegativeAmount(rawValue: string): number | null {

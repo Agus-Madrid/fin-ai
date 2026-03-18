@@ -13,7 +13,9 @@ export class PipelineLoggingStage implements PipelineStage {
     return context;
   }
 
-  private buildPipelineRunSummary(context: PipelineContext): PipelineRunSummary {
+  private buildPipelineRunSummary(
+    context: PipelineContext,
+  ): PipelineRunSummary {
     const totalLatencyMs = this.resolveTotalLatencyMilliseconds(context);
 
     return {
@@ -29,7 +31,8 @@ export class PipelineLoggingStage implements PipelineStage {
       extractedTransactionsCount: context.extractedTransactions?.length ?? 0,
       persistedPendingTransactionsCount:
         context.persistedPendingTransactionsCount ?? 0,
-      skippedPendingTransactionsCount: context.skippedPendingTransactionsCount ?? 0,
+      skippedPendingTransactionsCount:
+        context.skippedPendingTransactionsCount ?? 0,
       warningCount: context.warnings.length,
       warnings: [...context.warnings],
     };

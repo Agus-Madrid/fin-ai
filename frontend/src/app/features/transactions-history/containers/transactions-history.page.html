@@ -1,0 +1,97 @@
+<section class="app-page__header">
+  <div>
+    <div class="app-page__title">Historico de gastos</div>
+    <div class="app-page__subtitle">
+      Compara tendencia mensual por criterio de Consumo o Registro/Carga.
+    </div>
+  </div>
+  <div class="d-flex flex-wrap align-items-center gap-2">
+    <a class="app-btn-ghost" routerLink="/dashboard">
+      <i class="bi bi-arrow-left me-2"></i>
+      Volver a dashboard
+    </a>
+  </div>
+</section>
+
+<section class="app-card mb-4">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+    <div class="d-flex align-items-center gap-2">
+      <button
+        type="button"
+        [ngClass]="historyMode() === 'REGISTERED' ? 'app-btn-primary' : 'app-btn-ghost'"
+        (click)="setHistoryMode('REGISTERED')">
+        Registro/Carga
+      </button>
+      <button
+        type="button"
+        [ngClass]="historyMode() === 'CONSUMED' ? 'app-btn-primary' : 'app-btn-ghost'"
+        (click)="setHistoryMode('CONSUMED')">
+        Consumo
+      </button>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <button
+        type="button"
+        class="app-btn-ghost history-range-btn"
+        [ngClass]="isHistoryRangeSelected(3) ? 'is-active' : ''"
+        (click)="setHistoryRangeMonths(3)">
+        3M
+      </button>
+      <button
+        type="button"
+        class="app-btn-ghost history-range-btn"
+        [ngClass]="isHistoryRangeSelected(6) ? 'is-active' : ''"
+        (click)="setHistoryRangeMonths(6)">
+        6M
+      </button>
+      <button
+        type="button"
+        class="app-btn-ghost history-range-btn"
+        [ngClass]="isHistoryRangeSelected(12) ? 'is-active' : ''"
+        (click)="setHistoryRangeMonths(12)">
+        12M
+      </button>
+      <button
+        type="button"
+        class="app-btn-ghost history-range-btn"
+        [ngClass]="isHistoryRangeSelected(24) ? 'is-active' : ''"
+        (click)="setHistoryRangeMonths(24)">
+        24M
+      </button>
+      <span class="app-pill">{{ getHistoryModeSubtitle() }}</span>
+    </div>
+  </div>
+</section>
+
+<section class="app-card mb-4">
+  <div class="fw-semibold mb-3">
+    <i class="bi bi-bar-chart-line me-2 text-primary"></i>
+    Evolucion mensual
+  </div>
+  <div class="history-chart-wrap">
+    <canvas #historyChartCanvas aria-label="Historico de gastos mensuales"></canvas>
+  </div>
+</section>
+
+<section class="app-card">
+  <div class="fw-semibold mb-3">
+    <i class="bi bi-list-check me-2 text-primary"></i>
+    Ultimos {{ historyRangeMonths() }} meses
+  </div>
+
+  <div class="d-flex flex-column gap-2" *ngIf="filteredMonthlyRows().length > 0; else noRowsTemplate">
+    <div class="history-row" *ngFor="let row of filteredMonthlyRows()">
+      <div class="history-row__period">{{ row.label }}</div>
+      <div class="history-row__meta">
+        {{ row.transactionsCount }} movimientos
+      </div>
+      <div class="history-row__amount">
+        {{ row.total | currency: 'UYU':'symbol':'1.0-2' }}
+      </div>
+    </div>
+  </div>
+
+  <ng-template #noRowsTemplate>
+    <div class="text-muted-2">No hay datos para mostrar en este criterio.</div>
+  </ng-template>
+</section>

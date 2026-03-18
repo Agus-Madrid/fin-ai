@@ -13,7 +13,9 @@ export class NullDocumentOcrService implements DocumentOcrService {
     void input;
     return {
       text: '',
-      warnings: ['OCR service is disabled. Configure OCR_DRIVER to enable fallback OCR.'],
+      warnings: [
+        'OCR service is disabled. Configure OCR_DRIVER to enable fallback OCR.',
+      ],
     };
   }
 }

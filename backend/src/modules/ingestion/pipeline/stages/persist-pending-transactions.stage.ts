@@ -35,7 +35,10 @@ export class PersistPendingTransactionsStage implements PipelineStage {
     }
 
     const contextSummary = this.buildContextSummary(context);
-    const writePlan = this.buildPendingTransactionWritePlan(context, transactions);
+    const writePlan = this.buildPendingTransactionWritePlan(
+      context,
+      transactions,
+    );
     const existingIngestionKeys = await this.loadExistingIngestionKeys(
       writePlan.candidates,
     );
@@ -117,7 +120,11 @@ export class PersistPendingTransactionsStage implements PipelineStage {
     signatureOccurrenceMap: Map<string, number>,
     warnings: string[],
   ): PendingTransactionCandidate {
-    const date = this.normalizeDateForPersistence(transaction.date, sourceIndex, warnings);
+    const date = this.normalizeDateForPersistence(
+      transaction.date,
+      sourceIndex,
+      warnings,
+    );
     const amount = this.normalizeAmountForPersistence(
       transaction.amount,
       sourceIndex,
@@ -127,7 +134,9 @@ export class PersistPendingTransactionsStage implements PipelineStage {
       transaction.description,
       transaction.merchant,
     );
-    const categoryId = this.normalizeCategoryIdForPersistence(transaction.categoryId);
+    const categoryId = this.normalizeCategoryIdForPersistence(
+      transaction.categoryId,
+    );
     const signature = this.buildTransactionSignature(transaction);
     const occurrence = this.incrementSignatureOccurrence(
       signatureOccurrenceMap,
@@ -291,7 +300,8 @@ export class PersistPendingTransactionsStage implements PipelineStage {
     userId: string,
     candidatesToPersist: PendingTransactionCandidate[],
   ): Promise<Map<string, Category>> {
-    const categoryIds = this.collectCategoryIdsFromCandidates(candidatesToPersist);
+    const categoryIds =
+      this.collectCategoryIdsFromCandidates(candidatesToPersist);
     if (categoryIds.length === 0) {
       return new Map<string, Category>();
     }
@@ -309,9 +319,13 @@ export class PersistPendingTransactionsStage implements PipelineStage {
   private collectCategoryIdsFromCandidates(
     candidates: PendingTransactionCandidate[],
   ): string[] {
-    return [...new Set(candidates.map((candidate) => candidate.categoryId).filter(
-      (categoryId): categoryId is string => !!categoryId,
-    ))];
+    return [
+      ...new Set(
+        candidates
+          .map((candidate) => candidate.categoryId)
+          .filter((categoryId): categoryId is string => !!categoryId),
+      ),
+    ];
   }
 
   private buildCategoryLookup(categories: Category[]): Map<string, Category> {

@@ -67,6 +67,16 @@ export interface CommitmentSummary {
   savingsCommittedType: 'PENDING' | 'CONFIRMED' | 'SKIPPED';
 }
 
+export interface MonthlySummarySnapshot {
+  period: string;
+  status: 'OPEN' | 'CLOSED';
+  closedAt: string | null;
+  totalIncome: number;
+  totalFixedExpenses: number;
+  totalSavingsConfirmed: number;
+  netBalance: number;
+}
+
 export interface SavingsLogPoint {
   monthIndex: number;
   monthLabel: string;
@@ -86,6 +96,7 @@ export interface BudgetViewModel {
   currentPeriodSavingGoals: SavingGoalProgress[];
   savings: SavingsTarget;
   commitments: CommitmentSummary;
+  monthlySummary: MonthlySummarySnapshot;
   totalIncome: number;
   totalFixed: number;
 }

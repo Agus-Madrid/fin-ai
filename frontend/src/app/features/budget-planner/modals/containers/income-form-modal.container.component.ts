@@ -42,8 +42,8 @@ export class IncomeFormModalContainerComponent {
 
   get subtitle(): string {
     return this.income
-      ? 'Actualiza los datos del ingreso.'
-      : 'Carga los datos para registrar un nuevo ingreso.';
+      ? 'Actualiza el ingreso y su regla mensual o puntual.'
+      : 'Carga un ingreso mensual recurrente o un ingreso de un solo mes.';
   }
 
   get saveText(): string {

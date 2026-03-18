@@ -116,7 +116,9 @@ export class TesseractCliDocumentOcrService implements DocumentOcrService {
           fragments.push(stdout.trim());
         }
       } catch (error: unknown) {
-        warnings.push(this.formatCommandError(error, this.options.tesseractBin));
+        warnings.push(
+          this.formatCommandError(error, this.options.tesseractBin),
+        );
         return fragments;
       }
     }

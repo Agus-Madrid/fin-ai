@@ -70,9 +70,8 @@ export class CreateCategoriesStage implements PipelineStage {
       initialCategoryLookup,
     );
     this.logCategoryCreationPlan(contextSummary, creationPlan.requests);
-    const visualSuggestionResult = await this.generateCategoryVisualsForRequests(
-      creationPlan.requests,
-    );
+    const visualSuggestionResult =
+      await this.generateCategoryVisualsForRequests(creationPlan.requests);
     this.logCategoryVisualSuggestions(contextSummary, visualSuggestionResult);
     const visualSuggestionLookup = this.buildCategoryVisualSuggestionLookup(
       visualSuggestionResult.visuals,
@@ -116,12 +115,19 @@ export class CreateCategoriesStage implements PipelineStage {
 
   private loadUserCategories(
     userId: string,
-  ): Promise<Array<{ id: string; name: string; icon?: string; color?: string }>> {
+  ): Promise<
+    Array<{ id: string; name: string; icon?: string; color?: string }>
+  > {
     return this.categoryService.findAllByUser(userId);
   }
 
   private buildCategoryLookup(
-    categories: Array<{ id: string; name: string; icon?: string; color?: string }>,
+    categories: Array<{
+      id: string;
+      name: string;
+      icon?: string;
+      color?: string;
+    }>,
   ): Map<string, CategoryReference> {
     const lookup = new Map<string, CategoryReference>();
 
@@ -341,7 +347,8 @@ export class CreateCategoriesStage implements PipelineStage {
         icon: categoryVisual.icon,
         color: categoryVisual.color,
       });
-      const createdCategoryReference = this.mapCategoryToReference(createdCategory);
+      const createdCategoryReference =
+        this.mapCategoryToReference(createdCategory);
       categoryLookup.set(
         createdCategoryReference.normalizedName,
         createdCategoryReference,

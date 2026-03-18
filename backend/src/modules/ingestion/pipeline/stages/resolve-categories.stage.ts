@@ -72,7 +72,8 @@ export class ResolveCategoriesStage implements PipelineStage {
       return this.buildContextWithoutUserCategories(context);
     }
 
-    const candidateProfiles = this.buildCategoryCandidateProfiles(userCategories);
+    const candidateProfiles =
+      this.buildCategoryCandidateProfiles(userCategories);
     const resolution = await this.resolveCategoriesForTransactions(
       transactions,
       candidateProfiles,
@@ -153,9 +154,7 @@ export class ResolveCategoriesStage implements PipelineStage {
       categoryCreationSuggestions: results
         .map((result) => result.categoryCreationSuggestion)
         .filter(
-          (
-            suggestion,
-          ): suggestion is CategoryCreationSuggestion =>
+          (suggestion): suggestion is CategoryCreationSuggestion =>
             suggestion !== undefined,
         ),
     };
@@ -173,7 +172,10 @@ export class ResolveCategoriesStage implements PipelineStage {
     const llmCandidates = this.pickTopCandidatesForLlmCheck(
       deterministicMatch.rankedCandidates,
     );
-    const llmMatch = await this.requestLlmCategoryCheck(transaction, llmCandidates);
+    const llmMatch = await this.requestLlmCategoryCheck(
+      transaction,
+      llmCandidates,
+    );
     const decision = this.decideCategoryResolution(
       deterministicMatch,
       llmMatch,
@@ -342,9 +344,8 @@ export class ResolveCategoriesStage implements PipelineStage {
     llmMatch: CheckCategoryMatchResult,
     categoryCandidates: CategoryCandidateProfile[],
   ): CategoryResolutionDecision {
-    const deterministicApproved = this.isDeterministicMatchApproved(
-      deterministicMatch,
-    );
+    const deterministicApproved =
+      this.isDeterministicMatchApproved(deterministicMatch);
     const llmApproved = this.isLlmMatchApproved(llmMatch);
     const bothChecksAgree = this.checkBothChecksAgreement(
       deterministicMatch,
@@ -423,7 +424,9 @@ export class ResolveCategoriesStage implements PipelineStage {
     deterministicConfidence: number,
     llmConfidence: number,
   ): number {
-    return Math.round(((deterministicConfidence + llmConfidence) / 2) * 1000) / 1000;
+    return (
+      Math.round(((deterministicConfidence + llmConfidence) / 2) * 1000) / 1000
+    );
   }
 
   private buildUnresolvedCategoryDecision(
@@ -482,7 +485,10 @@ export class ResolveCategoriesStage implements PipelineStage {
     const warnings: string[] = [];
 
     warnings.push(
-      ...this.buildLlmWarningsForTransaction(transactionIndex, llmMatch.warnings),
+      ...this.buildLlmWarningsForTransaction(
+        transactionIndex,
+        llmMatch.warnings,
+      ),
     );
 
     if (!decision.selectedCategoryId) {
@@ -509,8 +515,7 @@ export class ResolveCategoriesStage implements PipelineStage {
     llmWarnings: string[],
   ): string[] {
     return llmWarnings.map(
-      (warning) =>
-        `CategoryLlmWarning[index=${transactionIndex}]: ${warning}`,
+      (warning) => `CategoryLlmWarning[index=${transactionIndex}]: ${warning}`,
     );
   }
 

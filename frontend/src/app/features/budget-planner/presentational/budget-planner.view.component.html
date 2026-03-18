@@ -44,7 +44,9 @@
             <div class="fw-semibold">{{ income.source }}</div>
           </div>
           <div class="budget-item__actions">
-            <span class="app-chip app-chip--success">{{ income.status }}</span>
+            <span class="app-chip" [ngClass]="income.status === 'Incluido' ? 'app-chip--success' : 'app-chip--warning'">
+              {{ income.status }}
+            </span>
             <div class="budget-actions">
               <button
                 type="button"
@@ -172,7 +174,7 @@
           min="0"
           step="0.01"
           [value]="budgetViewModel().savings.monthlyGoal">
-        <button class="app-btn-ghost" type="button" (click)="onUpdateMonthlyGoalRequested(monthlyGoalInput.value)">
+        <button class="app-btn-ghost" type="button" [disabled]="isCurrentMonthClosed()" (click)="onUpdateMonthlyGoalRequested(monthlyGoalInput.value)">
           Guardar
         </button>
       </div>
@@ -190,13 +192,27 @@
           min="0"
           step="0.01"
           [value]="budgetViewModel().savings.currentPeriodSuggestedAmount">
-        <button class="app-btn-primary" type="button" (click)="onConfirmMonthlySavingsRequested(confirmSavingsInput.value)">
+        <button class="app-btn-primary" type="button" [disabled]="isCurrentMonthClosed()" (click)="onConfirmMonthlySavingsRequested(confirmSavingsInput.value)">
           Confirmar
         </button>
       </div>
-      <button class="app-btn-ghost mt-2" type="button" (click)="onSkipMonthlySavingsRequested()">
+      <button class="app-btn-ghost mt-2" type="button" [disabled]="isCurrentMonthClosed()" (click)="onSkipMonthlySavingsRequested()">
         No pude ahorrar este mes
       </button>
+      <div class="d-flex align-items-center gap-2 mt-2">
+        <span
+          class="app-chip"
+          [ngClass]="isCurrentMonthClosed() ? 'app-chip--warning' : 'app-chip--success'">
+          Mes {{ getCurrentMonthStatusLabel() }}
+        </span>
+        <button
+          class="app-btn-ghost"
+          type="button"
+          [disabled]="isCurrentMonthClosed()"
+          (click)="onCloseCurrentMonthRequested()">
+          Cerrar mes {{ budgetViewModel().savings.currentPeriodLabel }}
+        </button>
+      </div>
       <div class="text-muted-2 mt-2">
         Estado actual: {{ getCurrentPeriodStatusLabel() }} -
         {{ budgetViewModel().savings.currentPeriodConfirmedAmount | currency: budgetViewModel().currency:'symbol':'1.0-2' }}

@@ -9,6 +9,7 @@ import { User } from '../user/user.entity';
 import { ConfirmSavingsLogDto } from './dtos/confirm-savings-log.dto';
 import { SavingsLog } from './savings-log.entity';
 import { SavingsLogStatus } from './savings-log-status.enum';
+import { MonthlyFinancialsService } from '../monthly-financials/monthly-financials.service';
 
 const PERIOD_REGEX = /^\d{4}-(0[1-9]|1[0-2])$/;
 
@@ -20,6 +21,7 @@ export class SavingsLogsService {
     private readonly savingsLogRepository: Repository<SavingsLog>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly monthlyFinancialsService: MonthlyFinancialsService,
   ) {}
 
   async findAllByUser(userId: string, period?: string): Promise<SavingsLog[]> {
@@ -44,8 +46,12 @@ export class SavingsLogsService {
   ): Promise<SavingsLog> {
     this.validatePeriod(dto.period);
     const status = this.resolveStatus(dto.status);
+    await this.monthlyFinancialsService.assertMonthIsOpenForMutation(
+      userId,
+      dto.period,
+    );
 
-    return this.dataSource.transaction(async (manager) => {
+    const confirmedLog = await this.dataSource.transaction(async (manager) => {
       const userRepository = manager.getRepository(User);
       const savingsLogRepository = manager.getRepository(SavingsLog);
 
@@ -111,6 +117,13 @@ export class SavingsLogsService {
 
       return savingsLogRepository.save(savingsLog);
     });
+
+    await this.monthlyFinancialsService.calculateAndPersistMonthlySummary(
+      userId,
+      dto.period,
+    );
+
+    return confirmedLog;
   }
 
   private resolveStatus(status?: SavingsLogStatus): SavingsLogStatus {

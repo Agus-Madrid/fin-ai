@@ -10,6 +10,56 @@
   transform: translateY(-1px);
 }
 
+.dashboard-card--clickable {
+  cursor: pointer;
+}
+
+.dashboard-card--clickable:focus-visible {
+  outline: 2px solid rgba(43, 108, 238, 0.5);
+  outline-offset: 2px;
+}
+
+.dashboard-mode-btn {
+  min-height: 30px;
+  padding: 0.2rem 0.6rem;
+  font-size: 0.75rem;
+}
+
+.dashboard-mode-btn.is-active {
+  border-color: rgba(43, 108, 238, 0.58);
+  color: #cddcff;
+  background: rgba(43, 108, 238, 0.16);
+}
+
+.dashboard-history-link {
+  min-height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--app-primary);
+  font-size: 0.78rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  text-decoration: none;
+}
+
+.dashboard-history-link:hover {
+  color: #cddcff;
+  text-decoration: underline;
+}
+
+.dashboard-history-link:focus-visible {
+  outline: 2px solid rgba(43, 108, 238, 0.5);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.dashboard-mode-caption {
+  font-size: 0.78rem;
+}
+
 .dashboard-card--span-two {
   grid-column: 1 / -1;
 }

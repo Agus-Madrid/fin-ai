@@ -12,6 +12,8 @@ import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
 import { Upload } from '../uploads/upload.entity';
 import { Income } from '../incomes/incomes.entity';
 import { SavingsLog } from '../savings-logs/savings-log.entity';
+import { IncomeMonthEntry } from '../monthly-financials/income-month-entry.entity';
+import { MonthlySummary } from '../monthly-financials/monthly-summary.entity';
 
 @Entity('users')
 export class User {
@@ -56,4 +58,13 @@ export class User {
 
   @OneToMany(() => SavingsLog, (savingsLog) => savingsLog.user)
   savingsLogs: SavingsLog[];
+
+  @OneToMany(
+    () => IncomeMonthEntry,
+    (incomeMonthEntry) => incomeMonthEntry.user,
+  )
+  incomeMonthEntries: IncomeMonthEntry[];
+
+  @OneToMany(() => MonthlySummary, (monthlySummary) => monthlySummary.user)
+  monthlySummaries: MonthlySummary[];
 }

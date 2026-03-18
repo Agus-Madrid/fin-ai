@@ -226,7 +226,9 @@ export class TransactionsService {
     return this.findCategoryByIdForUser(normalizedCategoryId, userId);
   }
 
-  private normalizeCategoryId(categoryId: string | null | undefined): string | null {
+  private normalizeCategoryId(
+    categoryId: string | null | undefined,
+  ): string | null {
     if (categoryId === null || categoryId === undefined) {
       return null;
     }

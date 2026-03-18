@@ -49,7 +49,8 @@ export class PipelineOrchestratorService {
     initialContext: PipelineContext,
   ): Promise<PipelineContext> {
     let context = this.initializePipelineContext(initialContext);
-    const pipelineStartMs = context.pipelineStartedAtMs ?? this.readCurrentTimestampMs();
+    const pipelineStartMs =
+      context.pipelineStartedAtMs ?? this.readCurrentTimestampMs();
 
     for (const stage of this.pipelineStages) {
       context = await this.executeSinglePipelineStage(context, stage);
@@ -62,7 +63,8 @@ export class PipelineOrchestratorService {
   private initializePipelineContext(context: PipelineContext): PipelineContext {
     return {
       ...context,
-      pipelineStartedAtMs: context.pipelineStartedAtMs ?? this.readCurrentTimestampMs(),
+      pipelineStartedAtMs:
+        context.pipelineStartedAtMs ?? this.readCurrentTimestampMs(),
       warnings: context.warnings ?? [],
       executedStages: context.executedStages ?? [],
       stageLatenciesMs: context.stageLatenciesMs ?? {},
@@ -78,7 +80,11 @@ export class PipelineOrchestratorService {
 
     try {
       const stageContext = await stage.executeStage(context);
-      return this.attachStageExecutionMetrics(stageContext, stage.name, stageStartMs);
+      return this.attachStageExecutionMetrics(
+        stageContext,
+        stage.name,
+        stageStartMs,
+      );
     } catch (error) {
       this.logPipelineStageFailure(context, stage.name, stageStartMs, error);
       throw error;
@@ -120,7 +126,8 @@ export class PipelineOrchestratorService {
   }
 
   private calculateElapsedMilliseconds(startTimestampMs: number): number {
-    const elapsedMilliseconds = this.readCurrentTimestampMs() - startTimestampMs;
+    const elapsedMilliseconds =
+      this.readCurrentTimestampMs() - startTimestampMs;
     return elapsedMilliseconds > 0 ? elapsedMilliseconds : 0;
   }
 

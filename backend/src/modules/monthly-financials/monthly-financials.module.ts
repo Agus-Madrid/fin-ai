@@ -2,25 +2,24 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { FixedCommitment } from '../fixed-commitments/fixed-commitment.entity';
 import { Income } from '../incomes/incomes.entity';
-import { SavingGoal } from '../savings-goals/saving-goal.entity';
 import { SavingsLog } from '../savings-logs/savings-log.entity';
 import { User } from '../user/user.entity';
-import { BudgetsController } from './budgets.controller';
-import { BudgetsService } from './budgets.service';
-import { MonthlyFinancialsModule } from '../monthly-financials/monthly-financials.module';
+import { IncomeMonthEntry } from './income-month-entry.entity';
+import { MonthlyFinancialsService } from './monthly-financials.service';
+import { MonthlySummary } from './monthly-summary.entity';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
       Income,
+      IncomeMonthEntry,
+      MonthlySummary,
       FixedCommitment,
       SavingsLog,
-      SavingGoal,
       User,
     ]),
-    MonthlyFinancialsModule,
   ],
-  controllers: [BudgetsController],
-  providers: [BudgetsService],
+  providers: [MonthlyFinancialsService],
+  exports: [MonthlyFinancialsService],
 })
-export class BudgetsModule {}
+export class MonthlyFinancialsModule {}

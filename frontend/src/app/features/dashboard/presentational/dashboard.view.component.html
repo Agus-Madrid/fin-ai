@@ -93,16 +93,44 @@
 
 <section class="app-grid app-grid--dash">
   <div class="d-flex flex-column gap-4">
-    <div class="app-card dashboard-card">
+    <div
+      class="app-card dashboard-card dashboard-card--clickable"
+      role="button"
+      tabindex="0"
+      (click)="onCategoryHistoryRequested()"
+      (keydown.enter)="onCategoryHistoryRequested()"
+      (keydown.space)="onCategoryHistoryRequested(); $event.preventDefault()">
       <div class="d-flex align-items-center justify-content-between mb-3">
         <div class="fw-semibold">
           <i class="bi bi-pie-chart me-2 text-primary"></i>
           Gastos por categoría
         </div>
-        <span class="app-pill">Distribución actual</span>
+        <div class="d-flex align-items-center gap-2">
+          <button
+            type="button"
+            class="app-btn-ghost dashboard-mode-btn"
+            [ngClass]="isCategoryModeSelected('REGISTERED') ? 'is-active' : ''"
+            (click)="$event.stopPropagation(); onCategoryModeChange('REGISTERED')">
+            Registro
+          </button>
+          <button
+            type="button"
+            class="app-btn-ghost dashboard-mode-btn"
+            [ngClass]="isCategoryModeSelected('CONSUMED') ? 'is-active' : ''"
+            (click)="$event.stopPropagation(); onCategoryModeChange('CONSUMED')">
+            Consumo
+          </button>
+          <button
+            type="button"
+            class="dashboard-history-link"
+            (click)="$event.stopPropagation(); onCategoryHistoryRequested()">
+            <i class="bi bi-box-arrow-up-right"></i>
+            Ver histórico
+          </button>
+        </div>
       </div>
       <div class="category-spotlight">
-        <div class="app-donut app-donut--hero chart-donut-wrap">
+        <div class="app-donut app-donut--hero chart-donut-wrap" style="align-self: start;">
           <canvas #categoryChart class="chart-donut-canvas" aria-label="Distribución de gastos por categoría"></canvas>
           <div class="app-donut__center app-donut__center--hero">
             <div class="app-donut__label">Total</div>
@@ -130,6 +158,7 @@
           </div>
         </div>
       </div>
+      <div class="text-muted-2 mt-3 dashboard-mode-caption">{{ getCategoryModeCaption() }}</div>
     </div>
 
     <div class="app-grid app-grid--two">

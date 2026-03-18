@@ -4,6 +4,7 @@ import { FixedCommitment } from './fixed-commitment.entity';
 import { Repository } from 'typeorm';
 import { CreateFixedCommitmentDto } from './dtos/create-fixed-commitment.dto';
 import { User } from '../user/user.entity';
+import { MonthlyFinancialsService } from '../monthly-financials/monthly-financials.service';
 
 @Injectable()
 export class FixedCommitmentsService {
@@ -12,6 +13,7 @@ export class FixedCommitmentsService {
     private readonly fixedCommitmentRepository: Repository<FixedCommitment>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
+    private readonly monthlyFinancialsService: MonthlyFinancialsService,
   ) {}
 
   async findAllByUser(userId: string): Promise<FixedCommitment[]> {
@@ -30,7 +32,10 @@ export class FixedCommitmentsService {
       ...createFixedCommitmentDto,
       user,
     });
-    return await this.fixedCommitmentRepository.save(fixedCommitment);
+    const savedFixedCommitment =
+      await this.fixedCommitmentRepository.save(fixedCommitment);
+    await this.monthlyFinancialsService.recalculateOpenPeriodsForUser(userId);
+    return savedFixedCommitment;
   }
 
   async update(
@@ -48,12 +53,16 @@ export class FixedCommitmentsService {
     if (updateData.amount !== undefined) {
       fixedCommitment.amount = updateData.amount;
     }
-    return await this.fixedCommitmentRepository.save(fixedCommitment);
+    const savedFixedCommitment =
+      await this.fixedCommitmentRepository.save(fixedCommitment);
+    await this.monthlyFinancialsService.recalculateOpenPeriodsForUser(userId);
+    return savedFixedCommitment;
   }
 
   async delete(userId: string, id: string): Promise<void> {
     const fixedCommitment = await this.findByIdForUser(id, userId);
     await this.fixedCommitmentRepository.remove(fixedCommitment);
+    await this.monthlyFinancialsService.recalculateOpenPeriodsForUser(userId);
   }
 
   private async findUserById(userId: string): Promise<User> {

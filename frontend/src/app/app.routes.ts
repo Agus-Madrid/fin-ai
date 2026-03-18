@@ -42,6 +42,13 @@ export const routes: Routes = [
           import('./features/transactions/containers/transactions.page').then((m) => m.TransactionsPageComponent)
       },
       {
+        path: 'transactions-history',
+        loadComponent: () =>
+          import('./features/transactions-history/containers/transactions-history.page').then(
+            (m) => m.TransactionsHistoryPageComponent,
+          ),
+      },
+      {
         path: 'categories',
         loadComponent: () =>
           import('./features/categories/containers/categories.page').then((m) => m.CategoriesPageComponent)

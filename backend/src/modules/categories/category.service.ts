@@ -21,7 +21,7 @@ export class CategoryService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(User)
     private readonly userRepository: Repository<User>,
-  ) { }
+  ) {}
 
   async findById(id: string, userId: string): Promise<Category> {
     const category = await this.categoryRepository.findOne({
@@ -82,11 +82,8 @@ export class CategoryService {
 
     return await this.categoryRepository.save(category);
   }
-  
-  async delete(
-    userId: string,
-    id: string,
-  ): Promise<void> {
+
+  async delete(userId: string, id: string): Promise<void> {
     const category = await this.findById(id, userId);
     await this.categoryRepository.remove(category);
   }

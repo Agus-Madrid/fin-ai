@@ -24,6 +24,7 @@ import { UploadItem } from '../../../shared/models/upload.model';
 Chart.register(...registerables);
 
 type CategorySpend = { category: Category; amount: number };
+type DashboardCategoryMode = 'REGISTERED' | 'CONSUMED';
 
 interface DashboardThemeColors {
   primary: string;
@@ -77,6 +78,7 @@ export class DashboardViewComponent {
 
   readonly transactions = input.required<ResourceRef<Transaction[]>>();
   readonly transactionCategories = input.required<CategorySpend[]>();
+  readonly categoryMode = input<DashboardCategoryMode>('REGISTERED');
   readonly user = input.required<User>();
   readonly totalIncome = input(0);
   readonly totalFixedExpenses = input(0);
@@ -92,6 +94,8 @@ export class DashboardViewComponent {
   readonly submitTransaction = output<void>();
   readonly smartUploadRequested = output<File>();
   readonly smartProcessRequested = output<string>();
+  readonly categoryModeChanged = output<DashboardCategoryMode>();
+  readonly categoryHistoryRequested = output<void>();
   readonly isSmartDropDragging = signal(false);
 
   constructor() {
@@ -516,5 +520,23 @@ export class DashboardViewComponent {
 
   isSmartProcessing(uploadId: string): boolean {
     return this.smartProcessingUploadId() === uploadId;
+  }
+
+  onCategoryHistoryRequested(): void {
+    this.categoryHistoryRequested.emit();
+  }
+
+  onCategoryModeChange(mode: DashboardCategoryMode): void {
+    this.categoryModeChanged.emit(mode);
+  }
+
+  isCategoryModeSelected(mode: DashboardCategoryMode): boolean {
+    return this.categoryMode() === mode;
+  }
+
+  getCategoryModeCaption(): string {
+    return this.categoryMode() === 'REGISTERED'
+      ? 'Mostrando mes actual por fecha de registro.'
+      : 'Mostrando mes actual por fecha de consumo.';
   }
 }

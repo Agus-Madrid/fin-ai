@@ -3,7 +3,7 @@ import { inject, Injectable, signal } from '@angular/core';
 import { rxResource } from '@angular/core/rxjs-interop';
 import { AppConfigService } from '../../../core/config/app-config.service';
 import { joinUrl } from '../../../core/http/url.util';
-import { BudgetViewModel } from '../../../shared/models/budget.model';
+import { BudgetViewModel, MonthlySummarySnapshot } from '../../../shared/models/budget.model';
 import {
   CreateIncomeRequest,
   UpdateIncomeRequest,
@@ -67,6 +67,19 @@ export class BudgetPlannerService {
 
   reloadBudgetViewModel(): void {
     this.budgetViewModelReloadVersion.update((current) => current + 1);
+  }
+
+  getMonthlySummaries(limit = 24) {
+    return this.http.get<MonthlySummarySnapshot[]>(
+      joinUrl(this.config.apiBaseUrl(), `/budgets/monthly-summaries?limit=${limit}`),
+    );
+  }
+
+  closeMonthlySummary(period: string) {
+    return this.http.post<MonthlySummarySnapshot>(
+      joinUrl(this.config.apiBaseUrl(), `/budgets/monthly-summaries/${period}/close`),
+      {},
+    );
   }
 
   createIncome(request: CreateIncomeRequest) {
