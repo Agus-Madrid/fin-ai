@@ -13,81 +13,87 @@
   </div>
 </section>
 
-<section class="app-grid app-grid--three mb-4">
-  <div class="app-card app-card--gradient dashboard-card dashboard-card--spendable">
-    <div class="app-stat__label dashboard-spendable__label">{{ getSpendableLabel() }}</div>
-    <span class="app-chip dashboard-spendable__chip" [ngClass]="getSpendableChipClass()">
-      <i class="bi" [ngClass]="getSpendableIconClass()"></i>
-      {{ getSpendablePercentLabel() }}
-    </span>
-    <div class="app-stat__value dashboard-spendable__value">
-      {{ spendableBalance() | currency: 'UYU':'symbol':'1.0-0' }}
-    </div>
-    <p class="text-muted mt-2 mb-0">
-      Formula: Ingreso - Gastos fijos - Ahorro confirmado del mes.
-    </p>
-  </div>
+<section class="mb-4">
+  <div class="app-card app-card--gradient dashboard-card dashboard-summary-card">
+    <div class="dashboard-summary-card__items">
+      <article class="dashboard-summary-card__item">
+        <div class="d-flex align-items-start justify-content-between gap-3">
+          <div class="app-stat__label">{{ getSpendableLabel() }}</div>
+          <span class="app-chip dashboard-spendable__chip-inline" [ngClass]="getSpendableChipClass()">
+            <i class="bi" [ngClass]="getSpendableIconClass()"></i>
+            {{ getSpendablePercentLabel() }}
+          </span>
+        </div>
+        <div class="app-stat__value dashboard-spendable__value">
+          {{ spendableBalance() | currency: 'UYU':'symbol':'1.0-0' }}
+        </div>
+        <p class="text-muted mt-2 mb-0">
+          Formula: Ingreso - Gastos fijos - Ahorro confirmado del mes.
+        </p>
+      </article>
 
-  <div class="app-card dashboard-card">
-    <div class="d-flex align-items-start justify-content-between">
-      <div>
-        <div class="app-stat__label">Ingreso Total</div>
-        <div class="fs-3 fw-semibold">
-          {{ totalIncome() | currency: 'UYU':'symbol':'1.0-2' }}
+      <article class="dashboard-summary-card__item">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="app-stat__label">Ingreso Total</div>
+            <div class="fs-3 fw-semibold">
+              {{ totalIncome() | currency: 'UYU':'symbol':'1.0-2' }}
+            </div>
+          </div>
+          <span class="app-icon-pill"><i class="bi bi-wallet2"></i></span>
         </div>
-      </div>
-      <span class="app-icon-pill"><i class="bi bi-wallet2"></i></span>
-    </div>
-    <div class="mt-3">
-      <div class="progress dashboard-progress" style="height: 6px;">
-        <div class="progress-bar bg-primary" [style.width.%]="totalIncome() > 0 ? 100 : 0"></div>
-      </div>
-    </div>
-  </div>
+        <div class="mt-3">
+          <div class="progress dashboard-progress" style="height: 6px;">
+            <div class="progress-bar bg-primary" [style.width.%]="totalIncome() > 0 ? 100 : 0"></div>
+          </div>
+        </div>
+      </article>
 
-  <div class="app-card dashboard-card">
-    <div class="d-flex align-items-start justify-content-between">
-      <div>
-        <div class="app-stat__label">Gastos Fijos</div>
-        <div class="fs-3 fw-semibold">
-          {{ totalFixedExpenses() | currency: 'UYU':'symbol':'1.0-2' }}
+      <article class="dashboard-summary-card__item">
+        <div class="d-flex align-items-start justify-content-between">
+          <div>
+            <div class="app-stat__label">Gastos Fijos</div>
+            <div class="fs-3 fw-semibold">
+              {{ totalFixedExpenses() | currency: 'UYU':'symbol':'1.0-2' }}
+            </div>
+          </div>
+          <span class="app-icon-pill text-danger border-danger" style="background: rgba(239,68,68,0.12);">
+            <i class="bi bi-receipt"></i>
+          </span>
         </div>
-      </div>
-      <span class="app-icon-pill text-danger border-danger" style="background: rgba(239,68,68,0.12);">
-        <i class="bi bi-receipt"></i>
-      </span>
-    </div>
-    <div class="mt-3">
-      <div class="progress dashboard-progress" style="height: 6px;">
-        <div class="progress-bar bg-danger" [style.width.%]="fixedExpensePercent()"></div>
-      </div>
-    </div>
-  </div>
+        <div class="mt-3">
+          <div class="progress dashboard-progress" style="height: 6px;">
+            <div class="progress-bar bg-danger" [style.width.%]="fixedExpensePercent()"></div>
+          </div>
+        </div>
+      </article>
 
-  <div class="app-card dashboard-card">
-    <div class="d-flex align-items-center justify-content-between">
-      <div class="app-stat__label">Meta de Ahorro</div>
-      <span class="app-pill app-pill--success">{{ getSavingGoalProgressPercent() | number:'1.0-1' }}%</span>
+      <article class="dashboard-summary-card__item">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="app-stat__label">Meta de Ahorro</div>
+          <span class="app-pill app-pill--success">{{ getSavingGoalProgressPercent() | number:'1.0-1' }}%</span>
+        </div>
+        <ng-container *ngIf="getPrimarySavingGoal() as savingGoal; else noSavingGoal">
+          <div class="mt-3">
+            <div class="fw-semibold">{{ savingGoal.name }}</div>
+            <div class="text-muted">
+              {{ user().currentTotalSavings | currency: 'UYU':'symbol':'1.0-0' }}
+              de
+              {{ savingGoal.targetAmount | currency: 'UYU':'symbol':'1.0-0' }}
+            </div>
+            <div class="progress dashboard-progress mt-3" style="height: 10px;">
+              <div class="progress-bar" [style.width.%]="getSavingGoalProgressPercent()"></div>
+            </div>
+            <div class="text-muted-2 mt-2">{{ getSavingGoalProjectionLabel() }}</div>
+          </div>
+        </ng-container>
+        <ng-template #noSavingGoal>
+          <div class="mt-3 text-muted-2">
+            Todavía no tienes metas de ahorro creadas.
+          </div>
+        </ng-template>
+      </article>
     </div>
-    <ng-container *ngIf="getPrimarySavingGoal() as savingGoal; else noSavingGoal">
-      <div class="mt-3">
-        <div class="fw-semibold">{{ savingGoal.name }}</div>
-        <div class="text-muted">
-          {{ user().currentTotalSavings | currency: 'UYU':'symbol':'1.0-0' }}
-          de
-          {{ savingGoal.targetAmount | currency: 'UYU':'symbol':'1.0-0' }}
-        </div>
-        <div class="progress dashboard-progress mt-3" style="height: 10px;">
-          <div class="progress-bar" [style.width.%]="getSavingGoalProgressPercent()"></div>
-        </div>
-        <div class="text-muted-2 mt-2">{{ getSavingGoalProjectionLabel() }}</div>
-      </div>
-    </ng-container>
-    <ng-template #noSavingGoal>
-      <div class="mt-3 text-muted-2">
-        Todavía no tienes metas de ahorro creadas.
-      </div>
-    </ng-template>
   </div>
 </section>
 

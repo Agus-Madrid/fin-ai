@@ -20,6 +20,10 @@ import { Transaction } from '../../../shared/models/transaction.model';
 import { SavingGoal } from '../../../shared/models/saving-goal.model';
 import { User } from '../../../shared/models/user.model';
 import { UploadItem } from '../../../shared/models/upload.model';
+import {
+  createDashboardIntlFormatters,
+  DASHBOARD_DEFAULT_LOCALE
+} from './dashboard.formatters';
 
 Chart.register(...registerables);
 
@@ -46,29 +50,10 @@ interface DashboardThemeColors {
 })
 export class DashboardViewComponent {
   TransactionStatus = TransactionStatus;
-  private readonly locale = 'es-UY';
   private readonly destroyRef = inject(DestroyRef);
-  private readonly compactNumberFormatter = new Intl.NumberFormat(this.locale, {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  });
-  private readonly currencyFormatter = new Intl.NumberFormat(this.locale, {
-    style: 'currency',
-    currency: 'UYU',
-    maximumFractionDigits: 0
-  });
-  private readonly percentFormatter = new Intl.NumberFormat(this.locale, {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1
-  });
-  private readonly trendDateFormatter = new Intl.DateTimeFormat(this.locale, {
-    day: '2-digit',
-    month: 'short'
-  });
-  private readonly goalDeadlineFormatter = new Intl.DateTimeFormat(this.locale, {
-    month: 'short',
-    year: 'numeric'
-  });
+  private readonly dashboardFormatters = createDashboardIntlFormatters(
+    DASHBOARD_DEFAULT_LOCALE
+  );
 
   private readonly categoryChartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('categoryChart');
   private readonly trendChartCanvas = viewChild<ElementRef<HTMLCanvasElement>>('trendChart');
@@ -130,7 +115,7 @@ export class DashboardViewComponent {
 
   getSpendablePercentLabel(): string {
     const absolute = Math.abs(this.spendablePercent());
-    return `${this.percentFormatter.format(absolute)}%`;
+    return `${this.dashboardFormatters.percent.format(absolute)}%`;
   }
 
   getTotalCategoryAmount(): number {
@@ -139,7 +124,7 @@ export class DashboardViewComponent {
   }
 
   getTotalCategoryAmountLabel(): string {
-    return `$${this.compactNumberFormatter.format(this.getTotalCategoryAmount())}`;
+    return `$${this.dashboardFormatters.compactNumber.format(this.getTotalCategoryAmount())}`;
   }
 
   getCategoryPercent(amount: number): number {
@@ -198,7 +183,7 @@ export class DashboardViewComponent {
       return 'Proyección: sin fecha válida';
     }
 
-    const formattedDeadline = this.goalDeadlineFormatter.format(deadline);
+    const formattedDeadline = this.dashboardFormatters.goalDeadline.format(deadline);
     return `Proyección: ${formattedDeadline}`;
   }
 
@@ -333,7 +318,7 @@ export class DashboardViewComponent {
             },
             ticks: {
               color: colors.muted,
-              callback: (value) => this.currencyFormatter.format(Number(value))
+              callback: (value) => this.dashboardFormatters.currency.format(Number(value))
             }
           }
         },
@@ -350,7 +335,7 @@ export class DashboardViewComponent {
             displayColors: false,
             callbacks: {
               label: (context: TooltipItem<'line'>) =>
-                `Gasto: ${this.currencyFormatter.format(context.parsed.y ?? 0)}`
+                `Gasto: ${this.dashboardFormatters.currency.format(context.parsed.y ?? 0)}`
             }
           }
         }
@@ -360,7 +345,7 @@ export class DashboardViewComponent {
 
   private getCategoryTooltipLabel(context: TooltipItem<'doughnut'>): string {
     const label = context.label ? `${context.label}: ` : '';
-    return `${label}${this.currencyFormatter.format(Number(context.raw) || 0)}`;
+    return `${label}${this.dashboardFormatters.currency.format(Number(context.raw) || 0)}`;
   }
 
   private getLineChartGradient(context: ScriptableContext<'line'>, color: string): string | CanvasGradient {
@@ -415,7 +400,9 @@ export class DashboardViewComponent {
     }
 
     return {
-      labels: series.map(([dateValue]) => this.trendDateFormatter.format(new Date(`${dateValue}T00:00:00`))),
+      labels: series.map(([dateValue]) =>
+        this.dashboardFormatters.trendDate.format(new Date(`${dateValue}T00:00:00`))
+      ),
       values: series.map(([, amount]) => Number(amount.toFixed(2)))
     };
   }

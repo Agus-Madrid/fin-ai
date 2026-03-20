@@ -48,3 +48,7 @@
 ## Auth and platform reliability rules applied
 - Keep CORS origin validation explicit and reusable (`resolveAllowedCorsOrigins`, `isAllowedLocalDevOrigin`) to avoid hidden login failures in local environments.
 - Allow local dev hosts (`localhost` and `127.0.0.1`) with variable ports so frontend port shifts do not break authentication unexpectedly.
+
+## Dashboard formatting quality rules applied
+- Keep `Intl` formatter definitions out of UI components and centralized in dedicated formatter modules (`dashboard.formatters.ts`) for readability and reuse.
+- Use explicit factory naming (`createDashboardIntlFormatters`) and a stable default locale constant (`DASHBOARD_DEFAULT_LOCALE`) to make formatting behavior predictable.
