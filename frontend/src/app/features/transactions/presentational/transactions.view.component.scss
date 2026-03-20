@@ -52,6 +52,60 @@
 
 .tx-filters {
   margin-top: 0.55rem;
+  row-gap: 0.5rem;
+}
+
+.tx-filters__title {
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+}
+
+.tx-filters__empty {
+  font-size: 0.8rem;
+}
+
+.tx-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.tx-filter-chip__remove {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: rgba(255, 255, 255, 0.12);
+  color: var(--app-text);
+  line-height: 1;
+}
+
+.tx-filter-chip__remove:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.tx-results-pill {
+  margin-left: auto;
+  font-size: 0.8rem;
+}
+
+.tx-filters-panel {
+  border-color: rgba(87, 87, 98, 0.4);
+  background: linear-gradient(180deg, #12161d 0%, #0e1218 100%);
+}
+
+.tx-filters-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.tx-filter-label {
+  margin-bottom: 0.35rem;
+  display: inline-flex;
 }
 
 .transactions-card {
@@ -219,6 +273,44 @@
   color: #fecaca;
 }
 
+.tx-empty-state {
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--app-muted-2);
+}
+
+.tx-pagination-wrap {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 0.8rem 1rem;
+}
+
+.tx-pagination-summary {
+  font-size: 0.82rem;
+}
+
+.tx-page-size-label {
+  font-size: 0.8rem;
+  color: var(--app-muted-2);
+}
+
+.tx-page-size-select {
+  width: 86px;
+}
+
+:host ::ng-deep .pagination {
+  margin-bottom: 0;
+}
+
 @keyframes tx-row-in {
   from {
     opacity: 0;
@@ -231,5 +323,25 @@
 @media (prefers-reduced-motion: reduce) {
   .app-table tbody tr {
     animation: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .tx-filters-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .tx-filters-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .tx-results-pill {
+    margin-left: 0;
+  }
+
+  .tx-pagination-wrap {
+    align-items: flex-start;
   }
 }

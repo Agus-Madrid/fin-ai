@@ -25,6 +25,7 @@ import {
     <ng-container *ngIf="transactionResource">
       <app-transactions-view
         [transactions]="transactionResource"
+        [categories]="categoriesResource.value()"
         (createRequested)="createTransaction()"
         (editRequested)="editTransaction($event)"
         (deleteRequested)="deleteTransaction($event)" />

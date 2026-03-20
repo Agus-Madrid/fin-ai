@@ -34,3 +34,17 @@
   - `monthly_summary`
 - Use deterministic recalculation methods for open months after income/fixed-commitment changes.
 - Preserve closed-month snapshots to keep historical statistics stable.
+
+## Transactions ledger quality rules applied
+- Keep filtering logic deterministic and isolated in reusable methods:
+  - `matchesCategoryFilter`
+  - `matchesAmountRangeFilter`
+  - `matchesDateRangeFilter`
+- Keep sorting logic explicit and testable with dedicated comparators (`compareByTransactionDate`, `compareByTransactionAmount`).
+- Keep pagination independent from filtering/sorting (`paginateTransactions`) to avoid side effects when criteria change.
+- Expose active filters as computed chips with one-to-one removal handlers to keep UI state and data state aligned.
+- Reuse existing UI library (`@ng-bootstrap/ng-bootstrap`) for pagination to avoid introducing unnecessary dependencies.
+
+## Auth and platform reliability rules applied
+- Keep CORS origin validation explicit and reusable (`resolveAllowedCorsOrigins`, `isAllowedLocalDevOrigin`) to avoid hidden login failures in local environments.
+- Allow local dev hosts (`localhost` and `127.0.0.1`) with variable ports so frontend port shifts do not break authentication unexpectedly.
