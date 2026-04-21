@@ -13,6 +13,14 @@ import { TransactionStatus } from './transaction.enum';
 
 const TRANSACTION_RELATIONS = ['category', 'user'] as const;
 
+export interface PaginatedTransactionsResult {
+  items: Transaction[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 @Injectable()
 export class TransactionsService {
   constructor(
@@ -31,6 +39,38 @@ export class TransactionsService {
     });
   }
 
+  async findAllByUserPaginated(
+    userId: string,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedTransactionsResult> {
+    const where = {
+      user: { id: userId },
+    };
+
+    const [items, total] = await Promise.all([
+      this.transactionRepository.find({
+        where,
+        order: {
+          date: 'DESC',
+          id: 'DESC',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        relations: [...TRANSACTION_RELATIONS],
+      }),
+      this.transactionRepository.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
+  }
+
   async findAllByUserStatus(
     userId: string,
     status: TransactionStatus,
@@ -44,6 +84,41 @@ export class TransactionsService {
       },
       relations: [...TRANSACTION_RELATIONS],
     });
+  }
+
+  async findAllByUserStatusPaginated(
+    userId: string,
+    status: TransactionStatus,
+    page: number,
+    limit: number,
+  ): Promise<PaginatedTransactionsResult> {
+    const statusValue = this.toStoredStatus(status);
+    const where = {
+      user: { id: userId },
+      status: statusValue as unknown as TransactionStatus,
+    };
+
+    const [items, total] = await Promise.all([
+      this.transactionRepository.find({
+        where,
+        order: {
+          date: 'DESC',
+          id: 'DESC',
+        },
+        skip: (page - 1) * limit,
+        take: limit,
+        relations: [...TRANSACTION_RELATIONS],
+      }),
+      this.transactionRepository.count({ where }),
+    ]);
+
+    return {
+      items,
+      total,
+      page,
+      limit,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
+    };
   }
 
   async findLatestByUser(

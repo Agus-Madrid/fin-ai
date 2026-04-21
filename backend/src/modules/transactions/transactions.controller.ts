@@ -24,19 +24,39 @@ export class TransactionsController {
   getAllByUser(
     @CurrentUser() user: AuthenticatedUser,
     @Query('status') status?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
   ) {
-    if (status === undefined) {
-      return this.transactionsService.findAllByUser(user.userId);
+    const parsedStatus = this.parseStatusQuery(status);
+    const shouldPaginate = page !== undefined || limit !== undefined;
+
+    if (!shouldPaginate) {
+      if (parsedStatus === undefined) {
+        return this.transactionsService.findAllByUser(user.userId);
+      }
+
+      return this.transactionsService.findAllByUserStatus(
+        user.userId,
+        parsedStatus,
+      );
     }
 
-    const parsedStatus = Number.parseInt(status, 10);
-    if (Number.isNaN(parsedStatus)) {
-      throw new BadRequestException('status must be a numeric enum value');
+    const parsedPage = this.parsePaginationParam(page, 1, 'page');
+    const parsedLimit = this.parsePaginationParam(limit, 10, 'limit');
+
+    if (parsedStatus === undefined) {
+      return this.transactionsService.findAllByUserPaginated(
+        user.userId,
+        parsedPage,
+        parsedLimit,
+      );
     }
 
-    return this.transactionsService.findAllByUserStatus(
+    return this.transactionsService.findAllByUserStatusPaginated(
       user.userId,
-      parsedStatus as TransactionStatus,
+      parsedStatus,
+      parsedPage,
+      parsedLimit,
     );
   }
 
@@ -80,5 +100,39 @@ export class TransactionsController {
     @Param('id', ParseIntPipe) transactionId: number,
   ) {
     return this.transactionsService.delete(user.userId, transactionId);
+  }
+
+  private parseStatusQuery(status: string | undefined): TransactionStatus | undefined {
+    if (status === undefined) {
+      return undefined;
+    }
+
+    const parsedStatus = Number.parseInt(status, 10);
+    if (Number.isNaN(parsedStatus)) {
+      throw new BadRequestException('status must be a numeric enum value');
+    }
+
+    return parsedStatus as TransactionStatus;
+  }
+
+  private parsePaginationParam(
+    value: string | undefined,
+    defaultValue: number,
+    fieldName: 'page' | 'limit',
+  ): number {
+    if (value === undefined) {
+      return defaultValue;
+    }
+
+    const parsed = Number.parseInt(value, 10);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      throw new BadRequestException(`${fieldName} must be a positive integer`);
+    }
+
+    if (fieldName === 'limit' && parsed > 100) {
+      throw new BadRequestException('limit must be less than or equal to 100');
+    }
+
+    return parsed;
   }
 }

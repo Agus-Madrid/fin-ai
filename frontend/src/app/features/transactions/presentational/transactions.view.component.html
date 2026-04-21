@@ -182,9 +182,57 @@
     </table>
   </div>
 
-  <div class="tx-pagination-wrap" *ngIf="totalFilteredTransactions() > 0">
+  <div class="tx-mobile-list">
+    <ng-container *ngIf="paginatedTransactions().length > 0; else mobileEmptyState">
+      <article
+        class="tx-mobile-item"
+        *ngFor="let tx of paginatedTransactions(); let index = index"
+        [class.is-pending]="tx.status === TransactionStatus.PENDING"
+        [style.--row-index]="index">
+        <div class="tx-mobile-item__head">
+          <div class="tx-mobile-item__main">
+            <span class="app-icon-pill" [style.background]="tx.category?.color || '#2f3542'">
+              <i>{{ tx.category?.icon || '?' }}</i>
+            </span>
+            <div class="tx-mobile-item__text">
+              <div class="fw-semibold">{{ tx.description }}</div>
+              <div class="text-muted-2">{{ getTransactionDateLabel(tx.date) }}</div>
+            </div>
+          </div>
+          <div class="tx-mobile-item__amount">
+            {{ tx.amount | currency: 'UYU':'symbol':'1.0-2' }}
+          </div>
+        </div>
+
+        <div class="tx-mobile-item__meta">
+          <span class="app-pill">{{ tx.category?.name || 'Sin categoria' }}</span>
+          <span class="app-chip app-chip--warning" *ngIf="tx.status === TransactionStatus.PENDING">Pendiente</span>
+        </div>
+
+        <div class="tx-mobile-item__actions">
+          <button type="button" class="app-btn-ghost tx-mobile-action" (click)="editTransaction(tx)">
+            <i class="bi bi-pencil-square me-2"></i>
+            Editar
+          </button>
+          <button type="button" class="app-btn-ghost tx-mobile-action is-danger" (click)="deleteTransaction(tx)">
+            <i class="bi bi-trash3 me-2"></i>
+            Eliminar
+          </button>
+        </div>
+      </article>
+    </ng-container>
+  </div>
+
+  <ng-template #mobileEmptyState>
+    <div class="tx-empty-state tx-empty-state--mobile">
+      <i class="bi bi-inbox"></i>
+      <span>No hay movimientos para los filtros seleccionados.</span>
+    </div>
+  </ng-template>
+
+  <div class="tx-pagination-wrap" *ngIf="transactionPage().total > 0">
     <div class="text-muted-2 tx-pagination-summary">
-      Mostrando {{ getCurrentPageFromIndex() }}-{{ getCurrentPageToIndex() }} de {{ totalFilteredTransactions() }}
+      Mostrando {{ getCurrentPageFromIndex() }}-{{ getCurrentPageToIndex() }} de {{ transactionPage().total }}
       movimientos
     </div>
     <div class="d-flex flex-wrap align-items-center gap-2">
@@ -196,16 +244,37 @@
         (change)="onPageSizeChange($any($event.target).value)">
         <option *ngFor="let size of availablePageSizes" [value]="size">{{ size }}</option>
       </select>
-      <ngb-pagination
-        [collectionSize]="totalFilteredTransactions()"
-        [page]="currentPage()"
-        [pageSize]="pageSize()"
-        [maxSize]="5"
-        [rotate]="true"
-        [ellipses]="false"
-        [boundaryLinks]="true"
-        (pageChange)="onPageChange($event)">
-      </ngb-pagination>
+      <nav class="tx-page-nav" aria-label="Paginacion de transacciones">
+        <button
+          type="button"
+          class="tx-page-btn"
+          [disabled]="currentPage() <= 1"
+          (click)="onPageChange(currentPage() - 1)">
+          ‹
+        </button>
+
+        <ng-container *ngFor="let token of pageTokens(); trackBy: trackPageToken">
+          <button
+            *ngIf="isPageNumberToken(token); else paginationEllipsis"
+            type="button"
+            class="tx-page-btn"
+            [class.is-active]="token === currentPage()"
+            (click)="onPageChange(token)">
+            {{ token }}
+          </button>
+          <ng-template #paginationEllipsis>
+            <span class="tx-page-ellipsis">...</span>
+          </ng-template>
+        </ng-container>
+
+        <button
+          type="button"
+          class="tx-page-btn"
+          [disabled]="currentPage() >= transactionPage().totalPages"
+          (click)="onPageChange(currentPage() + 1)">
+          ›
+        </button>
+      </nav>
     </div>
   </div>
 </div>

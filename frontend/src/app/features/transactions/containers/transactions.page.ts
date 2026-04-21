@@ -1,5 +1,5 @@
 import { NgIf } from '@angular/common';
-import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, ResourceStatus, effect, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionService } from '../../dashboard/services/transaction.service';
@@ -25,7 +25,11 @@ import {
     <ng-container *ngIf="transactionResource">
       <app-transactions-view
         [transactions]="transactionResource"
+        [currentPage]="currentPage()"
+        [pageSize]="pageSize()"
         [categories]="categoriesResource.value()"
+        (pageChanged)="onPageChanged($event)"
+        (pageSizeChanged)="onPageSizeChanged($event)"
         (createRequested)="createTransaction()"
         (editRequested)="editTransaction($event)"
         (deleteRequested)="deleteTransaction($event)" />
@@ -39,11 +43,49 @@ export class TransactionsPageComponent {
   private readonly modalService = inject(NgbModal);
   private readonly formBuilder = inject(FormBuilder);
 
-  readonly transactionResource = this.transactionService.getTransactionsByStatus(TransactionStatus.CONFIRMED);
+  readonly availablePageSizes = [10, 25, 50] as const;
+  readonly currentPage = signal(1);
+  readonly pageSize = signal<number>(this.availablePageSizes[0]);
+  readonly transactionResource = this.transactionService.getTransactionsByStatusPaginated(
+    TransactionStatus.CONFIRMED,
+    () => this.currentPage(),
+    () => this.pageSize(),
+  );
   readonly categoriesResource = this.categoryService.getCategories();
+
+  constructor() {
+    effect(() => {
+      const status = this.transactionResource.status();
+      if (status !== ResourceStatus.Resolved && status !== ResourceStatus.Local) {
+        return;
+      }
+
+      const totalPages = this.transactionResource.value().totalPages;
+      if (this.currentPage() > totalPages) {
+        this.currentPage.set(totalPages);
+      }
+    });
+  }
 
   createTransaction(): void {
     this.openTransactionFormModal();
+  }
+
+  onPageChanged(nextPage: number): void {
+    if (!Number.isInteger(nextPage) || nextPage <= 0) {
+      return;
+    }
+
+    this.currentPage.set(nextPage);
+  }
+
+  onPageSizeChanged(nextPageSize: number): void {
+    if (!this.availablePageSizes.includes(nextPageSize as 10 | 25 | 50)) {
+      return;
+    }
+
+    this.pageSize.set(nextPageSize);
+    this.currentPage.set(1);
   }
 
   editTransaction(tx: Transaction) {

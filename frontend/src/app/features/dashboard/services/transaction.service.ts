@@ -10,6 +10,7 @@ import {
 } from '../../../shared/models/transaction-create.model';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
+import { PaginatedTransactions } from '../../../shared/models/paginated-transactions.model';
 
 @Injectable({ providedIn: 'root' })
 export class TransactionService {
@@ -56,6 +57,45 @@ export class TransactionService {
           joinUrl(request.apiBaseUrl, `/transactions/latest?limit=${request.limit}`),
         ),
       defaultValue: [],
+    });
+  }
+
+  getTransactionsByStatusPaginated(
+    status: TransactionStatus,
+    page: () => number,
+    limit: () => number,
+  ) {
+    return rxResource<
+      PaginatedTransactions,
+      {
+        apiBaseUrl: string;
+        status: TransactionStatus;
+        page: number;
+        limit: number;
+        refreshVersion: number;
+      }
+    >({
+      request: () => ({
+        apiBaseUrl: this.config.apiBaseUrl(),
+        status,
+        page: page(),
+        limit: limit(),
+        refreshVersion: this.transactionsReloadVersion(),
+      }),
+      loader: ({ request }) =>
+        this.http.get<PaginatedTransactions>(
+          joinUrl(
+            request.apiBaseUrl,
+            `/transactions?status=${request.status}&page=${request.page}&limit=${request.limit}`,
+          ),
+        ),
+      defaultValue: {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 10,
+        totalPages: 1,
+      },
     });
   }
 

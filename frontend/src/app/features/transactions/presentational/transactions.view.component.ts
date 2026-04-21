@@ -2,17 +2,16 @@ import {
   ChangeDetectionStrategy,
   Component,
   computed,
-  effect,
   input,
   output,
   ResourceRef,
   signal,
 } from '@angular/core';
 import { CurrencyPipe, NgFor, NgIf } from '@angular/common';
-import { NgbPaginationModule } from '@ng-bootstrap/ng-bootstrap';
 import { TransactionStatus } from '../../../shared/enum/transaction-status.enum';
 import { Transaction } from '../../../shared/models/transaction.model';
 import { Category } from '../../../shared/models/category.model';
+import { PaginatedTransactions } from '../../../shared/models/paginated-transactions.model';
 
 type TransactionSortField = 'date' | 'amount';
 type TransactionSortDirection = 'ASC' | 'DESC';
@@ -28,10 +27,12 @@ interface CategoryFilterOption {
   name: string;
 }
 
+type PageToken = number | '...';
+
 @Component({
   selector: 'app-transactions-view',
   standalone: true,
-  imports: [CurrencyPipe, NgFor, NgIf, NgbPaginationModule],
+  imports: [CurrencyPipe, NgFor, NgIf],
   templateUrl: './transactions.view.component.html',
   styleUrl: './transactions.view.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -42,8 +43,13 @@ export class TransactionsViewComponent {
   readonly createRequested = output<void>();
   readonly editRequested = output<Transaction>();
   readonly deleteRequested = output<Transaction>();
-  readonly transactions = input.required<ResourceRef<Transaction[] | undefined>>();
+  readonly pageChanged = output<number>();
+  readonly pageSizeChanged = output<number>();
+
+  readonly transactions = input.required<ResourceRef<PaginatedTransactions | undefined>>();
   readonly categories = input<Category[]>([]);
+  readonly currentPage = input(1);
+  readonly pageSize = input(10);
 
   readonly availablePageSizes = [10, 25, 50] as const;
   readonly filtersVisible = signal(false);
@@ -54,12 +60,13 @@ export class TransactionsViewComponent {
   readonly dateTo = signal('');
   readonly sortField = signal<TransactionSortField>('date');
   readonly sortDirection = signal<TransactionSortDirection>('DESC');
-  readonly currentPage = signal(1);
-  readonly pageSize = signal<number>(this.availablePageSizes[0]);
 
+  readonly transactionPage = computed(
+    () => this.transactions().value() ?? this.emptyTransactionPage(),
+  );
   readonly categoryOptions = computed(() => this.buildCategoryOptions());
   readonly filteredTransactions = computed(() =>
-    this.filterTransactions(this.transactions().value() ?? []),
+    this.filterTransactions(this.transactionPage().items),
   );
   readonly sortedTransactions = computed(() =>
     this.sortTransactions(
@@ -68,43 +75,13 @@ export class TransactionsViewComponent {
       this.sortDirection(),
     ),
   );
+  readonly paginatedTransactions = computed(() => this.sortedTransactions());
   readonly totalFilteredTransactions = computed(() => this.sortedTransactions().length);
-  readonly paginatedTransactions = computed(() =>
-    this.paginateTransactions(
-      this.sortedTransactions(),
-      this.currentPage(),
-      this.pageSize(),
-    ),
-  );
   readonly activeFilterChips = computed(() => this.buildActiveFilterChips());
   readonly hasActiveFilters = computed(() => this.activeFilterChips().length > 0);
-
-  constructor() {
-    effect(
-      () => {
-        this.selectedCategoryId();
-        this.amountMin();
-        this.amountMax();
-        this.dateFrom();
-        this.dateTo();
-        this.sortField();
-        this.sortDirection();
-        this.pageSize();
-        this.currentPage.set(1);
-      },
-      { allowSignalWrites: true },
-    );
-
-    effect(
-      () => {
-        const maxPage = this.getMaxPage(this.totalFilteredTransactions(), this.pageSize());
-        if (this.currentPage() > maxPage) {
-          this.currentPage.set(maxPage);
-        }
-      },
-      { allowSignalWrites: true },
-    );
-  }
+  readonly pageTokens = computed(() =>
+    this.buildPageTokens(this.transactionPage().totalPages, this.currentPage()),
+  );
 
   createTransaction(): void {
     this.createRequested.emit();
@@ -161,7 +138,17 @@ export class TransactionsViewComponent {
   }
 
   onPageChange(nextPage: number): void {
-    this.currentPage.set(nextPage);
+    const totalPages = this.transactionPage().totalPages;
+    if (
+      !Number.isInteger(nextPage) ||
+      nextPage <= 0 ||
+      nextPage > totalPages ||
+      nextPage === this.currentPage()
+    ) {
+      return;
+    }
+
+    this.pageChanged.emit(nextPage);
   }
 
   onPageSizeChange(rawValue: string): void {
@@ -170,7 +157,7 @@ export class TransactionsViewComponent {
       return;
     }
 
-    this.pageSize.set(parsedValue);
+    this.pageSizeChanged.emit(parsedValue);
   }
 
   removeActiveFilter(key: ActiveFilterKey): void {
@@ -216,23 +203,43 @@ export class TransactionsViewComponent {
 
   getFilterResultsLabel(): string {
     const results = this.totalFilteredTransactions();
-    return `${results} movimiento${results === 1 ? '' : 's'}`;
+    return `${results} movimiento${results === 1 ? '' : 's'} en la pagina`;
   }
 
   getCurrentPageFromIndex(): number {
-    if (this.totalFilteredTransactions() === 0) {
+    const page = this.transactionPage();
+    if (page.total === 0) {
       return 0;
     }
 
-    return (this.currentPage() - 1) * this.pageSize() + 1;
+    return (page.page - 1) * page.limit + 1;
   }
 
   getCurrentPageToIndex(): number {
-    return Math.min(this.currentPage() * this.pageSize(), this.totalFilteredTransactions());
+    const page = this.transactionPage();
+    return Math.min(page.page * page.limit, page.total);
   }
 
   getTransactionDateLabel(rawDate: Date | string): string {
     return this.formatDateValue(rawDate);
+  }
+
+  isPageNumberToken(token: PageToken): token is number {
+    return typeof token === 'number';
+  }
+
+  trackPageToken(index: number, token: PageToken): string {
+    return `${token}-${index}`;
+  }
+
+  private emptyTransactionPage(): PaginatedTransactions {
+    return {
+      items: [],
+      total: 0,
+      page: 1,
+      limit: this.pageSize(),
+      totalPages: 1,
+    };
   }
 
   private buildCategoryOptions(): CategoryFilterOption[] {
@@ -245,7 +252,7 @@ export class TransactionsViewComponent {
     }
 
     let hasUncategorizedTransactions = false;
-    for (const transaction of this.transactions().value() ?? []) {
+    for (const transaction of this.transactionPage().items) {
       const categoryId = this.resolveTransactionCategoryId(transaction);
       const categoryName = transaction.category?.name?.trim();
 
@@ -382,15 +389,6 @@ export class TransactionsViewComponent {
     }
 
     return String(left.id).localeCompare(String(right.id));
-  }
-
-  private paginateTransactions(
-    transactions: Transaction[],
-    page: number,
-    pageSize: number,
-  ): Transaction[] {
-    const offset = (page - 1) * pageSize;
-    return transactions.slice(offset, offset + pageSize);
   }
 
   private buildActiveFilterChips(): ActiveFilterChip[] {
@@ -532,10 +530,39 @@ export class TransactionsViewComponent {
     return `${year}-${month}-${day}`;
   }
 
-  private getMaxPage(totalItems: number, pageSize: number): number {
-    if (totalItems <= 0) {
-      return 1;
+  private buildPageTokens(totalPages: number, currentPage: number): PageToken[] {
+    if (totalPages <= 7) {
+      return this.range(1, totalPages);
     }
-    return Math.max(1, Math.ceil(totalItems / pageSize));
+
+    const tokens: PageToken[] = [1];
+    const middleStart = Math.max(2, currentPage - 1);
+    const middleEnd = Math.min(totalPages - 1, currentPage + 1);
+
+    if (middleStart > 2) {
+      tokens.push('...');
+    }
+
+    tokens.push(...this.range(middleStart, middleEnd));
+
+    if (middleEnd < totalPages - 1) {
+      tokens.push('...');
+    }
+
+    tokens.push(totalPages);
+    return tokens;
+  }
+
+  private range(start: number, end: number): number[] {
+    if (end < start) {
+      return [];
+    }
+
+    const values: number[] = [];
+    for (let value = start; value <= end; value += 1) {
+      values.push(value);
+    }
+
+    return values;
   }
 }
